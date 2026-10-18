@@ -165,7 +165,7 @@ def rechercher_jeux_api(
 
     from src.contracts.validation_api import valider_reponse_api
 
-    TRIS_API = {"récent": "-last_update", "vues": "-views", "réutilisations": "-reuses"}
+    TRIS_API = {"recent": "-last_update", "vues": "-views", "reutilisations": "-reuses"}
 
     params = {
         "q": " ".join(mots_cles),

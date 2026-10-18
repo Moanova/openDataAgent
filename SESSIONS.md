@@ -372,3 +372,17 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun. Concepteur reteste le prompt A1/A2 en local.
+
+## **Séance du 18/10/2026 (2) — correctif TRIS_API + formalisation T11.3 (migration v2)**
+
+### **Actions réalisées**
+1. **Correctif TRIS_API** : les clés du dictionnaire de tri dans `rechercher_jeux_api` étaient accentuées (`"récent"`, `"réutilisations"`) alors que l'enum vaut `recent`/`reutilisations` — `tri=recent` et `tri=reutilisations` levaient un KeyError rattrapé en `echec_technique` (constaté dans la trace agentique : 2 invocations perdues sur 10). Clés corrigées ; test de régression paramétré sur les trois tris.
+2. **Kanban T11.3** : migration v1 → v2 formalisée — bascule pleine v2 (décision concepteur, pas d'adaptateur), sondage préalable S11.0 (cartographie champ par champ, fixtures v2 réelles), périmètre circonscrit à `src/utils/http.py` + schémas jsonschema + fixtures + mapping `derniere_maj` ; sorties normalisées inchangées (isolant).
+3. **Kanban T11.2** (séance précédente) complété : la question v1→v2 y est rattachée et désormais tranchée par T11.3.
+
+### **Décisions**
+- **Bascule pleine v2, sans adaptateur** (concepteur) : l'adaptateur par source ne se justifiera qu'avec T7.4 (autres sources).
+- **Sondage préalable obligatoire** (méthode éprouvée du projet : « API sondée en réel avant implémentation »).
+
+### **Blocages**
+- Aucun.

@@ -157,3 +157,19 @@ def test_reponse_invalide_contre_schema_echec_propre():
 
     assert resultat.statut == "echec_technique"
     assert "total" in (resultat.erreur or "")
+
+
+@pytest.mark.parametrize("tri,sort_attendu", [
+    ("recent", "-last_update"),
+    ("vues", "-views"),
+    ("reutilisations", "-reuses"),
+])
+@responses.activate
+def test_tri_recents_et_reutilisations_traduits(fixture_recherche, tri, sort_attendu):
+    # Régression : les clés de TRIS_API étaient accentuées ("récent", "réutilisations")
+    # alors que l'enum vaut recent/reutilisations -> KeyError -> echec_technique
+    # (constaté en trace agentique du 18/10/2026, 2 invocations perdues).
+    responses.add(responses.GET, URL_RECHERCHE, json=fixture_recherche, status=200)
+    resultat = rechercher_jeux_api(["dette"], tri=tri, limite=10, page=1)
+    assert resultat.reussi
+    assert f"sort={sort_attendu}" in responses.calls[0].request.url
