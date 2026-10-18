@@ -78,6 +78,8 @@ def rechercher_jeux(
     """
     if registre is None:
         registre = _registre_par_defaut
+    if registre_acceptations is None:
+        registre_acceptations = _registre_acceptations_par_defaut
     # Mettre à jour le contexte de logging avec l'id_execution
     if id_execution:
         bind_context(id_execution=id_execution)

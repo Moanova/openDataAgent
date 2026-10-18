@@ -346,3 +346,11 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun. T7.5 en revue : validation en local par le concepteur en attente.
+
+## **Séance du 15/10/2026 (5) — correctif : registre des acceptations non initialisé par défaut**
+
+### **Actions réalisées**
+1. **Anomalie remontée par le concepteur (test local)** : `python -m src.main search "élections présidentielles"` → `echec_technique` (« 'NoneType' object has no attribute 'consigner_acceptation_conditionnelle' »).
+2. **Cause racine** : lors de l'ajout du paramètre `registre_acceptations` à `rechercher_jeux`, la ligne d'initialisation par défaut (`if registre_acceptations is None: ... = _registre_acceptations_par_defaut`) avait été omise du corps de la fonction. En appel CLI (sans le paramètre), le registre restait `None` et échouait dès le premier jeu conditionnel accepté.
+3. **Pourquoi les tests ne l'avaient pas vu** : tous les tests du chantier B passaient explicitement `registre_acceptations` (fixture) ; le chemin « défaut + acceptation conditionnelle » n'était pas couvert.
+4. **Correctif** : initialisation par défaut ajoutée ; test de régression (appel sans `registre_acceptations`, registre global isolé sur `tmp_path` via monkeypatch) ; 348 tests verts.

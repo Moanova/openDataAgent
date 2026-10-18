@@ -277,3 +277,27 @@ def test_registre_acceptations_persiste_et_antidoublon(tmp_path):
     assert r2.id_deja_consigne("mairie1") is True
     assert r2.id_deja_consigne("autre") is False
     assert r2.rapport_pour_agent()["acceptations_conditionnelles"][0]["id_jeu"] == "mairie1"
+
+
+@responses.activate
+def test_sans_registre_acceptations_explicite(tmp_path, monkeypatch):
+    # Régression : la CLI appelle rechercher_jeux sans registre_acceptations ;
+    # le défaut (instance globale) doit prendre le relais, pas None.
+    # On isole le registre global sur tmp_path pour ne pas écrire dans data/.
+    import src.core.search as module_search
+    registre_iso = RegistreAcceptationsConditionnelles(chemin=tmp_path / "acceptations.json")
+    monkeypatch.setattr(module_search, "_registre_acceptations_par_defaut", registre_iso)
+    reponse_api = {
+        "data": [
+            _jeu("mairie1", "notspecified", "Ville de Paris",
+                 badges=[{"kind": "local-authority"}]),
+            _jeu("ouvert1", "lov2"),
+        ],
+        "total": 2, "page": 1, "next_page": None, "previous_page": None,
+    }
+    responses.add(responses.GET, URL_RECHERCHE, json=reponse_api, status=200)
+    # aucun registre_acceptations passé : défaut requis
+    reponse = rechercher_jeux(["dette"], id_execution="flux-test")
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["acceptes_licence_conditionnelle"] == 1
+    assert registre_iso.rapport_pour_agent()["acceptations_conditionnelles"][0]["id_jeu"] == "mairie1"
