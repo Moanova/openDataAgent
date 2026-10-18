@@ -130,3 +130,51 @@ def test_extraction_echec_http_page_2(tmp_path, monkeypatch):
         reponse = extraire_ressource("r6", id_execution="flux")
     assert reponse["statut"] == "echec_technique"
     assert not (tmp_path / "data" / "raw").exists() or not list((tmp_path / "data" / "raw").rglob("*.csv"))
+
+
+def test_mention_attribution_dans_extraction(tmp_path, monkeypatch):
+    # Réf. T7.5 — la mention d'attribution suit le fichier jusqu'à la visualisation (voie 1)
+    monkeypatch.chdir(tmp_path)
+    inventaire_avec({
+        "r1": {
+            "id": "r1", "api_tabulaire": True, "licence": "lov2",
+            "licence_conditionnelle": False,
+            "organisation": "Insee",
+            "derniere_maj": "2026-01-15",
+            "url": "https://example.fr/donnees.csv",
+        }
+    })
+    page = _reponse_api([{"theme": "a"}], 1)
+    with patch("src.core.extraction.interroger_ressource_api",
+               side_effect=[MagicMock(reussi=True, donnees=page)]):
+        reponse = extraire_ressource("r1", id_execution="flux", taille_page=10)
+    assert reponse["statut"] == "succes"
+    donnees = reponse["donnees"]
+    assert donnees["licence"] == "lov2"
+    assert donnees["licence_conditionnelle"] is False
+    mention = donnees["mention_attribution"]
+    assert mention is not None
+    assert "Insee" in mention
+    assert "Licence Ouverte / Open Licence 2.0 (Etalab)" in mention
+    assert "2026-01-15" in mention
+
+
+def test_mention_nulle_pour_licence_a_verifier_extraction(tmp_path, monkeypatch):
+    # Réf. T7.5 — other-open : jamais devinée, mention null, extraction réussie
+    monkeypatch.chdir(tmp_path)
+    inventaire_avec({
+        "r1": {
+            "id": "r1", "api_tabulaire": True, "licence": "other-open",
+            "licence_conditionnelle": False,
+            "organisation": "Association X",
+            "derniere_maj": None,
+            "url": "https://example.fr/donnees.csv",
+        }
+    })
+    page = _reponse_api([{"theme": "a"}], 1)
+    with patch("src.core.extraction.interroger_ressource_api",
+               side_effect=[MagicMock(reussi=True, donnees=page)]):
+        reponse = extraire_ressource("r1", id_execution="flux", taille_page=10)
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["mention_attribution"] is None
+    assert reponse["message"] != ""

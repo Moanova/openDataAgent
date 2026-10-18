@@ -40,6 +40,14 @@ class ExtraireRessourceOutput(BaseModel):
     colonnes: list[str] = Field(description="Colonnes du CSV, ordre de l'API conservé.")
     tronque: bool = Field(description="Vrai si l'extraction a été tronquée au plafond de sécurité.")
     licence: str = Field(description="Licence du jeu de données.")
+    licence_conditionnelle: bool = Field(
+        default=False,
+        description="Vrai si la licence a été acceptée par dérogation (producteur public, licence non renseignée).",
+    )
+    mention_attribution: str | None = Field(
+        default=None,
+        description="Mention d'attribution prête à afficher ; null si la licence est à vérifier (jamais devinée).",
+    )
     suggestion: str | None = Field(
         default=None,
         description="Suggestion en cas d'échec (ex : 'basculer sur telecharger_brut').",

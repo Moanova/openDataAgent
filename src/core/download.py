@@ -21,6 +21,7 @@ from src.utils.http import telecharger_fichier
 from src.utils.storage import generer_id_execution, chemin_destination, resoudre_collision
 from src.utils.registry import RegistreSourcesInaccessibles
 from src.core.resources import inventaire
+from src.core.licences_descriptif import mention_attribution
 
 logger = get_logger("openDataAgent.core.download")
 
@@ -124,12 +125,33 @@ def telecharger_brut(
         taille_octets=destination.stat().st_size,
     )
 
+    resultat_mention = mention_attribution(
+        organisation=metadonnees.get("organisation"),
+        licence=metadonnees.get("licence"),
+        derniere_maj=metadonnees.get("derniere_maj"),
+        licence_conditionnelle=bool(metadonnees.get("licence_conditionnelle", False)),
+    )
+    donnees_sortie = {
+        "chemin_local": str(destination),
+        "format": metadonnees.get("format") or "",
+        "licence": metadonnees.get("licence") or "",
+        "licence_conditionnelle": bool(metadonnees.get("licence_conditionnelle", False)),
+        "mention_attribution": resultat_mention["donnees"].get("mention"),
+    }
+    if resultat_mention["statut"] != "succes":
+        logger.warning(
+            "Mention d'attribution non generee",
+            licence=metadonnees.get("licence"),
+            statut_mention=resultat_mention["statut"],
+        )
+        log_to_file(
+            "Mention d'attribution non generee",
+            licence=metadonnees.get("licence"),
+            statut_mention=resultat_mention["statut"],
+            message=resultat_mention["message"],
+        )
     return {
         "statut": "succes",
-        "message": "",
-        "donnees": {
-            "chemin_local": str(destination),
-            "format": metadonnees.get("format") or "",
-            "licence": metadonnees.get("licence") or "",
-        },
+        "message": resultat_mention["message"] if resultat_mention["statut"] != "succes" else "",
+        "donnees": donnees_sortie,
     }

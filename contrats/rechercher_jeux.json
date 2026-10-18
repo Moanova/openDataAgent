@@ -90,6 +90,10 @@
                   "licence": {
                     "type": "string"
                   },
+                  "licence_conditionnelle": {
+                    "type": "boolean",
+                    "description": "Vrai si la licence a été acceptée par dérogation (producteur public)."
+                  },
                   "derniere_maj": {
                     "type": "string"
                   },
@@ -125,6 +129,10 @@
                 "null"
               ],
               "description": "Numero de la page suivante si elle existe, null sinon."
+            },
+            "acceptes_licence_conditionnelle": {
+              "type": "integer",
+              "description": "Nombre de jeux acceptés sous licence conditionnelle (producteur public, licence non renseignée)."
             }
           },
           "required": [

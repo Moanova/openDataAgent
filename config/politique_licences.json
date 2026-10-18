@@ -1,0 +1,21 @@
+{
+  "data.gouv.fr": {
+    "licences_acceptees": [
+      "lov2",
+      "fr-lo",
+      "odc-odbl",
+      "odc-by",
+      "odc-pddl",
+      "cc-by",
+      "cc-by-sa",
+      "cc-zero",
+      "other-open",
+      "other-attribution",
+      "other-pd"
+    ],
+    "licences_conditionnelles": {
+      "notspecified": ["service_public", "collectivite_territoriale"]
+    },
+    "types_organisation_confiance": ["service_public", "collectivite_territoriale"]
+  }
+}

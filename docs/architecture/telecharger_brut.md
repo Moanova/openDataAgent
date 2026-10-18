@@ -12,7 +12,7 @@ Acquérir une ressource non indexée par l'API tabulaire dans son état brut (vo
 
 ## Retour en succès
 
-`donnees.chemin_local` : chemin relatif du fichier acquis. `donnees.format` : format de la ressource. La licence est incluse afin que les obligations d'attribution suivent le fichier jusqu'à la visualisation.
+`donnees.chemin_local` : chemin relatif du fichier acquis. `donnees.format` : format de la ressource. La licence est incluse afin que les obligations d'attribution suivent le fichier jusqu'à la visualisation. `donnees.licence_conditionnelle` : vrai si la licence a été acceptée par dérogation (producteur public). `donnees.mention_attribution` : mention d'attribution prête à afficher, générée par le code à partir des métadonnées de l'inventaire (organisation, licence, date de mise à jour) ; `null` pour les licences à vérifier (`other-*`, `notspecified`) — jamais devinée, le message de la réponse l'explique alors. Version 1.1.0 (T7.5).
 
 ## Comportements d'échec
 

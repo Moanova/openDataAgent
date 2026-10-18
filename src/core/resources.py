@@ -18,12 +18,24 @@ from typing import Any, Dict, Optional
 
 from src.utils.logging import get_logger, bind_context, log_to_file
 from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.registre_acceptations import RegistreAcceptationsConditionnelles
+from src.core.licence import reinitialiser_politique
 from src.core.classification import classer_ressource
 from src.utils.http import lister_ressources_api, est_indexee_api_tabulaire
 
 logger = get_logger("openDataAgent.core.resources")
 
 _registre_par_defaut = RegistreSourcesInaccessibles()
+
+# Jeux acceptes sous licence conditionnelle (T7.5) : peuples par
+# rechercher_jeux, consultes par lister_ressources pour propager le
+# marquage jusqu'aux ressources (puis les deux voies d'acquisition).
+_jeux_conditionnels: Dict[str, bool] = {}
+
+
+def declarer_jeu_conditionnel(id_jeu: str) -> None:
+    """Marque un jeu comme accepte sous licence conditionnelle (T7.5)."""
+    _jeux_conditionnels[id_jeu] = True
 
 # Inventaire en mémoire : id_ressource -> métadonnées normalisées.
 # Peuplé a chaque appel de lister_ressources, consommé par telecharger_brut
@@ -89,6 +101,10 @@ def _normaliser_ressource(ressource: Dict[str, Any]) -> Dict[str, Any]:
         "url": ressource["url"],
         # La licence suit le fichier jusqu'a la visualisation (contrat telecharger_brut).
         "licence": _jeu_courant.get("licence"),
+        # T7.5 : le marquage conditionnel et la date de mise a jour suivent
+        # la licence jusqu'a la mention d'attribution (partie 2).
+        "licence_conditionnelle": _jeu_courant.get("licence_conditionnelle", False),
+        "derniere_maj": _jeu_courant.get("derniere_maj"),
     }
 
 
@@ -158,6 +174,8 @@ def lister_ressources(
         "id": id_jeu,
         "licence": data.get("license"),
         "organisation": (data.get("organization") or {}).get("name", ""),
+        "derniere_maj": data.get("last_modified"),
+        "licence_conditionnelle": bool(_jeux_conditionnels.get(id_jeu, False)),
     }
     ressources_normalisees = [_normaliser_ressource(r) for r in data.get("resources", [])]
 

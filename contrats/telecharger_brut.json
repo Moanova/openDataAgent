@@ -6,16 +6,25 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "id_ressource": { "type": "string", "description": "Identifiant de la ressource, issu de lister_ressources." }
+        "id_ressource": {
+          "type": "string",
+          "description": "Identifiant de la ressource, issu de lister_ressources."
+        }
       },
-      "required": ["id_ressource"]
+      "required": [
+        "id_ressource"
+      ]
     },
     "returns": {
       "type": "object",
       "properties": {
         "statut": {
           "type": "string",
-          "enum": ["succes", "ressource_introuvable", "echec_technique"],
+          "enum": [
+            "succes",
+            "ressource_introuvable",
+            "echec_technique"
+          ],
           "description": "Code de statut de l'opération."
         },
         "message": {
@@ -37,15 +46,37 @@
               "type": "string",
               "description": "Licence du jeu de données."
             },
+            "licence_conditionnelle": {
+              "type": "boolean",
+              "description": "Vrai si la licence a été acceptée par dérogation (producteur public, licence non renseignée)."
+            },
+            "mention_attribution": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Mention d'attribution prête à afficher ; null si la licence est à vérifier (jamais devinée)."
+            },
             "suggestion": {
-              "type": ["string", "null"],
+              "type": [
+                "string",
+                "null"
+              ],
               "description": "Suggestion en cas d'échec (ex : 'fichier_heberge_exterieurement')."
             }
           },
-          "required": ["chemin_local", "format", "licence"]
+          "required": [
+            "chemin_local",
+            "format",
+            "licence"
+          ]
         }
       },
-      "required": ["statut", "message", "donnees"]
+      "required": [
+        "statut",
+        "message",
+        "donnees"
+      ]
     }
   }
 }

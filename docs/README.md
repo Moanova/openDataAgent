@@ -240,20 +240,32 @@ Le projet n'acquiert que des jeux de données dont la licence est **compatible a
 | `lov2` | Licence Ouverte / Open Licence 2.0 (Etalab) | ✅ Obligatoire | ❌ Non | ✅ Autorisé | Licence de référence des administrations françaises (décret 2017-638) ; compatible OGL, ODC-BY, CC-BY 2.0 |
 | `fr-lo` | Licence Ouverte (variante d'écriture data.gouv.fr) | ✅ Obligatoire | ❌ Non | ✅ Autorisé | Même licence que `lov2` |
 | `odc-odbl` | Open Database License (ODbL) | ✅ Obligatoire | ✅ **Obligatoire** (clause 4.4 : toute base dérivée est redistribuée sous ODbL) | ✅ Autorisé | Licence copyleft des bases de données (OpenStreetMap, collectivités) ; **contrainte forte sur les produits dérivés** |
+| `odc-by` | Open Data Commons Attribution | ✅ Obligatoire | ❌ Non | ✅ Autorisé | Équivalent ODbL sans clause de partage à l'identique : permissive pour les produits dérivés |
+| `odc-pddl` | Open Data Commons Public Domain Dedication and License | ⛔ Facultative | ❌ Non | ✅ Autorisé | Dédicace au domaine public des bases de données : aucune obligation légale |
 | `cc-by` | Creative Commons Attribution 4.0 | ✅ Obligatoire | ❌ Non | ✅ Autorisé | Permissive, la plus courante des CC |
 | `cc-by-sa` | CC Attribution - ShareAlike 4.0 | ✅ Obligatoire | ✅ **Obligatoire** (les adaptations sont licenciées sous conditions identiques) | ✅ Autorisé | Copyleft ; homologuée en France pour certains périmètres (ex. SHOM) |
 | `cc-zero` | CC0 1.0 (domaine public) | ⚪ Facultative (recommandée par courtoisie) | ❌ Non | ✅ Autorisé | Renoncement aux droits : aucune obligation légale |
 | `other-open` | Autre licence ouverte (mention libre du producteur) | ⚠️ À vérifier au cas par cas | ⚠️ À vérifier | ⚠️ À vérifier | Le producteur déclare une licence ouverte sans en préciser la nature : les obligations exactes dépendent du texte de la licence citée sur la fiche du jeu |
+| `other-attribution` | Autre licence à attribution | ⚠️ Attribution requise, autres clauses à vérifier | ⚠️ À vérifier | ⚠️ À vérifier | Le producteur déclare une licence à attribution sans en préciser la nature : à vérifier sur la fiche du jeu |
+| `other-pd` | Autre mention de domaine public | ⚠️ À vérifier au cas par cas | ⚠️ À vérifier | ⚠️ À vérifier | Le producteur déclare une dedication au domaine public : à vérifier sur la fiche du jeu |
+
+### Licence conditionnelle
+
+`notspecified` (licence non renseignée) est acceptée **uniquement pour un producteur public** (`service_public`, `collectivité territoriale`) : l'absence de licence déclarée est présumée réutilisable pour un établissement public français (présomption de réutilisation, CRPA / décret 2017-638). Elle est refusée pour un producteur privé (`entreprise`, `association`). Cette acceptation est un **marquage** : les obligations restent à vérifier avant toute exploitation en partie 2.
 
 ### Licences exclues
 
-Toute licence fermée, non spécifiée (`notspecified`) ou commerciale est refusée. Une licence **absente ou vide est également refusée** (comportement sûr par défaut).
+Toute licence fermée ou commerciale est refusée, **quelle que soit l'organisation** — une licence incompatible explicite n'est jamais contournée, même pour un établissement public. Une licence **absente ou vide est également refusée** (comportement sûr par défaut).
 
 ### Implication pour l'exploitation des données (partie 2 du projet)
 
 - **Attribution** : pour toutes les licences sauf `cc-zero`, toute restitution des données doit mentionner la source (producteur, organisation, date de mise à jour). Le projet conserve la licence avec chaque fichier acquis (`telecharger_brut` la retourne) et l'agent la restitue dans son rapport final.
 - **Partage à l'identique** (`odc-odbl`, `cc-by-sa`) : tout produit dérivé des données doit être redistribué sous la même licence. Les visualisations et jeux dérivés de la partie 2 devront le respecter — c'est la contrainte la plus structurante du catalogue.
-- **`other-open`** : la licence déclarée doit être vérifiée sur la fiche data.gouv.fr avant toute exploitation.
+- **`other-open` / `other-attribution` / `other-pd`** : la licence déclarée doit être vérifiée sur la fiche data.gouv.fr avant toute exploitation.
+
+### Paramétrage de la politique
+
+La liste des licences (acceptées, conditionnelles, types d'organisation de confiance) est paramétrée dans [`config/politique_licences.json`](../config/politique_licences.json), avec une clé par source de données (préparation de l'ouverture à d'autres sites, T7.4). En l'absence ou en cas d'invalidité du fichier, une politique intégrée équivalente s'applique (comportement sûr).
 
 ---
 

@@ -5,8 +5,8 @@
     {
       "nom": "rechercher_jeux",
       "fichier": "rechercher_jeux.json",
-      "version": "1.1.0",
-      "changelog": "Ajout de l'argument page (pagination) et des champs de sortie page_courante / page_suivante."
+      "version": "1.2.0",
+      "changelog": "Ajout du marquage licence_conditionnelle par jeu et du compteur acceptes_licence_conditionnelle (T7.5 : licences conditionnelles)."
     },
     {
       "nom": "lister_ressources",
@@ -23,14 +23,14 @@
     {
       "nom": "telecharger_brut",
       "fichier": "telecharger_brut.json",
-      "version": "1.0.0",
-      "changelog": "Version initiale du contrat."
+      "version": "1.1.0",
+      "changelog": "Ajout des champs licence_conditionnelle et mention_attribution (T7.5 : la mention d'attribution suit le fichier jusqu'à la visualisation)."
     },
     {
       "nom": "extraire_ressource",
       "fichier": "extraire_ressource.json",
-      "version": "1.0.0",
-      "changelog": "T10.7 : extraction paginée d'une ressource indexée vers data/raw/ (voie 1 matérialisée) ; succès partiel tronqué au plafond de sécurité. Version initiale du contrat, livrée avec le manifeste 1.1."
+      "version": "1.1.0",
+      "changelog": "Ajout des champs licence_conditionnelle et mention_attribution (T7.5 : la mention d'attribution suit le fichier jusqu'à la visualisation)."
     }
   ]
 }

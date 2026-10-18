@@ -296,3 +296,53 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Problème d'environnement non identifié (résolu hors séance).
+## **Séance du 15/10/2026 (2) — T7.5 chantier A : référentiel de licences élargi et politique paramétrée**
+
+### **Contexte**
+- **Objectif** : avant le registre descriptif de T7.5, aligner le contrôle de licences avec le référentiel complet du filtre du site et préparer l'ouverture à d'autres sources (T7.4).
+
+### **Actions réalisées**
+1. **Diagnostic** : la liste initiale (7 licences) ne couvrait pas le référentiel du filtre du site ; manquaient `odc-by`, `odc-pddl`, `other-attribution`, `other-pd`.
+2. **Paramétrage JSON** : création de `config/politique_licences.json` (licences acceptées, conditionnelles, types d'organisation de confiance ; une clé par source).
+3. **`src/core/licence.py` v2** : `charger_politique()` avec fallback intégré sûr (fichier absent/invalide/source absente), `licence_est_acceptable(licence, type_organisation=None, politique=None)` rétrocompatible, mémoïsation, `reinitialiser_politique()`.
+4. **Tests** : `tests/unit/test_licence.py` v2 (TU-01 à TU-04 mis à jour, TU-40/TU-41 ajoutés) ; 302 tests verts.
+5. **Docs** : README (politique), contrat_global, plan de tests, suivi `docs/tasks/T7.5_licences_descriptif.md`, kanban.
+
+### **Décisions**
+- **Règle sécurisée (concepteur)** : `notspecified` acceptée uniquement pour un producteur public (`service_public`, `collectivite_territoriale`, présomption CRPA) ; une licence incompatible explicite n'est jamais contournée, même pour un établissement public (principe conservé pour l'ouverture future).
+- **Paramétrage figé dans le dépôt** : JSON versionné plutôt que dictionnaire en dur, une clé par source.
+
+### **Blocages**
+- Chantier B (type d'organisation dans `rechercher_jeux`) : le payload de recherche n'expose pas le type d'organisation ; résolution API à déterminer (discussion en cours).
+
+## **Séance du 15/10/2026 (3) — T7.5 chantier B : branchement du type d'organisation et registre des acceptations**
+
+### **Actions réalisées**
+1. **Sondage API** : le payload de recherche v1 (`/api/1/datasets/`) embarque `organization.badges` (kinds `public-service`, `local-authority`, `certified`) — vérifié en production (Etalab, Ville de Paris). Aucun appel supplémentaire nécessaire ; l'API reuses est jugée non pertinente.
+2. **`src/core/search.py` v2** : `_type_organisation()` (badges → type), filtre appelé avec le type, marquage `licence_conditionnelle` par jeu, compteur `acceptes_licence_conditionnelle`, paramètre `registre_acceptations`.
+3. **`src/utils/registre_acceptations.py` (création)** : `RegistreAcceptationsConditionnelles` (`data/registre_acceptations.json`, motif `licence_absente_producteur_public`) — invariants identiques au registre des sources inaccessibles (persistance, immutabilité, anti-doublon).
+4. **Tests** : 5 nouveaux tests dans `test_search.py` (TU-60) ; 307 tests verts.
+
+### **Décisions**
+- **Options 2 + 3 (concepteur)** : marquage par jeu dans la réponse **et** registre dédié aux acceptations conditionnelles — le registre des sources inaccessibles garde sa sémantique d'exclusions/échecs uniquement.
+- **Type d'organisation** : résolu depuis les badges uData du payload de recherche ; sans badge type, l'organisation est considérée privée (comportement sûr, badges DINUM uniquement sur organisations validées).
+
+### **Blocages**
+- Aucun.
+
+## **Séance du 15/10/2026 (4) — T7.5 : registre descriptif, mention d'attribution et branchement des deux voies**
+
+### **Actions réalisées**
+1. **`src/core/licences_descriptif.py` (création)** : registre descriptif (11 licences + `notspecified`), `propriete_licence()`, prédicats partie 2, `mention_attribution()`.
+2. **Propagation** : `derniere_maj` + `licence_conditionnelle` ajoutés aux métadonnées de jeu puis à chaque ressource (`resources.py`) ; `declarer_jeu_conditionnel()` relié à `rechercher_jeux`.
+3. **Branchement des deux voies (décision concepteur)** : `telecharger_brut` et `extraire_ressource` retournent `mention_attribution` + `licence_conditionnelle` ; acquisition jamais bloquée par la mention.
+4. **Contrats** : `telecharger_brut` et `extraire_ressource` v1.1.0, `rechercher_jeux` v1.2.0 — JSON, Pydantic et manifeste synchronisés (tests de cohérence TC-02 verts).
+5. **Tests** : TU-61 ; 347 tests verts (+40 sur la séance).
+
+### **Décisions**
+- **Mention de courtoisie** pour `cc-zero`/`odc-pddl` (attribution non obligatoire, mention générée quand même).
+- **Jamais deviné** : `other-*` et `notspecified` → mention `null` + message explicite ; prédicats partie 2 à `None`.
+- **Symétrie des deux voies** : la mention et le marquage conditionnel suivent le fichier jusqu'à la visualisation dans la voie 1 (extraction) et la voie 2 (téléchargement).
+
+### **Blocages**
+- Aucun. T7.5 en revue : validation en local par le concepteur en attente.

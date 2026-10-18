@@ -21,6 +21,7 @@ import responses
 
 from src.core.search import rechercher_jeux
 from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.registre_acceptations import RegistreAcceptationsConditionnelles
 
 REPERTOIRE_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "api"
 URL_RECHERCHE = "https://www.data.gouv.fr/api/1/datasets/"
@@ -37,7 +38,7 @@ def registre(tmp_path) -> RegistreSourcesInaccessibles:
     return RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
 
 
-def _jeu(id_: str, licence_id: str, organisation: str = "Insee") -> dict:
+def _jeu(id_: str, licence_id: str, organisation: str = "Insee", badges: list = None) -> dict:
     return {
         "id": id_,
         "title": f"Jeu {id_}",
@@ -46,7 +47,7 @@ def _jeu(id_: str, licence_id: str, organisation: str = "Insee") -> dict:
         "created_at": "2020-07-15T09:21:35.147000+00:00",
         "last_modified": "2026-09-30T16:42:11.000000+00:00",
         "license": licence_id,
-        "organization": {"name": organisation},
+        "organization": {"name": organisation, "badges": badges or []},
         "resources": [{"id": "res1", "title": "Fichier CSV", "url": "https://static.data.gouv.fr/res1.csv"}],
     }
 
@@ -176,3 +177,103 @@ def test_echec_http_500_echec_technique(registre):
     assert reponse["statut"] == "echec_technique"
     assert reponse["donnees"]["suggestion"] == "réessayer"
     assert registre.rapport_pour_agent()["sources_inaccessibles"] == []
+
+
+@pytest.fixture
+def registre_acceptations(tmp_path):
+    return RegistreAcceptationsConditionnelles(chemin=tmp_path / "registre_acceptations.json")
+
+
+@responses.activate
+def test_notspecified_producteur_public_accepte_conditionnel(registre, registre_acceptations):
+    # Réf. tests/plan_tests.md : TU-60 (notspecified + badge public-service -> accepté, marqué, consigné)
+    reponse_api = {
+        "data": [
+            _jeu("mairie1", "notspecified", "Ville de Paris",
+                 badges=[{"kind": "local-authority"}, {"kind": "certified"}]),
+            _jeu("ouvert1", "lov2"),
+        ],
+        "total": 2,
+        "page": 1,
+        "next_page": None,
+        "previous_page": None,
+    }
+    responses.add(responses.GET, URL_RECHERCHE, json=reponse_api, status=200)
+    reponse = rechercher_jeux(["dette"], registre=registre, registre_acceptations=registre_acceptations)
+    assert reponse["statut"] == "succes"
+    ids = [j["id"] for j in reponse["donnees"]["jeux"]]
+    assert ids == ["mairie1", "ouvert1"]
+    marquage = {j["id"]: j["licence_conditionnelle"] for j in reponse["donnees"]["jeux"]}
+    assert marquage == {"mairie1": True, "ouvert1": False}
+    assert reponse["donnees"]["acceptes_licence_conditionnelle"] == 1
+    assert reponse["donnees"]["exclus_licence"] == 0
+    acceptations = registre_acceptations.rapport_pour_agent()["acceptations_conditionnelles"]
+    assert len(acceptations) == 1
+    entree = acceptations[0]
+    assert entree["motif"] == "licence_absente_producteur_public"
+    assert entree["id_jeu"] == "mairie1"
+    assert entree["type_organisation"] == "collectivite_territoriale"
+    # le registre des sources inaccessibles n'est pas alimenté
+    assert registre.rapport_pour_agent()["sources_inaccessibles"] == []
+
+
+@responses.activate
+def test_notspecified_service_public_accepte(registre, registre_acceptations):
+    # Badge public-service -> service_public (TU-60)
+    reponse_api = {
+        "data": [_jeu("etalab1", "notspecified", "Etalab", badges=[{"kind": "public-service"}])],
+        "total": 1, "page": 1, "next_page": None, "previous_page": None,
+    }
+    responses.add(responses.GET, URL_RECHERCHE, json=reponse_api, status=200)
+    reponse = rechercher_jeux(["etalab"], registre=registre, registre_acceptations=registre_acceptations)
+    assert reponse["donnees"]["acceptes_licence_conditionnelle"] == 1
+    assert reponse["donnees"]["jeux"][0]["licence_conditionnelle"] is True
+
+
+@responses.activate
+def test_notsspecified_sans_badge_exclu(registre, registre_acceptations):
+    # Organisation sans badge type -> considérée privée -> exclusion (TU-60, comportement sûr)
+    reponse_api = {
+        "data": [
+            _jeu("prive1", "notspecified", "Entreprise X", badges=[{"kind": "certified"}]),
+        ],
+        "total": 1, "page": 1, "next_page": None, "previous_page": None,
+    }
+    responses.add(responses.GET, URL_RECHERCHE, json=reponse_api, status=200)
+    reponse = rechercher_jeux(["données"], registre=registre, registre_acceptations=registre_acceptations)
+    assert reponse["donnees"]["jeux"] == []
+    assert reponse["donnees"]["exclus_licence"] == 1
+    assert registre.rapport_pour_agent()["sources_inaccessibles"][0]["motif"] == "licence_incompatible"
+    assert registre_acceptations.rapport_pour_agent()["acceptations_conditionnelles"] == []
+
+
+@responses.activate
+def test_licence_incompatible_producteur_public_exclu(registre, registre_acceptations):
+    # Invariant : une licence incompatible explicite n'est jamais contournée, même public
+    reponse_api = {
+        "data": [
+            _jeu("ferme1", "other-closed", "Ministère X", badges=[{"kind": "public-service"}]),
+        ],
+        "total": 1, "page": 1, "next_page": None, "previous_page": None,
+    }
+    responses.add(responses.GET, URL_RECHERCHE, json=reponse_api, status=200)
+    reponse = rechercher_jeux(["dette"], registre=registre, registre_acceptations=registre_acceptations)
+    assert reponse["donnees"]["jeux"] == []
+    assert registre.rapport_pour_agent()["sources_inaccessibles"][0]["motif"] == "licence_incompatible"
+
+
+def test_registre_acceptations_persiste_et_antidoublon(tmp_path):
+    # Invariant du registre dédié : persistance entre instances, anti-doublon
+    from src.utils.registre_acceptations import RegistreAcceptationsConditionnelles
+    chemin = tmp_path / "registre_acceptations.json"
+    r1 = RegistreAcceptationsConditionnelles(chemin=chemin)
+    r1.consigner_acceptation_conditionnelle(
+        id_jeu="mairie1", organisation="Ville de Paris",
+        type_organisation="collectivite_territoriale",
+        licence="notspecified", url="https://example.org",
+    )
+    r1.sauvegarder()
+    r2 = RegistreAcceptationsConditionnelles(chemin=chemin)
+    assert r2.id_deja_consigne("mairie1") is True
+    assert r2.id_deja_consigne("autre") is False
+    assert r2.rapport_pour_agent()["acceptations_conditionnelles"][0]["id_jeu"] == "mairie1"

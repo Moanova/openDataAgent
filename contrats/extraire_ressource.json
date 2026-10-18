@@ -6,16 +6,27 @@
     "parameters": {
       "type": "object",
       "properties": {
-        "id_ressource": { "type": "string", "description": "Identifiant de la ressource, issu de lister_ressources." }
+        "id_ressource": {
+          "type": "string",
+          "description": "Identifiant de la ressource, issu de lister_ressources."
+        }
       },
-      "required": ["id_ressource"]
+      "required": [
+        "id_ressource"
+      ]
     },
     "returns": {
       "type": "object",
       "properties": {
         "statut": {
           "type": "string",
-          "enum": ["succes", "erreur_parametres", "ressource_introuvable", "ressource_non_indexee", "echec_technique"],
+          "enum": [
+            "succes",
+            "erreur_parametres",
+            "ressource_introuvable",
+            "ressource_non_indexee",
+            "echec_technique"
+          ],
           "description": "Code de statut de l'opération."
         },
         "message": {
@@ -25,18 +36,67 @@
         "donnees": {
           "type": "object",
           "properties": {
-            "chemin_local": { "type": "string", "description": "Chemin relatif du CSV extrait." },
-            "total_lignes": { "type": "integer", "description": "Nombre total de lignes de la ressource côté API." },
-            "lignes_ecrites": { "type": "integer", "description": "Nombre de lignes effectivement écrites." },
-            "colonnes": { "type": "array", "items": { "type": "string" }, "description": "Colonnes du CSV, ordre de l'API conservé." },
-            "tronque": { "type": "boolean", "description": "Vrai si l'extraction a été tronquée au plafond de sécurité." },
-            "licence": { "type": "string", "description": "Licence du jeu de données." },
-            "suggestion": { "type": ["string", "null"], "description": "Suggestion en cas d'échec (ex : 'basculer sur telecharger_brut')." }
+            "chemin_local": {
+              "type": "string",
+              "description": "Chemin relatif du CSV extrait."
+            },
+            "total_lignes": {
+              "type": "integer",
+              "description": "Nombre total de lignes de la ressource côté API."
+            },
+            "lignes_ecrites": {
+              "type": "integer",
+              "description": "Nombre de lignes effectivement écrites."
+            },
+            "colonnes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Colonnes du CSV, ordre de l'API conservé."
+            },
+            "tronque": {
+              "type": "boolean",
+              "description": "Vrai si l'extraction a été tronquée au plafond de sécurité."
+            },
+            "licence": {
+              "type": "string",
+              "description": "Licence du jeu de données."
+            },
+            "licence_conditionnelle": {
+              "type": "boolean",
+              "description": "Vrai si la licence a été acceptée par dérogation (producteur public, licence non renseignée)."
+            },
+            "mention_attribution": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Mention d'attribution prête à afficher ; null si la licence est à vérifier (jamais devinée)."
+            },
+            "suggestion": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Suggestion en cas d'échec (ex : 'basculer sur telecharger_brut')."
+            }
           },
-          "required": ["chemin_local", "total_lignes", "lignes_ecrites", "colonnes", "tronque", "licence"]
+          "required": [
+            "chemin_local",
+            "total_lignes",
+            "lignes_ecrites",
+            "colonnes",
+            "tronque",
+            "licence"
+          ]
         }
       },
-      "required": ["statut", "message", "donnees"]
+      "required": [
+        "statut",
+        "message",
+        "donnees"
+      ]
     }
   }
 }

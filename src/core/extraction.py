@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from src.core.resources import inventaire
+from src.core.licences_descriptif import mention_attribution
 from src.utils.http import interroger_ressource_api
 from src.utils.logging import get_logger, bind_context, log_to_file
 from src.utils.storage import chemin_destination, resoudre_collision
@@ -198,6 +199,12 @@ def extraire_ressource(
             "donnees": {"suggestion": "réessayer"},
         }
 
+    resultat_mention = mention_attribution(
+        organisation=metadonnees.get("organisation"),
+        licence=metadonnees.get("licence"),
+        derniere_maj=metadonnees.get("derniere_maj"),
+        licence_conditionnelle=bool(metadonnees.get("licence_conditionnelle", False)),
+    )
     logger.info(
         "Extraction terminée",
         id_ressource=id_ressource,
@@ -214,10 +221,13 @@ def extraire_ressource(
         lignes_ecrites=len(lignes),
         tronque=tronque,
     )
+    message_sortie = "" if not tronque else \
+        f"Extraction tronquée au plafond de {plafond} lignes ({total_lignes} lignes au total)."
+    if resultat_mention["statut"] != "succes":
+        message_sortie = (message_sortie + " " if message_sortie else "") + resultat_mention["message"]
     return {
         "statut": "succes",
-        "message": "" if not tronque else
-            f"Extraction tronquée au plafond de {plafond} lignes ({total_lignes} lignes au total).",
+        "message": message_sortie,
         "donnees": {
             "chemin_local": str(destination),
             "total_lignes": total_lignes,
@@ -225,5 +235,7 @@ def extraire_ressource(
             "colonnes": colonnes,
             "tronque": tronque,
             "licence": metadonnees.get("licence") or "",
+            "licence_conditionnelle": bool(metadonnees.get("licence_conditionnelle", False)),
+            "mention_attribution": resultat_mention["donnees"].get("mention"),
         },
     }

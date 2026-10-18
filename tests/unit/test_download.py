@@ -316,3 +316,59 @@ def test_contenu_binaire_non_utf8(registre, tmp_path, monkeypatch):
         reponse = telecharger_brut("res-bin", id_execution="20261014_bin", registre=registre)
     assert reponse["statut"] == "succes"
     assert Path(reponse["donnees"]["chemin_local"]).read_bytes() == contenu
+
+
+@responses.activate
+def test_mention_attribution_dans_telechargement(registre, tmp_path, monkeypatch):
+    # Réf. T7.5 : la mention d'attribution suit le fichier jusqu'à la visualisation
+    from src.core.resources import inventaire
+    inventaire().clear() if False else None
+    import src.core.resources as module_resources
+    module_resources._inventaire.clear()
+    module_resources._inventaire["res-1"] = {
+        "id": "res-1",
+        "id_jeu": "jeu-t",
+        "organisation": "Ministère de l'Économie",
+        "titre": "Budget 2024",
+        "format": "csv",
+        "url": "https://static.data.gouv.fr/res-1.csv",
+        "licence": "lov2",
+        "licence_conditionnelle": False,
+        "derniere_maj": "2026-09-30T16:42:11.000000+00:00",
+    }
+    responses.add(responses.GET, "https://static.data.gouv.fr/res-1.csv", body="a;b\n1;2\n", status=200)
+    monkeypatch.chdir(tmp_path)
+    reponse = telecharger_brut("res-1", registre=registre)
+    assert reponse["statut"] == "succes"
+    donnees = reponse["donnees"]
+    assert donnees["licence"] == "lov2"
+    assert donnees["licence_conditionnelle"] is False
+    mention = donnees["mention_attribution"]
+    assert mention is not None
+    assert "Ministère de l'Économie" in mention
+    assert "Licence Ouverte / Open Licence 2.0 (Etalab)" in mention
+    assert "2026-09-30" in mention
+
+
+@responses.activate
+def test_mention_nulle_pour_licence_a_verifier(registre, tmp_path, monkeypatch):
+    # other-open : jamais devinée — mention null, téléchargement réussi
+    import src.core.resources as module_resources
+    module_resources._inventaire.clear()
+    module_resources._inventaire["res-2"] = {
+        "id": "res-2",
+        "id_jeu": "jeu-u",
+        "organisation": "Association X",
+        "titre": "Jeu U",
+        "format": "csv",
+        "url": "https://static.data.gouv.fr/res-2.csv",
+        "licence": "other-open",
+        "licence_conditionnelle": False,
+        "derniere_maj": None,
+    }
+    responses.add(responses.GET, "https://static.data.gouv.fr/res-2.csv", body="a;b\n1;2\n", status=200)
+    monkeypatch.chdir(tmp_path)
+    reponse = telecharger_brut("res-2", registre=registre)
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["mention_attribution"] is None
+    assert reponse["message"] != ""  # message explicite de vérification

@@ -73,6 +73,10 @@ class RechercherJeuxOutput(BaseModel):
     total_trouves: int = Field(description="Nombre total de jeux correspondant a la requête.")
     jeux: list[JeuResume] = Field(description="Liste resumée des jeux de données.")
     exclus_licence: int = Field(description="Nombre de jeux écartés par le filtre de licence.")
+    acceptes_licence_conditionnelle: int = Field(
+        default=0,
+        description="Nombre de jeux acceptés sous licence conditionnelle (producteur public, licence non renseignée).",
+    )
     page_courante: int = Field(description="Numéro de la page retournée.")
     page_suivante: int | None = Field(
         default=None,

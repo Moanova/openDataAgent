@@ -75,12 +75,14 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 > Cette section prépare la **partie 2 du projet** (exploitation et visualisation des données) : l'usage légitime des données acquises dépend des obligations propres à chaque licence (attribution, partage à l'identique). La politique d'acquisition (section 2, `src/core/licence.py`) est terminée et ne dépend pas de ces travaux.
 
-- [ ] **T7.5** : Registre descriptif des licences et génération de mention d'attribution (`src/core/licences_descriptif.py`) :
+- [ ] **T7.5** *(en revue)* : Registre descriptif des licences et génération de mention d'attribution (`src/core/licences_descriptif.py`) :
   - registre des propriétés par licence (attribution obligatoire, partage à l'identique, usage commercial), miroir de la politique documentée dans `docs/README.md` (section Politique de licence) ;
   - `mention_attribution()` : génération de la mention prête à afficher à partir des métadonnées de l'inventaire (organisation, licence, date de mise à jour) ;
   - prédicats de compatibilité pour la partie 2 (ex. produit dérivé sous licence permissive autorisé ou non) ;
-  - échec propre sur licence inconnue et sur `other-open` (propriétés à vérifier, jamais devinées) ;
-  - branchement optionnel sur `telecharger_brut` (champ `mention_attribution` dans la réponse, contrat v1.1.0 → v1.2.0) : à décider séparément.
+  - échec propre sur licence inconnue et sur `other-open`/`other-attribution`/`other-pd` (propriétés à vérifier, jamais devinées) ;
+  - branchement optionnel sur `telecharger_brut` (champ `mention_attribution` dans la réponse, évolution de contrat à versionner) : à décider séparément.
+  - **Chantier A (préalable) ✅** : référentiel de licences élargi au filtre complet du site (`odc-by`, `odc-pddl`, `other-attribution`, `other-pd` ajoutées) + règle sécurisée `notspecified` acceptée pour un producteur public uniquement + politique paramétrée dans `config/politique_licences.json` (une clé par source, préparation T7.4). Voir `docs/tasks/T7.5_licences_descriptif.md`.
+  - **Chantier B ✅** : type d'organisation résolu via les badges uData du payload de recherche (`public-service`/`local-authority`) ; marquage `licence_conditionnelle` + compteur dans la réponse ; registre dédié aux acceptations conditionnelles (`data/registre_acceptations.json`), sémantique du registre des sources inaccessibles préservée. Voir `docs/tasks/T7.5_licences_descriptif.md`.
 
 ---
 

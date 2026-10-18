@@ -14,13 +14,40 @@ Module pour la recherche de jeux de données sur data.gouv.fr.
 from typing import List, Dict, Any, Optional
 from src.utils.logging import get_logger, bind_context, log_to_file
 from src.utils.http import rechercher_jeux_api
-from src.core.licence import licence_est_acceptable
+from src.core.licence import licence_est_acceptable, reinitialiser_politique
+from src.core.resources import declarer_jeu_conditionnel
 from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.registre_acceptations import RegistreAcceptationsConditionnelles
 
 # Initialiser le logger pour ce module
 logger = get_logger("openDataAgent.core.search")
 
 _registre_par_defaut = RegistreSourcesInaccessibles()
+_registre_acceptations_par_defaut = RegistreAcceptationsConditionnelles()
+
+# Badges uData (organization.badges) -> type d'organisation de la politique
+# de licence (config/politique_licences.json).
+_BADGES_VERS_TYPE = {
+    "public-service": "service_public",
+    "local-authority": "collectivite_territoriale",
+}
+
+
+def _type_organisation(jeu: Dict[str, Any]) -> Optional[str]:
+    """Resout le type d'organisation depuis les badges de l'organisation.
+
+    Le payload de recherche embarque `organization.badges` (kinds uData) :
+    `public-service` (service public), `local-authority` (collectivite
+    territoriale). Les autres badges (`certified`, etc.) ne sont pas des
+    types. Sans badge pertinent, retourne None : l'organisation est
+    consideree comme privee (comportement sur).
+    """
+    badges = ((jeu.get("organization") or {}).get("badges")) or []
+    for badge in badges:
+        type_org = _BADGES_VERS_TYPE.get(badge.get("kind"))
+        if type_org:
+            return type_org
+    return None
 
 
 def rechercher_jeux(
@@ -31,6 +58,7 @@ def rechercher_jeux(
     page: int = 1,
     id_execution: Optional[str] = None,
     registre: Optional[RegistreSourcesInaccessibles] = None,
+    registre_acceptations: Optional[RegistreAcceptationsConditionnelles] = None,
 ) -> Dict[str, Any]:
     """
     Recherche des jeux de données sur data.gouv.fr à partir de mots-clés.
@@ -125,13 +153,34 @@ def rechercher_jeux(
         data = resultat.donnees
 
         # Filtre de licence avant tout retour (T3.1.2) et consignation
-        # des exclusions au registre (T3.1.3)
+        # des exclusions au registre (T3.1.3) ; licences conditionnelles
+        # (T7.5) : le type d'organisation (badges uData) active la derogation
+        # notspecified pour un producteur public, avec marquage et consignation
+        # au registre dedie.
+        reinitialiser_politique()
         jeux_acceptes = []
         exclus_licence = 0
+        acceptes_conditionnels = 0
         for jeu in data["data"]:
             licence = jeu.get("license")
-            if licence_est_acceptable(licence):
-                jeux_acceptes.append(jeu)
+            type_org = _type_organisation(jeu)
+            if licence_est_acceptable(licence, type_organisation=type_org):
+                conditionnelle = (
+                    isinstance(licence, str)
+                    and licence.strip().lower() == "notspecified"
+                    and type_org is not None
+                )
+                if conditionnelle:
+                    acceptes_conditionnels += 1
+                    declarer_jeu_conditionnel(jeu["id"])
+                    registre_acceptations.consigner_acceptation_conditionnelle(
+                        id_jeu=jeu["id"],
+                        organisation=(jeu.get("organization") or {}).get("name", ""),
+                        type_organisation=type_org,
+                        licence=licence or "notspecified",
+                        url=jeu.get("page", ""),
+                    )
+                jeux_acceptes.append((jeu, conditionnelle))
             else:
                 exclus_licence += 1
                 registre.consigner_exclusion_juridique(
@@ -142,6 +191,8 @@ def rechercher_jeux(
                 )
         if exclus_licence:
             registre.sauvegarder()
+        if acceptes_conditionnels:
+            registre_acceptations.sauvegarder()
 
         # Log du succès (console + fichier)
         logger.info(
@@ -149,12 +200,14 @@ def rechercher_jeux(
             total_trouves=data["total"],
             jeux_retournes=len(jeux_acceptes),
             exclus_licence=exclus_licence,
+            acceptes_licence_conditionnelle=acceptes_conditionnels,
         )
         log_to_file(
             "Recherche terminée",
             total_trouves=data["total"],
             jeux_retournes=len(jeux_acceptes),
             exclus_licence=exclus_licence,
+            acceptes_licence_conditionnelle=acceptes_conditionnels,
         )
         
         # Retour normalisé
@@ -169,13 +222,15 @@ def rechercher_jeux(
                         "titre": jeu["title"],
                         "organisation": (jeu.get("organization") or {}).get("name", ""),
                         "licence": jeu["license"],
+                        "licence_conditionnelle": conditionnelle,
                         "derniere_maj": jeu.get("last_modified"),
                         "nb_ressources": len(jeu["resources"]),
                         "url": jeu.get("page", ""),
                     }
-                    for jeu in jeux_acceptes
+                    for jeu, conditionnelle in jeux_acceptes
                 ],
                 "exclus_licence": exclus_licence,
+                "acceptes_licence_conditionnelle": acceptes_conditionnels,
                 "page_courante": page,
                 "page_suivante": data.get("page_suivante"),
             },

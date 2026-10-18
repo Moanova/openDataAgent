@@ -14,7 +14,7 @@ Matérialiser l'acquisition d'une ressource indexée par l'API tabulaire (voie 1
 
 ## Retour en succès
 
-`donnees.chemin_local` : chemin relatif du CSV extrait. `donnees.total_lignes` / `donnees.lignes_ecrites` : volumétrie côté API et effectivement écrite. `donnees.colonnes` : ordre conservé de l'API. `donnees.tronque` : vrai si le plafond a été atteint (succès partiel explicite — jamais un échec silencieux). La licence est incluse afin que les obligations d'attribution suivent le fichier jusqu'à la visualisation.
+`donnees.chemin_local` : chemin relatif du CSV extrait. `donnees.total_lignes` / `donnees.lignes_ecrites` : volumétrie côté API et effectivement écrite. `donnees.colonnes` : ordre conservé de l'API. `donnees.tronque` : vrai si le plafond a été atteint (succès partiel explicite — jamais un échec silencieux). La licence est incluse afin que les obligations d'attribution suivent le fichier jusqu'à la visualisation. `donnees.licence_conditionnelle` : vrai si la licence a été acceptée par dérogation (producteur public). `donnees.mention_attribution` : mention d'attribution prête à afficher ; `null` pour les licences à vérifier — jamais devinée. Version 1.1.0 (T7.5).
 
 ## Comportements d'échec
 
