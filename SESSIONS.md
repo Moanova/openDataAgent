@@ -354,3 +354,21 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 2. **Cause racine** : lors de l'ajout du paramètre `registre_acceptations` à `rechercher_jeux`, la ligne d'initialisation par défaut (`if registre_acceptations is None: ... = _registre_acceptations_par_defaut`) avait été omise du corps de la fonction. En appel CLI (sans le paramètre), le registre restait `None` et échouait dès le premier jeu conditionnel accepté.
 3. **Pourquoi les tests ne l'avaient pas vu** : tous les tests du chantier B passaient explicitement `registre_acceptations` (fixture) ; le chemin « défaut + acceptation conditionnelle » n'était pas couvert.
 4. **Correctif** : initialisation par défaut ajoutée ; test de régression (appel sans `registre_acceptations`, registre global isolé sur `tmp_path` via monkeypatch) ; 348 tests verts.
+
+## **Séance du 18/10/2026 — prompt A1/A2 : qualificatifs de portée ; ouverture du chantier conversationnel**
+
+### **Contexte**
+- Retours d'usage du concepteur après tests locaux (search CLI et chat one-shot sur « élections présidentielles »).
+
+### **Actions réalisées**
+1. **Prompt système (A1)** : règle générique ajoutée — les qualificatifs de portée (géographique, temporelle, juridique : national, régional, définitif...) sont des critères de sélection, pas de recherche : jamais traduits en mots-clés ; la portée se vérifie à l'étape A2 (confrontation portée revendiquée / organisation productrice).
+2. **Prompt système (A2)** : règle de cohérence portée/organisation — écarter tout jeu dont la portée contredit l'organisation productrice, même immédiatement exploitable.
+3. **Kanban** : nouvelle section 11 avec **T11.1** (mode conversationnel multi-tours) — propose-puis-acquiert recommandé, plafond par tour, journal multi-tours ; aucune évolution de contrat cœur.
+
+### **Décisions**
+- **Règle générique plutôt que spécifique** (concepteur) : couvrir toute classe de qualificatifs de portée, pas le seul cas « national » observé.
+- **Boucle conversationnelle retenue** comme chantier T11.1 : l'arbitrage de pertinence se fait pendant la conversation (exploration sans écriture disque, acquisition après validation explicite).
+- Changement de modèle écarté à ce stade : l'échec observé était de type suivi d'instructions (le prompt corrigé s'attaque à la cause racine) ; le cas de test « élections présidentielles » servira de mesure (grille TA-04).
+
+### **Blocages**
+- Aucun. Concepteur reteste le prompt A1/A2 en local.

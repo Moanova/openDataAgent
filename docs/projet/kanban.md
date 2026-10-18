@@ -94,6 +94,21 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 ---
 
+### 11. Mode conversationnel multi-tours
+
+> Issu de la séance du 18/10/2026 (retours d'usage du concepteur sur le flux agentique) : l'arbitrage final de pertinence doit pouvoir se faire *pendant* la conversation, pas seulement après l'acquisition.
+
+- [ ] **T11.1** : Mode conversationnel multi-tours (`chat`) : boucle REPL où l'utilisateur raffine sa demande par une succession de prompts, l'agent conservant le contexte accumulé jusqu'à la fin de conversation (mot-clé de clôture). Décisions de conception à trancher en premier :
+  - **propose-puis-acquiert** (recommandé) : les tours conversationnels explorent (recherche, inventaire, interrogation — pas d'écriture disque) ; `extraire_ressource`/`telecharger_brut` ne s'exécutent qu'après validation explicite de l'utilisateur (évite les fichiers orphelins de tentatives rejetées) ;
+  - plafond d'invocations **par tour** (reinitialisé à chaque prompt utilisateur), pas par conversation ;
+  - étape A0 possible : question de clarification avant recherche si la demande est ambiguë ;
+  - journal multi-tours : une conversation = un `id_execution`, chaque tour horodaté avec son compte d'invocations et sa synthèse.
+  Composants touchés : `src/main.py` (commande chat, REPL + clôture, one-shot conservé en compatibilité), `src/agent/boucle.py` (état de conversation/historique des messages), `src/agent/agent.py` (prompt : A4 devient proposition en attente de validation, intégration du feedback), `src/agent/journal.py` (schéma multi-tours). **Aucune évolution de contrat cœur** : la conversation est une couche au-dessus des outils existants.
+  Prérequis : tests d'intégration multi-tours simulés (exploration → correction utilisateur → raffinement → acquisition validée).
+- [X] **Prompt A1/A2 (préalable, séance du 18/10/2026)** : règle générique sur les qualificatifs de portée (géographique, temporelle, juridique) — ils expriment un critère de sélection, pas de recherche ; vérification à l'étape A2 de la cohérence portée demandée / organisation productrice (une mairie ne produit pas de données nationales). Cas de test : « résultats nationaux des élections présidentielles » doit retenir un producteur national, pas une commune.
+
+---
+
 ## 🚧 En cours
 
 - [ ] **T10.7** : Persistance des extractions de la voie 1 (issu du chantier 1 de T10.1). En l'état, `interroger_ressource` retourne des pages à l'agent sans rien écrire sur disque (exploration conversationnelle uniquement) : les données sélectionnées ne sont jamais matérialisées via la voie 1. Chantier : extraction paginée vers `data/raw/` (nouveau module cœur `src/core/extraction.py`, réutilisant `interroger_ressource_api` et la logique `page_suivante`), plafond de sécurité (pages/lignes), accessible en mode manuel (commande CLI `extract`) **et** en mode agentique (évolution de contrat v1.2.0 à définir — exigence concepteur : les deux modes doivent pouvoir acquérir les données). Séquence : T10.7 avant T10.1 (normalisation B7). *(En cours — E1..E6 implémentées : fonction cœur, contrat v1.2.0 (manifeste 1.1), dispatch agent, commande CLI extract, tests 285 verts, docs ; validation en local en attente)*

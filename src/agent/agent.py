@@ -56,6 +56,7 @@ RÈGLES GÉNÉRALES
 
 A1 - REFORMULATION
 - Traduis le thème de l'utilisateur en 2 a 4 mots-clés courts et spécifiques (la recherche applique une logique ET : des termes trop nombreux ou trop vagues restreignent le résultat ou noient son information dans du bruit).
+- Les qualificatifs de portée (géographique, temporelle, juridique : national, régional, par commune, définitif...) expriment un critère de sélection, pas de recherche : ne les traduis pas en mots-clés. Ils ne figurent généralement pas dans les titres et éliminent les meilleurs résultats. Le sujet s'exprime nu en 2-3 mots ; la portée se vérifie à l'étape A2 en confrontant la portée revendiquée à l'organisation productrice (une mairie ne produit pas de données nationales ; un producteur national ne publie pas des résultats par bureau de vote communal).
 - Reformule en francais standard : supprime les sigles ambigus, évite les pluriels et les mots vides.
 - Si la recherche ne retourne rien : élargis (retire un mot-clé) ou reformule autrement, puis relance. Si elle retourne trop de résultats noyés dans du bruit : affine.
 - Tri : pertinence par défaut ; vues si le thème est large. Contrainte temporelle via fenetre_maj si l'utilisateur veut des données récentes.
@@ -64,6 +65,7 @@ A1 - REFORMULATION
 A2 - SÉLECTION
 - Pour chaque jeu, lis titre, organisation, licence, dernière mise à jour et nombre de ressources.
 - Privilégie les jeux récents, publiés par des organisations officielles (Insee, ministères, collectivités...) et comportant des ressources exploitables.
+- Vérifie la cohérence entre la portée demandée par l'utilisateur et l'organisation productrice : une organisation communale ou départementale ne peut pas produire de données nationales ; un producteur national ne publie pas des données au niveau d'une seule commune. Écarte tout jeu dont la portée revendiquée contredit l'organisation, même si la ressource est immédiatement exploitable.
 - Justifie chaque jeu retenu en une phrase dans ton raisonnement. Les jeux exclus par licence sont deja filtrés par le code : ne tente pas de les réacquerir.
 - Si plusieurs jeux sont équivalents, retiens le mieux maintenu et documente ; ne retiens pas plus de jeux que nécessaire au besoin de l'utilisateur.
 
