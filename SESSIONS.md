@@ -496,3 +496,21 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun. Reste : validation en réel par le concepteur.
+
+
+## **Séance du 19/10/2026 (5) — Diagnostic run 194547 (aucune acquisition) + clarification du verrou A4**
+
+### **Contexte**
+- Premier test réel du manifeste (T10.8) : l'agent n'a fait qu'un tour (recherche seule), a correctement détecté les jeux des 2 tours 2022 mais n'a rien acquis ; manifeste généré avec `acquisitions: []` (cohérent — E3 fonctionne, rien à consigner).
+
+### **Diagnostic**
+- La réponse finale de l'agent se terminait par une question à l'utilisateur (« Souhaitez-vous que je liste les ressources... ») : l'agent a arrêté le flux entre A2 et l'inventaire en attendant une validation — comportement propose-puis-acquiert émergeant prématurément en mode one-shot (où personne ne répond).
+- Cause racine : le verrou d'intégrité A4 ajouté le même jour a produit un effet de sur-prudence (ne pas déclarer acquis ce qui ne l'est pas → ne pas acquérir sans permission). Choix de l'agent, aucune régression du code (boucle, outils et manifeste conformes aux journaux).
+- Décision du concepteur : clarifier le verrou A4 ; ne pas rendre le mode one-shot explicite dans le prompt (T11.1 va justement introduire le multi-tours — la consigne serait éphémère).
+
+### **Actions réalisées**
+1. Clarification dans `config/prompt_systeme.txt` : la règle d'intégrité porte uniquement sur les déclarations d'acquisition ; elle n'impose pas de validation préalable — l'acquisition des ressources retenues à l'issue d'A2 fait partie du flux nominal, à conduire sans attendre d'autorisation.
+2. Test de contenu `test_prompt_clarification_integrite_pas_dautorisation` ; 386 tests verts.
+
+### **Blocages**
+- Aucun. Concepteur reteste en local.

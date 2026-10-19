@@ -362,6 +362,17 @@ def test_prompt_consigne_interroger_seulement_si_indexee():
     assert "invocation perdue" in PROMPT_SYSTEME
 
 
+def test_prompt_clarification_integrite_pas_dautorisation():
+    # Clarification (19/10/2026) : le verrou A4 a rendu l'agent sur-prudent
+    # (run 20261019_194547 : arrêt après A2 avec question à l'utilisateur,
+    # aucune acquisition). La consigne précise que l'intégrité du registre
+    # porte sur les déclarations, pas sur l'autorisation d'acquérir.
+    from src.agent.agent import PROMPT_SYSTEME
+
+    assert "ne t'impose pas de demander une validation avant d'acquérir" in PROMPT_SYSTEME
+    assert "conduis-la sans attendre une autorisation" in PROMPT_SYSTEME
+
+
 def test_prompt_consigne_integrite_registre():
     # Verrou anti-hallucination (constat du 19/10/2026 : l'étape A4 citait un
     # chemin local jamais retourné par un outil) : seules les acquisitions
