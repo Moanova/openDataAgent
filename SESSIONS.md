@@ -462,3 +462,13 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 - Correctif (niveau 1, prompt) : consigne A3 renforcée dans `config/prompt_systeme.txt` — `interroger_ressource` ne peut réussir que sur une ressource dont l'inventaire a retourné `api_tabulaire` vrai ; ne jamais l'invoquer pour « vérifier », l'estimation d'une ressource non indexée se fait sur titre/URL, l'acquisition passe par `telecharger_brut`.
 - Le niveau 2 (garde côté cœur/contrat) est écarté pour l'instant, à réévaluer avec T11.1 si le besoin persiste en multi-tours.
 - 1 nouveau test de contenu prompt (`test_prompt_consigne_interroger_seulement_si_indexee`) ; 366 tests verts.
+
+
+## **Séance du 19/10/2026 (3) — Validation T11.3 (E8) ; question de traçabilité des acquisitions**
+
+### **Actions réalisées**
+1. **T11.3 validée par le concepteur** (E8) : cas étalon satisfait — recherche « élections présidentielles » en v2, jeux du Ministère de l'Intérieur en page 1, **les deux tours 2022 rapatriés** ; comportement de l'agent jugé bien meilleur après les correctifs de prompt (verrou A4, consigne A3). Tâche déplacée en ✅ Terminé du kanban.
+2. **Analyse de la traçabilité `data/raw`** (préparation T10.1/B7) : voir question du concepteur et constat ci-dessous (manifeste d'acquisition proposé).
+
+### **Blocages**
+- Aucun.
