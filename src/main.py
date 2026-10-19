@@ -30,6 +30,7 @@ from src.utils.logging import configure_logging
 from src.agent.agent import creer_agent, detruire_agent
 from src.agent.boucle import PLAFOND_DEFAUT, boucle_conversation
 from src.agent.journal import REPERTOIRE_JOURNAUX
+from src.core.manifeste import consigner_demande, lire_manifeste
 from src.core.vocabulaires import (
     APERCU_DEFAUT,
     FenetreMaj,
@@ -193,6 +194,7 @@ def download(
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
 
+    consigner_demande(identifiant, f"download {id_ressource}")
     reponse = telecharger_brut(id_ressource=id_ressource, id_execution=identifiant)
 
     if sortie_json:
@@ -228,6 +230,7 @@ def extract(
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
+    consigner_demande(identifiant, f"extract {id_ressource}")
     reponse = extraire_ressource(
         id_ressource=id_ressource,
         id_execution=identifiant,
@@ -318,6 +321,42 @@ def query(
 
 
 @app.command()
+def acquisitions(
+    id_execution: str = typer.Argument(..., help="Identifiant de l'exécution dont on veut le manifeste d'acquisition."),
+) -> None:
+    """Affiche le manifeste d'acquisition d'une exécution (T10.8).
+
+    Relie chaque fichier de data/raw/<id_execution>/ à son jeu de données :
+    voie, licence, mention d'attribution, troncature.
+    """
+    manifeste = lire_manifeste(id_execution)
+    if manifeste is None:
+        typer.secho(
+            f"Aucun manifeste d'acquisition pour l'exécution '{id_execution}'.",
+            fg=typer.colors.RED,
+            err=True,
+        )
+        raise typer.Exit(code=1)
+    acquisitions = manifeste.get("acquisitions", [])
+    typer.echo(f"id_execution : {manifeste.get('id_execution', id_execution)}")
+    if manifeste.get("demande"):
+        typer.echo(f"demande : {manifeste['demande']}")
+    typer.echo(f"acquisitions : {len(acquisitions)}")
+    for indice, acquisition in enumerate(acquisitions, 1):
+        typer.echo()
+        typer.echo(f"  [{indice}] {acquisition.get('fichier', '?')}")
+        typer.echo(f"      voie : {acquisition.get('voie', '?')}  licence : {acquisition.get('licence') or 'inconnue'}"
+                   + (" (conditionnelle)" if acquisition.get("licence_conditionnelle") else ""))
+        typer.echo(f"      jeu : {acquisition.get('titre_jeu') or acquisition.get('id_jeu', '?')}")
+        typer.echo(f"      organisation : {acquisition.get('organisation') or '?'}")
+        if acquisition.get("mention_attribution"):
+            typer.echo(f"      attribution : {acquisition['mention_attribution']}")
+        if acquisition.get("voie") == "extraction":
+            typer.echo(f"      lignes : {acquisition.get('nb_lignes', '?')}"
+                       + ("  (tronqué)" if acquisition.get("tronque") else ""))
+
+
+@app.command()
 def chat(
     prompt: List[str] = typer.Argument(..., help="Demande en francais : l'agent conduit recherche, sélection et acquisition."),
     plafond: int = typer.Option(10, "--plafond", min=1, help="Nombre maximum d'invocations d'outils."),
@@ -335,6 +374,7 @@ def chat(
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
 
+    consigner_demande(identifiant, texte)
     creation = creer_agent(identifiant)
     if creation["statut"] != "succes":
         typer.secho(f"[{creation['statut']}] {creation['message']}", fg=typer.colors.RED, err=True)

@@ -305,9 +305,11 @@ def test_t521_ressource_hors_chaine_refusee(registre, tmp_path, monkeypatch):
     reponse_ko = telecharger_brut("res-fantome", id_execution="20261014_hc", registre=registre)
     assert reponse_ko["statut"] == "ressource_introuvable"
     assert reponse_ko["donnees"]["suggestion"] == "reprendre par l'inventaire"
-    # Aucune ecriture pour la ressource refusee : un seul fichier dans l'arborescence
+    # Aucune ecriture pour la ressource refusee : un seul fichier de donnees
+    # dans l'arborescence (T10.8 : le manifeste d'acquisition de la ressource
+    # legitime precedemment telechargee est une sortie latérale attendue).
     fichiers = list((tmp_path / "data" / "raw").rglob("*"))
-    fichiers_ecrits = [f for f in fichiers if f.is_file()]
+    fichiers_ecrits = [f for f in fichiers if f.is_file() and f.name != "manifeste_acquisitions.json"]
     assert len(fichiers_ecrits) == 1
 
 

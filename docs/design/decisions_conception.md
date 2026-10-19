@@ -252,3 +252,28 @@ Le tri `pertinence` est le tri implicite du moteur v2 (celui du site) : aucun pa
 
 #### Justification
 - Cas étalon « élections présidentielles » : jeux du Ministère de l'Intérieur en tête de page 1 en v2 (total 235) vs jeux communaux en v1 (total 41) — la motivation première de T11.3.
+
+
+---
+
+## 19/10/2026 — T10.8 : manifeste d'acquisition par exécution
+
+### 1. Source de vérité acquisition côté disque
+
+#### Décision
+Chaque acquisition réussie (`telecharger_brut`, `extraire_ressource`) ajoute une entrée à `data/raw/<id_execution>/manifeste_acquisitions.json`, avec la demande utilisateur en en-tête. Le manifeste relie fichier → jeu → licence → mention d'attribution.
+
+#### Justification
+- Constat de la validation T11.3 : en mode agentique, le lien fichier → jeu n'était reconstituable qu'en croisant l'inventaire persistant (écrit en CLI uniquement) et le journal de conversation — fragile et incomplet.
+- La partie 2 (T10.1/B7) doit consommer ces métadonnées : le manifeste les pose à côté des fichiers, dans les deux modes.
+
+### 2. Écrit au cœur, additif, jamais bloquant
+
+#### Décision
+- Écriture au cœur (pas côté CLI) : un seul chemin de code pour les deux modes.
+- Aucune évolution de contrat : sortie latérale ; nommage des fichiers et sorties normalisées inchangés.
+- Un échec d'écriture du manifeste ne fait jamais échouer l'acquisition (warning) : le manifeste est une commodité de traçabilité, pas une dépendance.
+
+#### Justification
+- Symétrie manuel/agentique déjà retenue pour l'extraction (T10.7) : même principe.
+- La traçabilité ne doit pas introduire de nouveau point de défaillance sur le chemin d'acquisition.

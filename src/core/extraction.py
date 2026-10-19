@@ -25,9 +25,10 @@ from typing import Any, Dict, List, Optional
 
 from src.core.resources import inventaire
 from src.core.licences_descriptif import mention_attribution
+from src.core.manifeste import enregistrer_acquisition
 from src.utils.http import interroger_ressource_api
 from src.utils.logging import get_logger, bind_context, log_to_file
-from src.utils.storage import chemin_destination, resoudre_collision
+from src.utils.storage import generer_id_execution, chemin_destination, resoudre_collision
 
 logger = get_logger("openDataAgent.core.extraction")
 
@@ -174,7 +175,7 @@ def extraire_ressource(
         page = suivante
 
     # Écriture du CSV pivot (data/raw/, même racine que la voie 2).
-    identifiant = id_execution or ""
+    identifiant = id_execution or generer_id_execution()
     destination = chemin_destination(
         id_execution=identifiant,
         id_ressource=id_ressource,
@@ -221,6 +222,27 @@ def extraire_ressource(
         lignes_ecrites=len(lignes),
         tronque=tronque,
     )
+    # T10.8 : traçabilité acquisition -> jeu dans le manifeste de l'exécution ;
+    # un échec d'écriture ne fait jamais échouer l'extraction.
+    enregistrer_acquisition(
+        identifiant,
+        {
+            "fichier": destination.name,
+            "voie": "extraction",
+            "id_ressource": id_ressource,
+            "titre_ressource": metadonnees.get("titre") or "",
+            "id_jeu": metadonnees.get("id_jeu") or "",
+            "titre_jeu": metadonnees.get("titre_jeu") or "",
+            "organisation": metadonnees.get("organisation") or "",
+            "url_jeu": metadonnees.get("url_jeu") or "",
+            "licence": metadonnees.get("licence") or "",
+            "licence_conditionnelle": bool(metadonnees.get("licence_conditionnelle", False)),
+            "mention_attribution": resultat_mention["donnees"].get("mention"),
+            "tronque": tronque,
+            "nb_lignes": len(lignes),
+        },
+    )
+
     message_sortie = "" if not tronque else \
         f"Extraction tronquée au plafond de {plafond} lignes ({total_lignes} lignes au total)."
     if resultat_mention["statut"] != "succes":

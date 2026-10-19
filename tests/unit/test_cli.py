@@ -568,3 +568,74 @@ def test_extract_sortie_json(mock_extraction):
     resultat = runner.invoke(app, ["extract", "r1", "--json"])
     assert resultat.exit_code == 0
     assert json.loads(resultat.output)["donnees"]["chemin_local"] == "data/raw/flux/r1_donnees.csv"
+
+
+# ---------------------------------------------------------------------------
+# T10.8 — Manifeste d'acquisition : commande acquisitions + consigne demande
+# ---------------------------------------------------------------------------
+
+
+def test_acquisitions_manifeste_absent_sortie_erreur():
+    # T10.8 (E4) : aucune exécution -> message d'erreur, code 1.
+    from src.core import manifeste as module_manifeste
+
+    resultat = runner.invoke(app, ["acquisitions", "exec-fantome"])
+    assert resultat.exit_code == 1
+    assert "Aucun manifeste" in resultat.output
+
+
+def test_acquisitions_affiche_les_entrees(tmp_path, monkeypatch):
+    # T10.8 (E4) : le manifeste existant est affiché lisiblement
+    # (fichier, voie, licence, jeu, organisation).
+    monkeypatch.chdir(tmp_path)
+    from src.core.manifeste import consigner_demande, enregistrer_acquisition
+
+    consigner_demande("exec-a", "résultats des élections présidentielles")
+    enregistrer_acquisition(
+        "exec-a",
+        {
+            "fichier": "res-1_resultats-t1.csv",
+            "voie": "extraction",
+            "id_ressource": "res-1",
+            "id_jeu": "jeu-1",
+            "titre_jeu": "Élection présidentielle 2022 - 1er tour",
+            "organisation": "Ministère de l'intérieur",
+            "licence": "notspecified",
+            "licence_conditionnelle": True,
+            "tronque": False,
+            "nb_lignes": 1,
+        },
+    )
+    resultat = runner.invoke(app, ["acquisitions", "exec-a"])
+    assert resultat.exit_code == 0
+    assert "exec-a" in resultat.output
+    assert "résultats des élections présidentielles" in resultat.output
+    assert "res-1_resultats-t1.csv" in resultat.output
+    assert "Élection présidentielle 2022 - 1er tour" in resultat.output
+    assert "extraction" in resultat.output
+    assert "(conditionnelle)" in resultat.output
+
+
+def test_download_consigne_la_demande(tmp_path, monkeypatch):
+    # T10.8 (E3) : la commande download écrit l'en-tête demande du manifeste
+    # avant l'acquisition (échec réseau inclus : la consigne précède l'appel).
+    monkeypatch.chdir(tmp_path)
+    with patch("src.main.telecharger_brut") as mock_tele:
+        mock_tele.return_value = {
+            "statut": "succes",
+            "message": "",
+            "donnees": {
+                "chemin_local": "x",
+                "format": "csv",
+                "licence": "fr-lo",
+                "licence_conditionnelle": False,
+                "mention_attribution": None,
+            },
+        }
+        resultat = runner.invoke(app, ["download", "res-9", "--id-execution", "exec-d"])
+        assert resultat.exit_code == 0
+    from src.core.manifeste import lire_manifeste
+
+    manifeste = lire_manifeste("exec-d")
+    assert manifeste is not None
+    assert manifeste["demande"] == "download res-9"

@@ -307,3 +307,22 @@ Implémentation : `tests/unit/test_extraction.py` (7 tests TU-47..53), `tests/un
 | TU-58 | Inventaire v2 : jeu sans ressource (total 0) | Succès, liste vide | Non bloquant |
 | TC-03 | Manifeste : `rechercher_jeux` en v1.3.0 (dépréciation `fenetre_maj`) | Version exacte | Bloquant |
 | TB-01b | Validation en réel : recherche « élections présidentielles » — le jeu du Ministère de l'Intérieur en page 1 (moteur v2) | Cas étalon satisfait | Bloquant (E8) |
+
+
+## Tests T10.8 — Manifeste d'acquisition (19/10/2026)
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-70 | Manifeste : round-trip écriture/lecture, entrée complète (fichier, voie, titre_jeu, horodatage) | Relu à l'identique | Bloquant |
+| TU-71 | Manifeste : additivité (2 acquisitions -> 2 entrées), anti-doublon sur fichier | 2 entrées distinctes / 1 seule par fichier | Bloquant |
+| TU-72 | Manifeste : écriture atomique, aucun `.part` résiduel | Fichier final seul présent | Bloquant |
+| TU-73 | Manifeste : lecture défensive (absent, JSON invalide) | None sans exception | Bloquant |
+| TU-74 | `consigner_demande` : en-tête écrit, acquisitions préservées | Demande en en-tête, entrées intactes | Bloquant |
+| TU-75 | Échec d'écriture du manifeste | Warning, aucune exception levée | Bloquant |
+| TU-76 | `telecharger_brut` succès -> entrée voie telechargement (titre_jeu, url_jeu, mention) ; échec -> aucune entrée | Entrée exacte / manifeste absent | Bloquant |
+| TU-77 | `extraire_ressource` succès -> entrée voie extraction (tronque, nb_lignes) ; garde non indexée -> aucune entrée | Entrée exacte / manifeste absent | Bloquant |
+| TU-78 | E0 : `_jeu_courant` porte titre/url du jeu, dénormalisés dans la ressource | titre_jeu, url_jeu présents | Bloquant |
+| TU-79 | `lister_acquisitions` (storage) : liste vide si absent, entrées sinon | Comportement défensif | Non bloquant |
+| TU-E12 | CLI `acquisitions` : absent -> erreur code 1 ; existant -> affichage lisible (fichier, voie, jeu, licence conditionnelle) | Sorties exactes | Bloquant |
+| TU-E13 | CLI `download` : consigne de la demande dans le manifeste | En-tête `demande` écrit | Bloquant |
+| TI-17 | Flux deux voies (extraction puis téléchargement) dans une même exécution | Un manifeste, 2 entrées ordonnées aux voies distinctes | Bloquant |

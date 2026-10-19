@@ -87,4 +87,21 @@ def lister_fichiers(id_execution: str, racine: Path = Path("data") / "raw") -> l
     repertoire = racine / nettoyer_nom_fichier(id_execution)
     if not repertoire.is_dir():
         return []
-    return sorted(f for f in repertoire.iterdir() if f.is_file())
+    # T10.8 : le manifeste d'acquisition n'est pas une donnée acquise.
+    from src.core.manifeste import NOM_MANIFESTE
+
+    return sorted(f for f in repertoire.iterdir() if f.is_file() and f.name != NOM_MANIFESTE)
+
+
+def lister_acquisitions(id_execution: str, racine: Path = Path("data") / "raw") -> list:
+    """Retourne les acquisitions manifestées d'une exécution (T10.8).
+
+    Lit data/raw/<id_execution>/manifeste_acquisitions.json via le module
+    manifeste (défensif : liste vide si absent ou illisible).
+    """
+    from src.core.manifeste import lire_manifeste
+
+    manifeste = lire_manifeste(id_execution, racine)
+    if not manifeste:
+        return []
+    return manifeste.get("acquisitions", [])

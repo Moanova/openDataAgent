@@ -111,6 +111,7 @@ Le projet s'utilise via une **CLI** (Command Line Interface) avec Typer. Voici l
 | `extract`  | Extrait une ressource indexée vers un CSV local (voie 1 matérialisée). | `python -m src.main extract <id_ressource>` |
 | `download` | Télécharge une ressource non indexée.                | `python -m src.main download <id_ressource>` |
 | `chat`     | Conversation agentique : un prompt libre, l'agent conduit le flux complet. | `python -m src.main chat "cherche les données de la dette publique"` |
+| `acquisitions` | Affiche le manifeste d'acquisition d'une exécution : relie chaque fichier de `data/raw/<id>/` à son jeu, sa licence et sa mention d'attribution. | `python -m src.main acquisitions 20261019_175304` |
 
 Les cinq premières commandes (`search`, `list`, `query`, `extract`, `download`) sont le mode manuel : l'utilisateur joue lui-même les étapes de sélection. La commande `chat` est le mode agentique : l'agent Mistral conduit le flux de bout en bout (reformulation, sélection, acquisition) en s'appuyant sur les mêmes fonctions.
 
@@ -225,6 +226,8 @@ Rapport :
 
 journal de conversation : conversations/20261014_142233/conversation.jsonl
 ```
+
+Chaque exécution ayant acquis des données écrit un **manifeste d'acquisition** (`data/raw/<id_execution>/manifeste_acquisitions.json`, T10.8) : en-tête avec la demande utilisateur, une entrée par fichier acquis (voie, jeu de données, organisation, licence, mention d'attribution, troncature). C'est la source de vérité pour relier les fichiers téléchargés à leurs jeux de données — consultable avec la commande `acquisitions`, consommable par la normalisation (T10.1).
 
 Le journal JSONL (`conversations/<id_execution>/conversation.jsonl`) conserve la conversation complète : contexte (modèle, prompt, date), messages, raisonnements de l'agent, invocations d'outils avec arguments et résultats. Il sert à l'audit et aux tests agentiques (propriétés TA).
 

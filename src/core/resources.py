@@ -89,6 +89,10 @@ def _normaliser_ressource(ressource: Dict[str, Any]) -> Dict[str, Any]:
         "id_jeu": _jeu_courant.get("id"),
         "organisation": _jeu_courant.get("organisation"),
         "titre": ressource["title"],
+        # T10.8 : métadonnées de jeu dénormalisées (titre, url) pour le
+        # manifeste d'acquisition ; sérialisées avec l'inventaire T10.2.
+        "titre_jeu": _jeu_courant.get("titre"),
+        "url_jeu": _jeu_courant.get("url", ""),
         "format": ressource.get("format"),
         "taille_octets": ressource.get("filesize"),
         "classe": classe,
@@ -176,6 +180,10 @@ def lister_ressources(
         "organisation": (data.get("organization") or {}).get("name", ""),
         "derniere_maj": data.get("last_update"),
         "licence_conditionnelle": bool(_jeux_conditionnels.get(id_jeu, False)),
+        # T10.8 : titre et URL du jeu nécessaires au manifeste d'acquisition
+        # (traçabilité fichier -> jeu) ; présents dans le payload v2.
+        "titre": data.get("title"),
+        "url": data.get("page", ""),
     }
     ressources_normalisees = [_normaliser_ressource(r) for r in data.get("resources", [])]
 

@@ -31,3 +31,8 @@ Réponse (succès) : `{"statut": "succes", "donnees": {"chemin_local": "donnees/
 
 - Un échec de cette fonction ne provoque jamais la perte des autres acquisitions : chaque téléchargement est indépendant.
 - Le registre est alimenté même en cas d'échec : une source inaccessible doit toujours être tracée.
+
+
+## Manifeste d'acquisition (T10.8)
+
+En cas de succès, `telecharger_brut` ajoute une entrée au manifeste `data/raw/<id_execution>/manifeste_acquisitions.json` (sortie latérale, sans évolution de contrat) : fichier, voie, identifiants et titre du jeu, organisation, url du jeu, licence, marquage conditionnel, mention d'attribution, horodatage. Un échec d'écriture du manifeste ne fait jamais échouer l'acquisition. Voir `docs/specs/stockage.md` §7.

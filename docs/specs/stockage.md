@@ -62,3 +62,24 @@ openDataAgent/
 
 ## 6. Améliorations futures
 - Ajout d'un **mécanisme de nettoyage automatique** pour les anciennes exécutions.
+
+
+## 7. Manifeste d'acquisition (T10.8, 19/10/2026)
+
+Chaque exécution ayant acquis des données porte un manifeste :
+
+```
+data/raw/<id_execution>/manifeste_acquisitions.json
+```
+
+**En-tête** : `id_execution`, `demande` (prompt `chat` ou rappel de commande manuelle), `generé_le`.
+
+**Entrées** (une par acquisition réussie, dans l'ordre chronologique) : `fichier`, `voie` (`telechargement` | `extraction`), `id_ressource`, `titre_ressource`, `id_jeu`, `titre_jeu`, `organisation`, `url_jeu`, `licence`, `licence_conditionnelle`, `mention_attribution`, `horodatage` ; plus `url_source` (voie 2) ou `tronque`/`nb_lignes` (voie 1).
+
+**Invariants** :
+- écrit au cœur (`telecharger_brut`, `extraire_ressource`) : les deux modes (manuel et agentique) produisent le même manifeste ;
+- écriture atomique (`.part` puis renommage), additive (aucune entrée altérée), anti-doublon sur `fichier` ;
+- un échec d'écriture produit un warning, jamais un échec de l'acquisition ;
+- `lister_fichiers` exclut le manifeste (ce n'est pas une donnée acquise) ; `lister_acquisitions` (storage) et la commande CLI `acquisitions <id_execution>` le lisent.
+
+**Rôle** : source de vérité « acquisition » côté disque — la partie 2 (via T10.1, normalisation B7) consomme ce manifeste pour relier chaque fichier à son jeu, sa licence et sa mention d'attribution, sans recroiser inventaire persistant et journal de conversation.

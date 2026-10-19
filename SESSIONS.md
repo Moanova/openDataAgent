@@ -477,3 +477,22 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 - Question du concepteur : en mode manuel, rien ne permet de relier les fichiers de `data/raw` aux jeux de données correspondants (nommage issu de l'URL de la ressource ; inventaire T10.2 non écrit en mode agentique).
 - Analyse stockage/storage.py : l'horodatage isole l'exécution, mais le lien fichier → jeu n'existe que par croisement inventaire (CLI uniquement) + journal conversation.jsonl (à parser). Manque aussi au cœur : `_jeu_courant` ne retient ni le titre ni l'URL du jeu (pourtant dans le payload v2).
 - **T10.8 créée** (kanban, section 12) : manifeste `data/raw/<id_execution>/manifeste_acquisitions.json`, écrit au cœur à chaque acquisition (les deux voies), additif sans évolution de contrat, en-tête avec la demande utilisateur, enrichissement de `_jeu_courant` (titre/url) en prérequis E0. Plan complet E0..E6 dans `docs/tasks/T10.8_manifeste_acquisitions.md`.
+
+
+## **Séance du 19/10/2026 (4) — T10.8 : implémentation complète du manifeste d'acquisition (E0..E6)**
+
+### **Actions réalisées**
+1. **E0** : `_jeu_courant` enrichi (titre, url du jeu — présents dans le payload v2, non retenus auparavant) ; dénormalisation `titre_jeu`/`url_jeu` dans la ressource normalisée ; sérialisé avec l'inventaire T10.2 (additif).
+2. **E1 — `src/core/manifeste.py`** : `enregistrer_acquisition` (atomique `.part`→renommage, additif, anti-doublon sur fichier, échec → warning jamais bloquant), `consigner_demande` (en-tête, préserve les acquisitions), `lire_manifeste` (défensif : absent/invalide → None).
+3. **E2** : branchement des deux voies après succès uniquement — `telecharger_brut` (voie telechargement, + url_source) et `extraire_ressource` (voie extraction, + tronque/nb_lignes). Correctif au passage : `extraire_ressource` générait un `id_execution` vide par défaut → fallback `generer_id_execution()` (cohérent avec download).
+4. **E3** : consigne de la demande — prompt dans `chat`, rappel de commande dans `download`/`extract`.
+5. **E4** : `lister_acquisitions` dans storage.py (défensif) + commande CLI `acquisitions <id_execution>` (affichage lisible : fichier, voie, jeu, organisation, licence conditionnelle, attribution, troncature). `lister_fichiers` exclut désormais le manifeste (ce n'est pas une donnée acquise).
+6. **E5 — tests** : TU-70..TU-79 (module), TU-76/77 (branchement succès/échec des deux voies), TU-78 (E0), TU-E12/E13 (CLI), TI-17 (flux deux voies, un manifeste, entrées ordonnées) ; adaptation de 2 tests existants impactés par le manifeste (présence dans l'arborescence). **385 tests verts** (366 avant, +19).
+7. **E6 — docs** : stockage.md §7 (format, invariants), architecture des deux voies (sortie latérale), decisions_conception.md (2 décisions), README (commande acquisitions + paragraphe traçabilité), plan_tests.md (section T10.8), suivi de tâche, kanban (en cours), SESSIONS.
+
+### **Décisions**
+- Le manifeste est exclu de `lister_fichiers` : ce n'est pas une donnée acquise (la partie 2 ne doit pas le normaliser).
+- `id_execution` par défaut d'`extraire_ressource` : fallback `generer_id_execution()` au lieu d'une chaîne vide (le manifeste et le nommage des fichiers restent cohérents).
+
+### **Blocages**
+- Aucun. Reste : validation en réel par le concepteur.

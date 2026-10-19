@@ -22,6 +22,7 @@ from src.utils.storage import generer_id_execution, chemin_destination, resoudre
 from src.utils.registry import RegistreSourcesInaccessibles
 from src.core.resources import inventaire
 from src.core.licences_descriptif import mention_attribution
+from src.core.manifeste import enregistrer_acquisition
 
 logger = get_logger("openDataAgent.core.download")
 
@@ -138,6 +139,26 @@ def telecharger_brut(
         "licence_conditionnelle": bool(metadonnees.get("licence_conditionnelle", False)),
         "mention_attribution": resultat_mention["donnees"].get("mention"),
     }
+
+    # T10.8 : traçabilité acquisition -> jeu dans le manifeste de l'exécution ;
+    # un échec d'écriture ne fait jamais échouer le téléchargement.
+    enregistrer_acquisition(
+        identifiant,
+        {
+            "fichier": destination.name,
+            "voie": "telechargement",
+            "id_ressource": id_ressource,
+            "titre_ressource": metadonnees.get("titre") or "",
+            "id_jeu": metadonnees.get("id_jeu") or "",
+            "titre_jeu": metadonnees.get("titre_jeu") or "",
+            "organisation": metadonnees.get("organisation") or "",
+            "url_jeu": metadonnees.get("url_jeu") or "",
+            "url_source": url,
+            "licence": metadonnees.get("licence") or "",
+            "licence_conditionnelle": bool(metadonnees.get("licence_conditionnelle", False)),
+            "mention_attribution": resultat_mention["donnees"].get("mention"),
+        },
+    )
     if resultat_mention["statut"] != "succes":
         logger.warning(
             "Mention d'attribution non generee",

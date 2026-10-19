@@ -36,3 +36,8 @@ Réponse (succès partiel) : `{"statut": "succes", "message": "Extraction tronqu
 - Le plafond produit un succès partiel signalé (`tronque: true`, message), jamais un échec silencieux ni une perte de données cachée.
 - Une collision de nom (ré-extraction dans la même exécution) produit un suffixe : un fichier acquis n'est jamais écrasé.
 - La répartition exploration/acquisition est explicite : `interroger_ressource` n'écrit rien, `extraire_ressource` et `telecharger_brut` écrivent.
+
+
+## Manifeste d'acquisition (T10.8)
+
+En cas de succès, `extraire_ressource` ajoute une entrée au manifeste `data/raw/<id_execution>/manifeste_acquisitions.json` (sortie latérale, sans évolution de contrat) : fichier, voie, identifiants et titre du jeu, organisation, url du jeu, licence, marquage conditionnel, mention d'attribution, horodatage. Un échec d'écriture du manifeste ne fait jamais échouer l'acquisition. Voir `docs/specs/stockage.md` §7.
