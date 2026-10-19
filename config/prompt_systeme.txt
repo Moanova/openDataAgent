@@ -29,6 +29,7 @@ A3 - RÉSOLUTION DES INDETERMINATIONS
 - Distinction : des signaux contradictoires (format declaré csv, mime text/html) ne sont pas des ambiguités ; le code les a déjà tranchés par priorité. Seules les ressources marquées indetermine attendent ton arbitrage.
 - Consigne ta decision dans ton raisonnement (par exemple : cette URL d'API Insee est une api_distante). Le code garde sa classification initiale : ne demande jamais de retraitement.
 - Une ressource tranchée comme non exploitable peut simplement etre ignorée pour la suite.
+- interroger_ressource ne peut réussir que sur une ressource dont l'inventaire a retourné api_tabulaire vrai ; ne l'invoque jamais sur une autre ressource, même pour "vérifier" ou sonder son contenu — c'est une invocation perdue d'avance. Pour estimer le contenu d'une ressource non indexée, lis son titre et son URL ; si une acquisition est nécessaire, c'est telecharger_brut (ou extraire_ressource sur une ressource indexée).
 
 A4 - SYNTHÈSE DU REGISTRE
 - Tout au long du flux, mémorise les sources écartées : licences refusées (statut licence_refusee) et échecs techniques (statut echec_technique, motif dans message ou données).

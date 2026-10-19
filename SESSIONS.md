@@ -456,3 +456,9 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun.
+
+### Complément — renforcement A3 (invocation perdue sur ressource non indexée)
+- Constat analysé : le test local du 19/10 montrait un `interroger_ressource` sur la ressource `.txt` 2017 (classe `indetermine`, `api_tabulaire` faux dans l'inventaire) — choix de l'agent, non de la logique applicative : le code avait correctement exposé l'information, mais l'agent a utilisé l'outil comme sonde expérimentale contre la consigne « réponse autoportante » d'A3.
+- Correctif (niveau 1, prompt) : consigne A3 renforcée dans `config/prompt_systeme.txt` — `interroger_ressource` ne peut réussir que sur une ressource dont l'inventaire a retourné `api_tabulaire` vrai ; ne jamais l'invoquer pour « vérifier », l'estimation d'une ressource non indexée se fait sur titre/URL, l'acquisition passe par `telecharger_brut`.
+- Le niveau 2 (garde côté cœur/contrat) est écarté pour l'instant, à réévaluer avec T11.1 si le besoin persiste en multi-tours.
+- 1 nouveau test de contenu prompt (`test_prompt_consigne_interroger_seulement_si_indexee`) ; 366 tests verts.

@@ -352,6 +352,16 @@ def test_prompt_systeme_vide_echec_explicite(tmp_path):
         _charger_prompt_systeme(chemin)
 
 
+def test_prompt_consigne_interroger_seulement_si_indexee():
+    # Verrou A3 (constat du 19/10/2026 : l'agent a sondé via interroger_ressource
+    # une ressource indeterminee, api_tabulaire faux — invocation perdue d'avance).
+    from src.agent.agent import PROMPT_SYSTEME
+
+    assert "api_tabulaire vrai" in PROMPT_SYSTEME
+    assert "ne l'invoque jamais sur une autre ressource" in PROMPT_SYSTEME
+    assert "invocation perdue" in PROMPT_SYSTEME
+
+
 def test_prompt_consigne_integrite_registre():
     # Verrou anti-hallucination (constat du 19/10/2026 : l'étape A4 citait un
     # chemin local jamais retourné par un outil) : seules les acquisitions
