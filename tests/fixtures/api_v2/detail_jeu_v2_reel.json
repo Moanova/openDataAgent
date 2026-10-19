@@ -1,0 +1,133 @@
+{
+  "id": "62581fdf02e05e365ea227a1",
+  "title": "Election présidentielle des 10 et 24 avril 2022 - Résultats définitifs du 1er tour",
+  "acronym": null,
+  "slug": "election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour",
+  "description": "Résultats du 1er tour de l’élection présidentielle 2022, France entière,métropole, outre-mer, par régions, départements, communes, circonscriptions législatives et bureaux de vote.\nCes résultats sont définitifs.\nLe détail des résultats par listes consulaires des Français de l'étranger est accessible depuis le site du ministère des affaires étrangères au lien suivant :[site du Ministère de l'Europe et des Affaires étrangère](https://www.diplomatie.gouv.fr/fr/services-aux-francais/voter-a-l-etranger/resultats-des-elections/article/election-presidentielle-2022-resultats-du-1er-tour-pour-les-francais-de-l)",
+  "description_short": null,
+  "created_at": "2022-04-14T15:21:35.194000+00:00",
+  "last_modified": "2022-04-19T11:44:16.818000+00:00",
+  "deleted": null,
+  "private": false,
+  "tags": [],
+  "badges": [],
+  "resources": {
+    "rel": "subsection",
+    "href": "https://www.data.gouv.fr/api/2/datasets/62581fdf02e05e365ea227a1/resources/?page=1&page_size=50",
+    "type": "GET",
+    "total": 16
+  },
+  "community_resources": {
+    "rel": "subsection",
+    "href": "https://www.data.gouv.fr/api/1/datasets/community_resources/?dataset=62581fdf02e05e365ea227a1&page=1&page_size=50",
+    "type": "GET",
+    "total": 11
+  },
+  "frequency": "unknown",
+  "frequency_date": null,
+  "extras": {},
+  "metrics": {
+    "discussions": 8,
+    "discussions_open": 8,
+    "reuses": 19,
+    "reuses_by_months": {
+      "2025-09": 0,
+      "2025-10": 0,
+      "2025-11": 0,
+      "2025-12": 0,
+      "2026-01": 0,
+      "2026-02": 0,
+      "2026-03": 0,
+      "2026-04": 0,
+      "2026-05": 1,
+      "2026-06": 1,
+      "2026-07": 1,
+      "2026-08": 3,
+      "2026-09": 0
+    },
+    "dataservices": 1,
+    "followers": 8,
+    "followers_by_months": {
+      "2024-08": 1,
+      "2024-09": 0,
+      "2024-10": 2,
+      "2024-11": 0,
+      "2024-12": 0,
+      "2025-01": 1,
+      "2025-02": 0,
+      "2025-03": 0,
+      "2025-04": 0,
+      "2025-05": 0,
+      "2025-06": 0,
+      "2025-07": 0,
+      "2025-08": 0
+    },
+    "views": 97300,
+    "resources_downloads": 58647
+  },
+  "organization": {
+    "badges": [
+      {
+        "kind": "public-service"
+      },
+      {
+        "kind": "certified"
+      }
+    ],
+    "name": "Ministère de l'intérieur",
+    "acronym": "MI",
+    "slug": "ministere-de-linterieur",
+    "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a.jpg",
+    "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a-100.jpg",
+    "page": "https://www.data.gouv.fr/organizations/ministere-de-linterieur",
+    "permissions": {
+      "edit": false,
+      "delete": false,
+      "members": false,
+      "harvest": false,
+      "private": false
+    },
+    "uri": "https://www.data.gouv.fr/api/1/organizations/ministere-de-linterieur/",
+    "id": "534fff91a3a7292c64a77f53",
+    "class": "Organization"
+  },
+  "owner": null,
+  "temporal_coverage": null,
+  "spatial": null,
+  "license": "notspecified",
+  "access_type": "open",
+  "access_audiences": [],
+  "access_type_reason_category": null,
+  "access_type_reason": null,
+  "authorization_request_url": null,
+  "uri": "https://www.data.gouv.fr/api/1/datasets/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/",
+  "page": "https://www.data.gouv.fr/datasets/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour",
+  "last_update": "2022-04-14T15:26:17.908000+00:00",
+  "archived": null,
+  "doi": null,
+  "quality": {
+    "license": true,
+    "temporal_coverage": false,
+    "spatial": false,
+    "update_frequency": false,
+    "dataset_description_quality": true,
+    "has_resources": true,
+    "has_open_format": true,
+    "all_resources_available": true,
+    "resources_documentation": false,
+    "score": 0.4444444444444444
+  },
+  "harvest": null,
+  "geopf": null,
+  "internal": {
+    "created_at_internal": "2022-04-14T15:21:35.194000+00:00",
+    "last_modified_internal": "2022-04-19T11:44:16.818000+00:00"
+  },
+  "contact_points": [],
+  "featured": true,
+  "permissions": {
+    "delete": false,
+    "edit": false,
+    "edit_resources": false
+  }
+}

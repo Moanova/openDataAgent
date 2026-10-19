@@ -44,6 +44,12 @@ def _peupler_inventaire(api_tabulaire: bool = True) -> None:
             {"id": RID, "title": "Films", "url": "https://static.data.gouv.fr/films.csv", "format": "csv", "mime": "text/csv", "filesize": 100}
         ],
     }
+    detail = {k: v for k, v in reponse_api.items() if k != "resources"}
+    detail["resources"] = {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/jeu-cnc/resources/",
+        "total": len(reponse_api["resources"]),
+    }
     with responses.mock:
         responses.add(
             responses.GET,
@@ -53,8 +59,15 @@ def _peupler_inventaire(api_tabulaire: bool = True) -> None:
         )
         responses.add(
             responses.GET,
-            "https://www.data.gouv.fr/api/1/datasets/jeu-cnc/",
-            json=reponse_api,
+            "https://www.data.gouv.fr/api/2/datasets/jeu-cnc/",
+            json=detail,
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            "https://www.data.gouv.fr/api/2/datasets/jeu-cnc/resources/",
+            json={"data": reponse_api["resources"], "total": 1, "page": 1,
+                  "page_size": 50, "next_page": None, "previous_page": None},
             status=200,
         )
         lister_ressources("jeu-cnc")

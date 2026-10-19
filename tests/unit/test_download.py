@@ -24,8 +24,32 @@ from src.core.resources import lister_ressources
 from src.utils.registry import RegistreSourcesInaccessibles
 from src.utils.storage import chemin_destination, nettoyer_nom_fichier
 
-URL_JEU = "https://www.data.gouv.fr/api/1/datasets/jeu-t/"
+URL_JEU = "https://www.data.gouv.fr/api/2/datasets/jeu-t/"
 URL_FICHIER = "https://exemple.fr/donnees/budget-2024.csv"
+
+def _mocker_inventaire_v2(id_jeu, detail, ressources):
+    """Ajoute les deux reponses v2 : detail du jeu + sous-ressource paginee."""
+    import responses as _r
+    base = "https://www.data.gouv.fr/api/2/datasets/"
+    _r.add(_r.GET, base + id_jeu + "/", json=detail, status=200)
+    _r.add(
+        _r.GET,
+        base + id_jeu + "/resources/",
+        json={"data": ressources, "total": len(ressources), "page": 1,
+              "page_size": 50, "next_page": None, "previous_page": None},
+        status=200,
+    )
+
+
+def _split_v2(payload):
+    """Scinde un payload inventaire {.., resources: [liste]} en (detail, ressources) v2."""
+    detail = {k: v for k, v in payload.items() if k != "resources"}
+    detail["resources"] = {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/%s/resources/" % payload.get("id", "x"),
+        "total": len(payload.get("resources", [])),
+    }
+    return detail, payload.get("resources", [])
 
 
 @pytest.fixture
@@ -52,7 +76,7 @@ def inventaire_peuple(registre, tmp_path):
         ],
     }
     with patch("src.core.resources.est_indexee_api_tabulaire", return_value=False), responses.mock:
-        responses.add(responses.GET, URL_JEU, json=reponse_api, status=200)
+        _mocker_inventaire_v2("jeu-t", *_split_v2(reponse_api))
         lister_ressources("jeu-t", registre=registre)
     return reponse_api
 
@@ -239,7 +263,7 @@ def _inventaire_avec_ressource(registre, tmp_path, id_ressource, titre, url, for
     }
     url_jeu = URL_JEU.replace("jeu-t", "jeu-f")
     with patch("src.core.resources.est_indexee_api_tabulaire", return_value=False), responses.mock:
-        responses.add(responses.GET, url_jeu, json=reponse_api, status=200)
+        _mocker_inventaire_v2("jeu-f", *_split_v2(reponse_api))
         lister_ressources("jeu-f", registre=registre)
     return reponse_api
 

@@ -24,7 +24,7 @@ from src.utils.registry import RegistreSourcesInaccessibles
 from src.utils.registre_acceptations import RegistreAcceptationsConditionnelles
 
 REPERTOIRE_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "api"
-URL_RECHERCHE = "https://www.data.gouv.fr/api/1/datasets/"
+URL_RECHERCHE = "https://www.data.gouv.fr/api/2/datasets/search/"
 
 
 @pytest.fixture
@@ -46,9 +46,10 @@ def _jeu(id_: str, licence_id: str, organisation: str = "Insee", badges: list = 
         "page": f"https://www.data.gouv.fr/datasets/jeu-{id_}",
         "created_at": "2020-07-15T09:21:35.147000+00:00",
         "last_modified": "2026-09-30T16:42:11.000000+00:00",
+        "last_update": "2026-09-30T16:42:11.000000+00:00",
         "license": licence_id,
         "organization": {"name": organisation, "badges": badges or []},
-        "resources": [{"id": "res1", "title": "Fichier CSV", "url": "https://static.data.gouv.fr/res1.csv"}],
+        "resources": {"rel": "subsection", "href": "https://www.data.gouv.fr/api/2/datasets/%s/resources/" % id_, "total": 1},
     }
 
 
@@ -71,6 +72,42 @@ def test_limite_hors_bornes_corrigee(fixture_recherche, registre):
 
 
 @responses.activate
+def test_fenetre_maj_depreciee_avertissement_sans_echec(fixture_recherche, registre):
+    # T11.3 (E4) : fenetre_maj != "toutes" -> paramètre ignoré (jamais envoyé à l'API v2),
+    # avertissement explicite dans le message, la recherche reste un succès.
+    responses.add(responses.GET, URL_RECHERCHE, json=fixture_recherche, status=200)
+
+    reponse = rechercher_jeux(["dette"], fenetre_maj="12_mois", registre=registre)
+
+    assert reponse["statut"] == "succes"
+    assert "déprécié" in reponse["message"]
+    assert "last_update_range" not in responses.calls[0].request.url
+
+
+@responses.activate
+def test_fenetre_maj_toutes_sans_avertissement(fixture_recherche, registre):
+    # T11.3 (E4) : la valeur par défaut "toutes" ne produit aucun avertissement.
+    responses.add(responses.GET, URL_RECHERCHE, json=fixture_recherche, status=200)
+
+    reponse = rechercher_jeux(["dette"], fenetre_maj="toutes", registre=registre)
+
+    assert reponse["statut"] == "succes"
+    assert reponse["message"] == ""
+
+
+@responses.activate
+def test_derniere_maj_alimentee_depuis_last_update_v2(fixture_recherche, registre):
+    # T11.3 (E3, décision 1) : derniere_maj est mappé sur last_update (fraîcheur des
+    # données), pas sur last_modified (métadonnées).
+    responses.add(responses.GET, URL_RECHERCHE, json=fixture_recherche, status=200)
+
+    reponse = rechercher_jeux(["dette"], registre=registre)
+
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["jeux"][0]["derniere_maj"] == "2022-04-14T15:26:17.908000+00:00"
+
+
+@responses.activate
 def test_filtre_licence_et_registre(registre):
     # Réf. tests/plan_tests.md : invariant CA-1 (aucun jeu de licence incompatible dans jeux)
     # + TU-21 (exclusion juridique consignée au registre)
@@ -83,7 +120,7 @@ def test_filtre_licence_et_registre(registre):
         ],
         "total": 4,
         "page": 1,
-        "next_page": "https://www.data.gouv.fr/api/1/datasets/?q=dette&page=2&page_size=10",
+        "next_page": "https://www.data.gouv.fr/api/2/datasets/search/?q=dette&page=2&page_size=10",
         "previous_page": None,
     }
     responses.add(responses.GET, URL_RECHERCHE, json=reponse_api, status=200)
@@ -110,7 +147,7 @@ def test_pagination_page_suivante_et_invariant(registre):
         "data": [_jeu("ferme1", "other-closed"), _jeu("ouvert1", "lov2")],
         "total": 3,
         "page": 1,
-        "next_page": "https://www.data.gouv.fr/api/1/datasets/?q=dette&page=2&page_size=2",
+        "next_page": "https://www.data.gouv.fr/api/2/datasets/search/?q=dette&page=2&page_size=2",
         "previous_page": None,
     }
     page2 = {
@@ -118,7 +155,7 @@ def test_pagination_page_suivante_et_invariant(registre):
         "total": 3,
         "page": 2,
         "next_page": None,
-        "previous_page": "https://www.data.gouv.fr/api/1/datasets/?q=dette&page=1&page_size=2",
+        "previous_page": "https://www.data.gouv.fr/api/2/datasets/search/?q=dette&page=1&page_size=2",
     }
     responses.add(responses.GET, URL_RECHERCHE, json=page1, status=200)
     responses.add(responses.GET, URL_RECHERCHE, json=page2, status=200)
@@ -143,12 +180,13 @@ def test_licence_absente_exclue(fixture_recherche, registre):
     # Réf. tests/plan_tests.md : TU-03 via le flux (licence absente -> comportement sûr par défaut)
     donnees = json.loads(json.dumps(fixture_recherche))
     donnees["data"][0]["license"] = None
+    donnees["data"][1]["license"] = None
     responses.add(responses.GET, URL_RECHERCHE, json=donnees, status=200)
 
     reponse = rechercher_jeux(["dette"], registre=registre)
 
     assert reponse["donnees"]["jeux"] == []
-    assert reponse["donnees"]["exclus_licence"] == 1
+    assert reponse["donnees"]["exclus_licence"] == 2
     assert registre.rapport_pour_agent()["sources_inaccessibles"][0]["licence"] == "notspecified"
 
 
@@ -161,9 +199,11 @@ def test_succes_aucune_exclusion(fixture_recherche, registre):
 
     assert reponse["statut"] == "succes"
     assert reponse["message"] == ""
-    assert reponse["donnees"]["total_trouves"] == 1
+    assert reponse["donnees"]["total_trouves"] == 235
     assert reponse["donnees"]["exclus_licence"] == 0
-    assert reponse["donnees"]["jeux"][0]["licence"] == "lov2"
+    assert len(reponse["donnees"]["jeux"]) == 2
+    assert reponse["donnees"]["jeux"][0]["licence"] == "notspecified"
+    assert reponse["donnees"]["jeux"][0]["licence_conditionnelle"] is True
     assert registre.rapport_pour_agent()["sources_inaccessibles"] == []
 
 

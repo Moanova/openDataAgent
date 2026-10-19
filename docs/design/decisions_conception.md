@@ -198,3 +198,57 @@ L'extraction écrit un CSV UTF-8 dans `data/raw/<id_execution>/` (même racine q
 ### Justification
 - **Lisibilité et universalité** : le CSV est directement consommable par la partie 2 (pandas) et par l'humain.
 - **Simplicité** : l'agrégation de lignes JSON en CSV via `csv.DictWriter` est déterministe et sans dépendance.
+
+
+---
+
+## 18/10/2026 — T11.3 : migration API data.gouv.fr v1 → v2
+
+### 1. Bascule pleine v2, sans adaptateur
+
+#### Décision
+La recherche et l'inventaire passent sur l'API v2 (`/api/2/datasets/search/`, `/api/2/datasets/{id}`, `/api/2/datasets/{id}/resources/`) sans couche d'abstraction par source. L'adaptateur n'aura de sens qu'avec T7.4 (autres sources : Eurostat, INSEE...).
+
+### 2. Mapping `derniere_maj` ← `last_update`
+
+#### Décision
+Le champ normalisé `derniere_maj` est alimenté par `last_update` (dernière mise à jour d'une ressource — fraîcheur des données) et non `last_modified` (dernière modification des métadonnées). C'est aussi le champ support du tri `recent` (`-last_update`).
+
+#### Justification
+- Sur le jeu étalon (élections présidentielles 2022, Ministère de l'Intérieur) : `last_modified` = 19/04/2022, `last_update` = 14/04/2022 — la sémantique utile au projet est la fraîcheur des données.
+- Cohérence avec le tri `recent` et avec la fenêtre de mise à jour (v1) qui portaient déjà sur `last_update`.
+
+### 3. Dépréciation de `fenetre_maj` (contrat v1.2.0 → v1.3.0)
+
+#### Décision
+L'API v2 ne supporte pas `last_update_range` (HTTP 400, sondage S11.0) et n'offre pas d'équivalent simple. Le paramètre `fenetre_maj` est conservé en signature (compatibilité CLI/agent) mais **ignoré** : toute valeur autre que `toutes` produit un avertissement explicite dans le `message` de la réponse, sans faire échouer la recherche. Le retrait complet est prévu avec T7.4.
+
+#### Justification
+- Évoluer le contrat en fracassant la compatibilité n'était pas justifié : aucun appelant ne dépend de la fenêtre pour la sécurité juridique ou l'acquisition.
+- L'avertissement dans `message` plutôt qu'un échec : la recherche reste utile, l'appelant est informé.
+
+### 4. Pagination : arrêt sur `next_page` absent
+
+#### Décision
+Toute boucle de pagination (recherche, inventaire) s'arrête exclusivement quand la réponse ne contient plus `next_page` — jamais sur une erreur HTTP ou une liste vide.
+
+#### Justification
+- La v2 peut répondre 400 ou une liste vide au-delà du total selon le numéro demandé (comportement moins prévisible que la v1, sondage S11.0) ; le signal serveur `next_page` est le seul fiable.
+- Même logique que l'extraction tabulaire (`links.next`, T10.7) — la règle est désormais explicite et uniforme.
+
+### 5. Inventaire : sous-ressource paginée reconstituée par l'isolant HTTP
+
+#### Décision
+`lister_ressources_api` enchaîne deux appels (détail du jeu, puis sous-ressource `resources` avec boucle sur `next_page`, `page_size` 50, plafond de sécurité 20 pages) et **reconstitue** le payload au format attendu par le cœur (détail + liste `resources` plate). La normalisation aval est inchangée.
+
+#### Justification
+- L'isolant statut/message/donnees absorbe la restructuration v2 : aucune évolution des sorties normalisées (prévision confirmée du kanban).
+- Le plafond de pages est une garde anti-boucle explicite (échec propre « plafond atteint »), pas une limite fonctionnelle : 20 × 50 = 1000 ressources suffisent au catalogue réel.
+
+### 6. Choix de la pertinence v2
+
+#### Décision
+Le tri `pertinence` est le tri implicite du moteur v2 (celui du site) : aucun paramètre `sort` n'est envoyé.
+
+#### Justification
+- Cas étalon « élections présidentielles » : jeux du Ministère de l'Intérieur en tête de page 1 en v2 (total 235) vs jeux communaux en v1 (total 41) — la motivation première de T11.3.

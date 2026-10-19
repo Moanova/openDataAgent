@@ -1,0 +1,874 @@
+{
+  "data": [
+    {
+      "id": "98eb9dab-f328-4dee-ac08-ac17211357a8",
+      "title": "resultats-par-niveau-burvot-t1-france-entiere.xlsx",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "xlsx",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152612/resultats-par-niveau-burvot-t1-france-entiere.xlsx",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/98eb9dab-f328-4dee-ac08-ac17211357a8",
+      "checksum": {
+        "type": "sha1",
+        "value": "dcb3c1642334b596eb78381b611cc6ff280aee50"
+      },
+      "filesize": 33486161,
+      "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "created_at": "2022-04-14T15:26:15.768000+00:00",
+      "last_modified": "2022-04-14T15:26:17.908000+00:00",
+      "metrics": {
+        "views": 20181
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T23:53:28.002352+00:00",
+        "check:headers:content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "check:headers:content-length": 33486161,
+        "analysis:last-modified-at": "2022-04-14T13:26:15+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:error": "File too large to download",
+        "check:id": 41756626,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": null,
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:26:15.768000+00:00",
+        "last_modified_internal": "2022-04-14T15:26:17.908000+00:00"
+      }
+    },
+    {
+      "id": "79b5cac4-4957-486b-bbda-322d80868224",
+      "title": "resultats-par-niveau-burvot-t1-france-entiere.txt",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "txt",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152542/resultats-par-niveau-burvot-t1-france-entiere.txt",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/79b5cac4-4957-486b-bbda-322d80868224",
+      "checksum": {
+        "type": "sha1",
+        "value": "743706525eb16605539efca5055ee729c1d06521"
+      },
+      "filesize": 36463842,
+      "mime": "text/plain",
+      "created_at": "2022-04-14T15:25:45.761000+00:00",
+      "last_modified": "2022-04-14T15:25:47.829000+00:00",
+      "metrics": {
+        "views": 9719
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T12:20:55.190736+00:00",
+        "check:headers:content-type": "text/plain",
+        "analysis:error": "File too large to download",
+        "analysis:last-modified-at": "2022-04-14T13:25:45+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:content-length": 36463842,
+        "analysis:checksum": "743706525eb16605539efca5055ee729c1d06521",
+        "analysis:mime-type": "text/plain",
+        "analysis:parsing:finished_at": "2023-08-30 19:47:26.207731+02",
+        "analysis:parsing:parsing_table": "29e778d68d095fa9fdfdaa61ef6a6bf4",
+        "check:id": 41674200,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/79b5cac4-4957-486b-bbda-322d80868224",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:25:45.761000+00:00",
+        "last_modified_internal": "2022-04-14T15:25:47.829000+00:00"
+      }
+    },
+    {
+      "id": "6d9b33e5-667d-4c3e-9a0b-5fdf5baac708",
+      "title": "resultats-par-niveau-subcom-t1-france-entiere.xlsx",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "xlsx",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152517/resultats-par-niveau-subcom-t1-france-entiere.xlsx",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/6d9b33e5-667d-4c3e-9a0b-5fdf5baac708",
+      "checksum": {
+        "type": "sha1",
+        "value": "2f40b69ab0ecb20ade373312fd6eb3e2ee9764a8"
+      },
+      "filesize": 16645922,
+      "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "created_at": "2022-04-14T15:25:19.239000+00:00",
+      "last_modified": "2022-04-14T15:25:21.887000+00:00",
+      "metrics": {
+        "views": 7018
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T09:00:34.849731+00:00",
+        "check:headers:content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "check:headers:content-length": 16645922,
+        "analysis:last-modified-at": "2022-04-14T13:25:19+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:error": "File too large to download",
+        "check:id": 41648173,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": null,
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:25:19.239000+00:00",
+        "last_modified_internal": "2022-04-14T15:25:21.887000+00:00"
+      }
+    },
+    {
+      "id": "aae19572-df6d-4e05-ab09-06430ca8acde",
+      "title": "resultats-par-niveau-subcom-t1-france-entiere.txt",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "txt",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152459/resultats-par-niveau-subcom-t1-france-entiere.txt",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/aae19572-df6d-4e05-ab09-06430ca8acde",
+      "checksum": {
+        "type": "sha1",
+        "value": "6e682f7a94c7fb539a6383fb8f778fbb4a27f19a"
+      },
+      "filesize": 17688915,
+      "mime": "text/plain",
+      "created_at": "2022-04-14T15:25:01.131000+00:00",
+      "last_modified": "2022-04-14T15:25:03.406000+00:00",
+      "metrics": {
+        "views": 3246
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T13:16:30.908467+00:00",
+        "check:headers:content-type": "text/plain",
+        "analysis:error": "File too large to download",
+        "analysis:last-modified-at": "2022-04-14T13:25:00+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:content-length": 17688915,
+        "analysis:checksum": "6e682f7a94c7fb539a6383fb8f778fbb4a27f19a",
+        "analysis:mime-type": "text/plain",
+        "analysis:parsing:finished_at": "2023-08-30 09:25:21.136455+02",
+        "analysis:parsing:parsing_table": "5502e720dcf435cc92cd326a30bef640",
+        "check:id": 41682813,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/aae19572-df6d-4e05-ab09-06430ca8acde",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:25:01.131000+00:00",
+        "last_modified_internal": "2022-04-14T15:25:03.406000+00:00"
+      }
+    },
+    {
+      "id": "1a35594a-99f2-4257-87e0-ec2f55039276",
+      "title": "resultats-par-niveau-cirlg-t1-france-entiere.xlsx",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "xlsx",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152438/resultats-par-niveau-cirlg-t1-france-entiere.xlsx",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/1a35594a-99f2-4257-87e0-ec2f55039276",
+      "checksum": {
+        "type": "sha1",
+        "value": "fd2a5e095d6f5b1c98059cf9dad376f514e95f0e"
+      },
+      "filesize": 290023,
+      "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "created_at": "2022-04-14T15:24:38.551000+00:00",
+      "last_modified": "2022-04-14T15:24:40.142000+00:00",
+      "metrics": {
+        "views": 3762
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T07:12:03.640844+00:00",
+        "check:headers:content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "check:headers:content-length": 290023,
+        "analysis:last-modified-at": "2022-04-14T13:24:38+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:content-length": 290023,
+        "analysis:checksum": "fd2a5e095d6f5b1c98059cf9dad376f514e95f0e",
+        "analysis:mime-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "analysis:parsing:started_at": "2024-10-23T01:19:34.311122+00:00",
+        "analysis:parsing:finished_at": "2024-10-23T01:19:41.982384+00:00",
+        "analysis:parsing:parsing_table": "32e2ab2f0b7d23e7ce672f3e038e12d7",
+        "check:id": 41634273,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/1a35594a-99f2-4257-87e0-ec2f55039276",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:24:38.551000+00:00",
+        "last_modified_internal": "2022-04-14T15:24:40.142000+00:00"
+      }
+    },
+    {
+      "id": "056c3d1e-87ef-42b2-ae9c-57ad9d81b563",
+      "title": "resultats-par-niveau-cirlg-t1-france-entiere.txt",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "txt",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152430/resultats-par-niveau-cirlg-t1-france-entiere.txt",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/056c3d1e-87ef-42b2-ae9c-57ad9d81b563",
+      "checksum": {
+        "type": "sha1",
+        "value": "846797a8d2fee6c188fd05b11945708ae66b8037"
+      },
+      "filesize": 317249,
+      "mime": "text/plain",
+      "created_at": "2022-04-14T15:24:30.420000+00:00",
+      "last_modified": "2022-04-14T15:24:32.013000+00:00",
+      "metrics": {
+        "views": 1852
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T01:37:22.532800+00:00",
+        "check:headers:content-type": "text/plain",
+        "analysis:content-length": 317249,
+        "analysis:checksum": "846797a8d2fee6c188fd05b11945708ae66b8037",
+        "analysis:mime-type": "text/plain",
+        "analysis:last-modified-at": "2022-04-14T13:24:30+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:parsing:finished_at": "2023-08-28 22:23:35.709356+02",
+        "analysis:parsing:parsing_table": "1af368f5e893696d2800e4382dd9bfc3",
+        "check:id": 41597816,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/056c3d1e-87ef-42b2-ae9c-57ad9d81b563",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:24:30.420000+00:00",
+        "last_modified_internal": "2022-04-14T15:24:32.013000+00:00"
+      }
+    },
+    {
+      "id": "18847484-f622-4ccc-baa9-e6b12f749514",
+      "title": "resultats-par-niveau-dpt-t1-france-entiere.xlsx",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "xlsx",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152411/resultats-par-niveau-dpt-t1-france-entiere.xlsx",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/18847484-f622-4ccc-baa9-e6b12f749514",
+      "checksum": {
+        "type": "sha1",
+        "value": "9627e9c00594eef1b7b812306e99a95c822e91ba"
+      },
+      "filesize": 54785,
+      "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "created_at": "2022-04-14T15:24:11.571000+00:00",
+      "last_modified": "2022-04-14T15:24:13.219000+00:00",
+      "metrics": {
+        "views": 3393
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T10:37:43.879556+00:00",
+        "check:headers:content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "check:headers:content-length": 54785,
+        "analysis:last-modified-at": "2022-04-14T13:24:11+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:content-length": 54785,
+        "analysis:checksum": "9627e9c00594eef1b7b812306e99a95c822e91ba",
+        "analysis:mime-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "analysis:parsing:started_at": "2024-10-23T12:04:26.376594+00:00",
+        "analysis:parsing:finished_at": "2024-10-23T12:04:29.429301+00:00",
+        "analysis:parsing:parsing_table": "e6c062c8b0f7e0cb69f5bf41dcdd53ad",
+        "check:id": 41661314,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/18847484-f622-4ccc-baa9-e6b12f749514",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:24:11.571000+00:00",
+        "last_modified_internal": "2022-04-14T15:24:13.219000+00:00"
+      }
+    },
+    {
+      "id": "8b4d68f6-4490-4afc-b632-6c259073a4b9",
+      "title": "resultats-par-niveau-dpt-t1-france-entiere.txt",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "txt",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152356/resultats-par-niveau-dpt-t1-france-entiere.txt",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/8b4d68f6-4490-4afc-b632-6c259073a4b9",
+      "checksum": {
+        "type": "sha1",
+        "value": "a412b9553eec2624e616ef3e411ddf6de7aea9d7"
+      },
+      "filesize": 54697,
+      "mime": "text/plain",
+      "created_at": "2022-04-14T15:23:56.644000+00:00",
+      "last_modified": "2022-04-14T15:23:58.328000+00:00",
+      "metrics": {
+        "views": 1699
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T05:20:41.474954+00:00",
+        "check:headers:content-type": "text/plain",
+        "analysis:content-length": 54697,
+        "analysis:checksum": "a412b9553eec2624e616ef3e411ddf6de7aea9d7",
+        "analysis:mime-type": "text/plain",
+        "analysis:last-modified-at": "2022-04-14T13:23:56+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:parsing:finished_at": "2023-08-30 15:13:49.002987+02",
+        "analysis:parsing:parsing_table": "f3662b99c3b311d4bfdcfd0a81bcde51",
+        "check:id": 41620460,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/8b4d68f6-4490-4afc-b632-6c259073a4b9",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:23:56.644000+00:00",
+        "last_modified_internal": "2022-04-14T15:23:58.328000+00:00"
+      }
+    },
+    {
+      "id": "027763c9-f97d-4468-b2d5-c310a1020fa7",
+      "title": "resultats-par-niveau-reg-t1-france-entiere.xlsx",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "xlsx",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152347/resultats-par-niveau-reg-t1-france-entiere.xlsx",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/027763c9-f97d-4468-b2d5-c310a1020fa7",
+      "checksum": {
+        "type": "sha1",
+        "value": "dd6f3c5bb8d0a7f6ec2d1f535d060068f128e3fa"
+      },
+      "filesize": 14805,
+      "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "created_at": "2022-04-14T15:23:48.033000+00:00",
+      "last_modified": "2022-04-14T15:23:49.883000+00:00",
+      "metrics": {
+        "views": 1467
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T03:26:34.191318+00:00",
+        "check:headers:content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "check:headers:content-length": 14805,
+        "analysis:last-modified-at": "2022-04-14T13:23:47+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:content-length": 14805,
+        "analysis:checksum": "dd6f3c5bb8d0a7f6ec2d1f535d060068f128e3fa",
+        "analysis:mime-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "analysis:parsing:started_at": "2024-10-22T21:06:38.663795+00:00",
+        "analysis:parsing:finished_at": "2024-10-22T21:06:40.316977+00:00",
+        "analysis:parsing:parsing_table": "7c655582e709cf12bf39e4b5642a6632",
+        "check:id": 41608380,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/027763c9-f97d-4468-b2d5-c310a1020fa7",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:23:48.033000+00:00",
+        "last_modified_internal": "2022-04-14T15:23:49.883000+00:00"
+      }
+    },
+    {
+      "id": "cbf026c5-e0bf-4ff8-b1cd-eb994cd26290",
+      "title": "resultats-par-niveau-reg-t1-france-entiere.txt",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "txt",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152331/resultats-par-niveau-reg-t1-france-entiere.txt",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/cbf026c5-e0bf-4ff8-b1cd-eb994cd26290",
+      "checksum": {
+        "type": "sha1",
+        "value": "283f1d175c2b47381e48fe3f8f6f3ae8c36a8dc7"
+      },
+      "filesize": 9628,
+      "mime": "text/plain",
+      "created_at": "2022-04-14T15:23:31.594000+00:00",
+      "last_modified": "2022-04-14T15:23:33.117000+00:00",
+      "metrics": {
+        "views": 1402
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-14T14:02:13.191698+00:00",
+        "check:headers:content-type": "text/plain",
+        "analysis:content-length": 9628,
+        "analysis:checksum": "283f1d175c2b47381e48fe3f8f6f3ae8c36a8dc7",
+        "analysis:mime-type": "text/plain",
+        "analysis:last-modified-at": "2022-04-14T13:23:31+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:parsing:finished_at": "2023-08-29 06:10:00.888507+02",
+        "analysis:parsing:parsing_table": "c9629730f040a732cc2a70bd5e70d8c7",
+        "check:id": 41531649,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/cbf026c5-e0bf-4ff8-b1cd-eb994cd26290",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:23:31.594000+00:00",
+        "last_modified_internal": "2022-04-14T15:23:33.117000+00:00"
+      }
+    },
+    {
+      "id": "2a20fd47-aff4-410a-ba45-95d7b1f49b21",
+      "title": "resultats-par-niveau-fe-t1-outre-mer.xlsx",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "xlsx",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152315/resultats-par-niveau-fe-t1-outre-mer.xlsx",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/2a20fd47-aff4-410a-ba45-95d7b1f49b21",
+      "checksum": {
+        "type": "sha1",
+        "value": "97bd886d7bf019e38ac6a3361bc6466300e09167"
+      },
+      "filesize": 6782,
+      "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "created_at": "2022-04-14T15:23:15.473000+00:00",
+      "last_modified": "2022-04-14T15:23:17.289000+00:00",
+      "metrics": {
+        "views": 609
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T06:47:57.354490+00:00",
+        "check:headers:content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "check:headers:content-length": 6782,
+        "analysis:last-modified-at": "2022-04-14T13:23:15+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:content-length": 6782,
+        "analysis:checksum": "97bd886d7bf019e38ac6a3361bc6466300e09167",
+        "analysis:mime-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "analysis:parsing:started_at": "2024-10-23T10:49:39.266644+00:00",
+        "analysis:parsing:finished_at": "2024-10-23T10:49:41.714025+00:00",
+        "analysis:parsing:parsing_table": "64acdbb9111985a3c6ce3a9efd38b9d3",
+        "check:id": 41630016,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/2a20fd47-aff4-410a-ba45-95d7b1f49b21",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:23:15.473000+00:00",
+        "last_modified_internal": "2022-04-14T15:23:17.289000+00:00"
+      }
+    },
+    {
+      "id": "5272b637-dacf-4153-8966-aa763a76c4a3",
+      "title": "resultats-par-niveau-fe-t1-outre-mer.txt",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "txt",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152300/resultats-par-niveau-fe-t1-outre-mer.txt",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/5272b637-dacf-4153-8966-aa763a76c4a3",
+      "checksum": {
+        "type": "sha1",
+        "value": "2e641ef9103aeceef3e4903f1b195ef1eadbe9bf"
+      },
+      "filesize": 781,
+      "mime": "text/plain",
+      "created_at": "2022-04-14T15:23:00.301000+00:00",
+      "last_modified": "2022-04-14T15:23:02.097000+00:00",
+      "metrics": {
+        "views": 434
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:timeout": false,
+        "check:date": "2026-02-15T00:48:42.805750+00:00",
+        "analysis:content-length": 781,
+        "analysis:checksum": "2e641ef9103aeceef3e4903f1b195ef1eadbe9bf",
+        "analysis:mime-type": "text/plain",
+        "check:status": 200,
+        "check:headers:content-type": "text/plain",
+        "check:headers:content-length": 781,
+        "analysis:last-modified-at": "2022-04-14T13:23:00+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "check:id": 41590111,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": null,
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:23:00.301000+00:00",
+        "last_modified_internal": "2022-04-14T15:23:02.097000+00:00"
+      }
+    },
+    {
+      "id": "0f4d10a3-90ef-4330-a36b-7e8f518133f9",
+      "title": "resultats-par-niveau-fe-t1-metropole.xlsx",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "xlsx",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152249/resultats-par-niveau-fe-t1-metropole.xlsx",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/0f4d10a3-90ef-4330-a36b-7e8f518133f9",
+      "checksum": {
+        "type": "sha1",
+        "value": "e61c98e6843857f8969dc9bf51128003ca4b4a36"
+      },
+      "filesize": 6810,
+      "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "created_at": "2022-04-14T15:22:49.619000+00:00",
+      "last_modified": "2022-04-14T15:22:51.386000+00:00",
+      "metrics": {
+        "views": 867
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T04:14:17.939914+00:00",
+        "check:headers:content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "check:headers:content-length": 6810,
+        "analysis:last-modified-at": "2022-04-14T13:22:49+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:content-length": 6810,
+        "analysis:checksum": "e61c98e6843857f8969dc9bf51128003ca4b4a36",
+        "analysis:mime-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "analysis:parsing:started_at": "2024-10-23T06:45:36.433253+00:00",
+        "analysis:parsing:finished_at": "2024-10-23T06:45:38.907517+00:00",
+        "analysis:parsing:parsing_table": "6a58c02c3c29205055e89a3255b1c240",
+        "check:id": 41613449,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/0f4d10a3-90ef-4330-a36b-7e8f518133f9",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:22:49.619000+00:00",
+        "last_modified_internal": "2022-04-14T15:22:51.386000+00:00"
+      }
+    },
+    {
+      "id": "1674aa93-b002-46f1-988d-cb09164bce30",
+      "title": "resultats-par-niveau-fe-t1-metropole.txt",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "txt",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152238/resultats-par-niveau-fe-t1-metropole.txt",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/1674aa93-b002-46f1-988d-cb09164bce30",
+      "checksum": {
+        "type": "sha1",
+        "value": "ef606a3200300619a3c6499a2cf61e6d6f0d3777"
+      },
+      "filesize": 811,
+      "mime": "text/plain",
+      "created_at": "2022-04-14T15:22:38.469000+00:00",
+      "last_modified": "2022-04-14T15:22:40.110000+00:00",
+      "metrics": {
+        "views": 534
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T16:32:47.987566+00:00",
+        "check:headers:content-type": "text/plain",
+        "check:headers:content-length": 811,
+        "analysis:content-length": 811,
+        "analysis:checksum": "ef606a3200300619a3c6499a2cf61e6d6f0d3777",
+        "analysis:mime-type": "text/plain",
+        "check:id": 41704927,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": null,
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:22:38.469000+00:00",
+        "last_modified_internal": "2022-04-14T15:22:40.110000+00:00"
+      }
+    },
+    {
+      "id": "c65f9e3a-87d1-4a0b-9006-6baa3fe9f419",
+      "title": "resultats-par-niveau-fe-t1-france-entiere.xlsx",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "xlsx",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152228/resultats-par-niveau-fe-t1-france-entiere.xlsx",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/c65f9e3a-87d1-4a0b-9006-6baa3fe9f419",
+      "checksum": {
+        "type": "sha1",
+        "value": "247eb132c3f63cd8a4c93db1b6b7d7ffd1c550e8"
+      },
+      "filesize": 6812,
+      "mime": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "created_at": "2022-04-14T15:22:28.729000+00:00",
+      "last_modified": "2022-04-14T15:22:31.913000+00:00",
+      "metrics": {
+        "views": 970
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T14:10:26.075372+00:00",
+        "check:headers:content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "check:headers:content-length": 6812,
+        "analysis:last-modified-at": "2022-04-14T13:22:28+00:00",
+        "analysis:last-modified-detection": "last-modified-header",
+        "analysis:content-length": 6812,
+        "analysis:checksum": "247eb132c3f63cd8a4c93db1b6b7d7ffd1c550e8",
+        "analysis:mime-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "analysis:parsing:started_at": "2024-10-22T20:20:06.033315+00:00",
+        "analysis:parsing:finished_at": "2024-10-22T20:20:08.212694+00:00",
+        "analysis:parsing:parsing_table": "fca69781933c75cf75f19dfddffe5b09",
+        "check:id": 41689519,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": "https://explore.data.gouv.fr/fr/resources/c65f9e3a-87d1-4a0b-9006-6baa3fe9f419",
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:22:28.729000+00:00",
+        "last_modified_internal": "2022-04-14T15:22:31.913000+00:00"
+      }
+    },
+    {
+      "id": "1421c8db-b10f-4ed1-abb3-52b010e74e79",
+      "title": "resultats-par-niveau-fe-t1-france-entiere.txt",
+      "description": null,
+      "filetype": "file",
+      "type": "main",
+      "format": "txt",
+      "url": "https://static.data.gouv.fr/resources/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/20220414-152200/resultats-par-niveau-fe-t1-france-entiere.txt",
+      "latest": "https://www.data.gouv.fr/api/1/datasets/r/1421c8db-b10f-4ed1-abb3-52b010e74e79",
+      "checksum": {
+        "type": "sha1",
+        "value": "e47ede4708fb1481d756efb81eecad6e481f2321"
+      },
+      "filesize": 816,
+      "mime": "text/plain",
+      "created_at": "2022-04-14T15:22:00.766000+00:00",
+      "last_modified": "2022-04-14T15:22:06.048000+00:00",
+      "metrics": {
+        "views": 1494
+      },
+      "harvest": null,
+      "geopf": null,
+      "extras": {
+        "check:available": true,
+        "check:status": 200,
+        "check:timeout": false,
+        "check:date": "2026-02-15T18:37:28.339767+00:00",
+        "check:headers:content-type": "text/plain",
+        "check:headers:content-length": 816,
+        "analysis:content-length": 816,
+        "analysis:checksum": "e47ede4708fb1481d756efb81eecad6e481f2321",
+        "analysis:mime-type": "text/plain",
+        "check:id": 41719809,
+        "check:cors:status": 204,
+        "check:cors:allow-origin": "*",
+        "check:cors:allow-methods": "GET, OPTIONS",
+        "check:cors:allow-headers": "Origin,Authorization,Accept,DNT,User-Agent,If-Modified-Since,Cache-Control,Content-Type,Range,sentry-trace,baggage",
+        "check:cors:max-age": "1728000",
+        "check:cors:allow-credentials": "true"
+      },
+      "preview_url": null,
+      "schema": {
+        "name": null,
+        "version": null,
+        "url": null
+      },
+      "internal": {
+        "created_at_internal": "2022-04-14T15:22:00.766000+00:00",
+        "last_modified_internal": "2022-04-14T15:22:06.048000+00:00"
+      }
+    }
+  ],
+  "next_page": null,
+  "previous_page": null,
+  "page": 1,
+  "page_size": 50,
+  "total": 16
+}

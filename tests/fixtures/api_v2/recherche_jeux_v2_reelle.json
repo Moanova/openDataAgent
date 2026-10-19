@@ -1,0 +1,1532 @@
+{
+  "data": [
+    {
+      "id": "62581fdf02e05e365ea227a1",
+      "title": "Election présidentielle des 10 et 24 avril 2022 - Résultats définitifs du 1er tour",
+      "acronym": null,
+      "slug": "election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour",
+      "description": "Résultats du 1er tour de l’élection présidentielle 2022, France entière,métropole, outre-mer, par régions, départements, communes, circonscriptions législatives et bureaux de vote.\nCes résultats sont définitifs.\nLe détail des résultats par listes consulaires des Français de l'étranger est accessible depuis le site du ministère des affaires étrangères au lien suivant :[site du Ministère de l'Europe et des Affaires étrangère](https://www.diplomatie.gouv.fr/fr/services-aux-francais/voter-a-l-etranger/resultats-des-elections/article/election-presidentielle-2022-resultats-du-1er-tour-pour-les-francais-de-l)",
+      "description_short": null,
+      "created_at": "2022-04-14T15:21:35.194000+00:00",
+      "last_modified": "2022-04-19T11:44:16.818000+00:00",
+      "deleted": null,
+      "private": false,
+      "tags": [],
+      "badges": [],
+      "resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/62581fdf02e05e365ea227a1/resources/?page=1&page_size=50",
+        "type": "GET",
+        "total": 16
+      },
+      "community_resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/1/datasets/community_resources/?dataset=62581fdf02e05e365ea227a1&page=1&page_size=50",
+        "type": "GET",
+        "total": 11
+      },
+      "frequency": "unknown",
+      "frequency_date": null,
+      "extras": {},
+      "metrics": {
+        "discussions": 8,
+        "discussions_open": 8,
+        "reuses": 19,
+        "reuses_by_months": {
+          "2025-09": 0,
+          "2025-10": 0,
+          "2025-11": 0,
+          "2025-12": 0,
+          "2026-01": 0,
+          "2026-02": 0,
+          "2026-03": 0,
+          "2026-04": 0,
+          "2026-05": 1,
+          "2026-06": 1,
+          "2026-07": 1,
+          "2026-08": 3,
+          "2026-09": 0
+        },
+        "dataservices": 1,
+        "followers": 8,
+        "followers_by_months": {
+          "2024-08": 1,
+          "2024-09": 0,
+          "2024-10": 2,
+          "2024-11": 0,
+          "2024-12": 0,
+          "2025-01": 1,
+          "2025-02": 0,
+          "2025-03": 0,
+          "2025-04": 0,
+          "2025-05": 0,
+          "2025-06": 0,
+          "2025-07": 0,
+          "2025-08": 0
+        },
+        "views": 97300,
+        "resources_downloads": 58647
+      },
+      "organization": {
+        "badges": [
+          {
+            "kind": "public-service"
+          },
+          {
+            "kind": "certified"
+          }
+        ],
+        "name": "Ministère de l'intérieur",
+        "acronym": "MI",
+        "slug": "ministere-de-linterieur",
+        "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a.jpg",
+        "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a-100.jpg",
+        "page": "https://www.data.gouv.fr/organizations/ministere-de-linterieur",
+        "permissions": {
+          "edit": false,
+          "delete": false,
+          "members": false,
+          "harvest": false,
+          "private": false
+        },
+        "uri": "https://www.data.gouv.fr/api/1/organizations/ministere-de-linterieur/",
+        "id": "534fff91a3a7292c64a77f53",
+        "class": "Organization"
+      },
+      "owner": null,
+      "temporal_coverage": null,
+      "spatial": null,
+      "license": "notspecified",
+      "access_type": "open",
+      "access_audiences": [],
+      "access_type_reason_category": null,
+      "access_type_reason": null,
+      "authorization_request_url": null,
+      "uri": "https://www.data.gouv.fr/api/1/datasets/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour/",
+      "page": "https://www.data.gouv.fr/datasets/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-1er-tour",
+      "last_update": "2022-04-14T15:26:17.908000+00:00",
+      "archived": null,
+      "doi": null,
+      "quality": {
+        "license": true,
+        "temporal_coverage": false,
+        "spatial": false,
+        "update_frequency": false,
+        "dataset_description_quality": true,
+        "has_resources": true,
+        "has_open_format": true,
+        "all_resources_available": true,
+        "resources_documentation": false,
+        "score": 0.4444444444444444
+      },
+      "harvest": null,
+      "geopf": null,
+      "internal": {
+        "created_at_internal": "2022-04-14T15:21:35.194000+00:00",
+        "last_modified_internal": "2022-04-19T11:44:16.818000+00:00"
+      },
+      "contact_points": [],
+      "featured": true,
+      "permissions": {
+        "delete": false,
+        "edit": false,
+        "edit_resources": false
+      }
+    },
+    {
+      "id": "61f109d1fdf76c4be0604d0c",
+      "title": "Parrainages des candidats à l'élection présidentielle française de 2022",
+      "acronym": null,
+      "slug": "parrainages-des-candidats-a-lelection-presidentielle-francaise-de-2022",
+      "description": "Le Conseil constitutionnel publiera, deux fois par semaine, les parrainages validés. Ces données seront disponibles en format données ouvertes, ou « open data ».\n\nATTENTION: le total des parrainages affiché ne préjuge pas de la validité de la candidature. Seule la décision finale du Conseil constitutionnel fait foi.\n\nEn effet, une candidature est retenue si:\n1 – pas plus d’un dixième des 500 parrainages nécessaires, c’est-à-dire 50 au maximum, émanent d’un même département ou collectivité d’outre-mer ;\n2 – ces parrainages sont signés par des élus d’au moins 30 départements ou collectivités d’outre-mer.",
+      "description_short": null,
+      "created_at": "2022-01-26T09:44:01.715000+00:00",
+      "last_modified": "2022-03-07T18:34:26.124000+00:00",
+      "deleted": null,
+      "private": false,
+      "tags": [
+        "candidats",
+        "conseil",
+        "conseil-constitutionnel",
+        "constitution",
+        "constitutionnel",
+        "election-presidentielle",
+        "elections",
+        "parrainages",
+        "presidentielle",
+        "presidentielle2022"
+      ],
+      "badges": [],
+      "resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/61f109d1fdf76c4be0604d0c/resources/?page=1&page_size=50",
+        "type": "GET",
+        "total": 34
+      },
+      "community_resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/1/datasets/community_resources/?dataset=61f109d1fdf76c4be0604d0c&page=1&page_size=50",
+        "type": "GET",
+        "total": 0
+      },
+      "frequency": "semiweekly",
+      "frequency_date": null,
+      "extras": {},
+      "metrics": {
+        "discussions": 3,
+        "discussions_open": 1,
+        "reuses": 21,
+        "reuses_by_months": {
+          "2024-08": 0,
+          "2024-09": 0,
+          "2024-10": 0,
+          "2024-11": 0,
+          "2024-12": 0,
+          "2025-01": 0,
+          "2025-02": 0,
+          "2025-03": 0,
+          "2025-04": 0,
+          "2025-05": 0,
+          "2025-06": 0,
+          "2025-07": 0,
+          "2025-08": 0
+        },
+        "dataservices": 0,
+        "followers": 9,
+        "followers_by_months": {
+          "2024-08": 0,
+          "2024-09": 0,
+          "2024-10": 0,
+          "2024-11": 0,
+          "2024-12": 0,
+          "2025-01": 0,
+          "2025-02": 0,
+          "2025-03": 0,
+          "2025-04": 0,
+          "2025-05": 0,
+          "2025-06": 0,
+          "2025-07": 0,
+          "2025-08": 0
+        },
+        "views": 20086,
+        "resources_downloads": 24587
+      },
+      "organization": {
+        "badges": [
+          {
+            "kind": "public-service"
+          },
+          {
+            "kind": "certified"
+          }
+        ],
+        "name": "Conseil constitutionnel",
+        "acronym": null,
+        "slug": "conseil-constitutionnel",
+        "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/b2/24e8bb86d94820a1c0fb43a55b9722.png",
+        "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/b2/24e8bb86d94820a1c0fb43a55b9722-100.png",
+        "page": "https://www.data.gouv.fr/organizations/conseil-constitutionnel",
+        "permissions": {
+          "edit": false,
+          "delete": false,
+          "members": false,
+          "harvest": false,
+          "private": false
+        },
+        "uri": "https://www.data.gouv.fr/api/1/organizations/conseil-constitutionnel/",
+        "id": "540f9a01a3a72928898af4a3",
+        "class": "Organization"
+      },
+      "owner": null,
+      "temporal_coverage": {
+        "start": "2022-01-27",
+        "end": "2022-03-04"
+      },
+      "spatial": {
+        "geom": null,
+        "zones": [
+          "country:fr"
+        ],
+        "granularity": "fr:departement"
+      },
+      "license": "other-pd",
+      "access_type": "open",
+      "access_audiences": [],
+      "access_type_reason_category": null,
+      "access_type_reason": null,
+      "authorization_request_url": null,
+      "uri": "https://www.data.gouv.fr/api/1/datasets/parrainages-des-candidats-a-lelection-presidentielle-francaise-de-2022/",
+      "page": "https://www.data.gouv.fr/datasets/parrainages-des-candidats-a-lelection-presidentielle-francaise-de-2022",
+      "last_update": "2022-03-07T18:34:26.124000+00:00",
+      "archived": null,
+      "doi": null,
+      "quality": {
+        "license": true,
+        "temporal_coverage": true,
+        "spatial": true,
+        "update_frequency": true,
+        "dataset_description_quality": true,
+        "has_resources": true,
+        "has_open_format": true,
+        "all_resources_available": true,
+        "resources_documentation": true,
+        "update_fulfilled_in_time": false,
+        "score": 0.8888888888888888
+      },
+      "harvest": null,
+      "geopf": null,
+      "internal": {
+        "created_at_internal": "2022-01-26T09:44:01.715000+00:00",
+        "last_modified_internal": "2022-03-07T18:34:26.124000+00:00"
+      },
+      "contact_points": [],
+      "featured": true,
+      "permissions": {
+        "delete": false,
+        "edit": false,
+        "edit_resources": false
+      }
+    },
+    {
+      "id": "626a86215fb310e32b48b137",
+      "title": "Election présidentielle des 10 et 24 avril 2022 - Résultats définitifs du 2nd tour",
+      "acronym": null,
+      "slug": "election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-2nd-tour",
+      "description": "Résultats du 2nd tour de l’élection présidentielle 2022, France entière,métropole, outre-mer, par régions, départements, communes, circonscriptions législatives et bureaux de vote.\nCes résultats sont définitifs",
+      "description_short": null,
+      "created_at": "2022-04-28T14:18:41.116000+00:00",
+      "last_modified": "2022-04-28T14:24:31.861000+00:00",
+      "deleted": null,
+      "private": false,
+      "tags": [],
+      "badges": [],
+      "resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/626a86215fb310e32b48b137/resources/?page=1&page_size=50",
+        "type": "GET",
+        "total": 16
+      },
+      "community_resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/1/datasets/community_resources/?dataset=626a86215fb310e32b48b137&page=1&page_size=50",
+        "type": "GET",
+        "total": 3
+      },
+      "frequency": "unknown",
+      "frequency_date": null,
+      "extras": {},
+      "metrics": {
+        "discussions": 3,
+        "discussions_open": 3,
+        "reuses": 13,
+        "reuses_by_months": {
+          "2025-10": 0,
+          "2025-11": 0,
+          "2025-12": 0,
+          "2026-01": 0,
+          "2026-02": 0,
+          "2026-03": 0,
+          "2026-04": 0,
+          "2026-05": 0,
+          "2026-06": 1,
+          "2026-07": 1,
+          "2026-08": 2,
+          "2026-09": 0,
+          "2026-10": 1
+        },
+        "dataservices": 1,
+        "followers": 3,
+        "followers_by_months": {
+          "2024-08": 0,
+          "2024-09": 0,
+          "2024-10": 0,
+          "2024-11": 0,
+          "2024-12": 0,
+          "2025-01": 0,
+          "2025-02": 0,
+          "2025-03": 0,
+          "2025-04": 0,
+          "2025-05": 0,
+          "2025-06": 0,
+          "2025-07": 0,
+          "2025-08": 0
+        },
+        "views": 30655,
+        "resources_downloads": 24150
+      },
+      "organization": {
+        "badges": [
+          {
+            "kind": "public-service"
+          },
+          {
+            "kind": "certified"
+          }
+        ],
+        "name": "Ministère de l'intérieur",
+        "acronym": "MI",
+        "slug": "ministere-de-linterieur",
+        "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a.jpg",
+        "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a-100.jpg",
+        "page": "https://www.data.gouv.fr/organizations/ministere-de-linterieur",
+        "permissions": {
+          "edit": false,
+          "delete": false,
+          "members": false,
+          "harvest": false,
+          "private": false
+        },
+        "uri": "https://www.data.gouv.fr/api/1/organizations/ministere-de-linterieur/",
+        "id": "534fff91a3a7292c64a77f53",
+        "class": "Organization"
+      },
+      "owner": null,
+      "temporal_coverage": null,
+      "spatial": null,
+      "license": "notspecified",
+      "access_type": "open",
+      "access_audiences": [],
+      "access_type_reason_category": null,
+      "access_type_reason": null,
+      "authorization_request_url": null,
+      "uri": "https://www.data.gouv.fr/api/1/datasets/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-2nd-tour/",
+      "page": "https://www.data.gouv.fr/datasets/election-presidentielle-des-10-et-24-avril-2022-resultats-definitifs-du-2nd-tour",
+      "last_update": "2022-04-28T14:24:31.861000+00:00",
+      "archived": null,
+      "doi": null,
+      "quality": {
+        "license": true,
+        "temporal_coverage": false,
+        "spatial": false,
+        "update_frequency": false,
+        "dataset_description_quality": true,
+        "has_resources": true,
+        "has_open_format": true,
+        "all_resources_available": true,
+        "resources_documentation": false,
+        "score": 0.4444444444444444
+      },
+      "harvest": null,
+      "geopf": null,
+      "internal": {
+        "created_at_internal": "2022-04-28T14:18:41.116000+00:00",
+        "last_modified_internal": "2022-04-28T14:24:31.861000+00:00"
+      },
+      "contact_points": [],
+      "featured": true,
+      "permissions": {
+        "delete": false,
+        "edit": false,
+        "edit_resources": false
+      }
+    },
+    {
+      "id": "5901a718c751df3f49b29ff8",
+      "title": "Election présidentielle des 23 avril et 7 mai 2017 - Résultats définitifs du 1er tour par bureaux de vote",
+      "acronym": null,
+      "slug": "election-presidentielle-des-23-avril-et-7-mai-2017-resultats-definitifs-du-1er-tour-par-bureaux-de-vote",
+      "description": "Résultats du 1er tour de l’élection présidentielle 2017, par bureaux de vote.\nCes résultats sont définitifs.\n",
+      "description_short": null,
+      "created_at": "2017-04-27T10:08:56.834000+00:00",
+      "last_modified": "2017-04-27T10:10:03.696000+00:00",
+      "deleted": null,
+      "private": false,
+      "tags": [
+        "1er-tour",
+        "2017",
+        "bureaux-de-vote",
+        "election",
+        "election-presidentielle",
+        "presidentielle",
+        "resultats"
+      ],
+      "badges": [],
+      "resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/5901a718c751df3f49b29ff8/resources/?page=1&page_size=50",
+        "type": "GET",
+        "total": 1
+      },
+      "community_resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/1/datasets/community_resources/?dataset=5901a718c751df3f49b29ff8&page=1&page_size=50",
+        "type": "GET",
+        "total": 4
+      },
+      "frequency": "continuous",
+      "frequency_date": null,
+      "extras": {},
+      "metrics": {
+        "discussions": 4,
+        "discussions_open": 4,
+        "reuses": 3,
+        "reuses_by_months": {
+          "2024-11": 0,
+          "2024-12": 0,
+          "2025-01": 0,
+          "2025-02": 0,
+          "2025-03": 0,
+          "2025-04": 0,
+          "2025-05": 0,
+          "2025-06": 0,
+          "2025-07": 0,
+          "2025-08": 0,
+          "2025-09": 0,
+          "2025-10": 0,
+          "2025-11": 0
+        },
+        "dataservices": 0,
+        "followers": 2,
+        "followers_by_months": {
+          "2024-08": 0,
+          "2024-09": 0,
+          "2024-10": 0,
+          "2024-11": 0,
+          "2024-12": 0,
+          "2025-01": 0,
+          "2025-02": 0,
+          "2025-03": 0,
+          "2025-04": 0,
+          "2025-05": 0,
+          "2025-06": 0,
+          "2025-07": 0,
+          "2025-08": 0
+        },
+        "views": 22412,
+        "resources_downloads": 5208
+      },
+      "organization": {
+        "badges": [
+          {
+            "kind": "public-service"
+          },
+          {
+            "kind": "certified"
+          }
+        ],
+        "name": "Ministère de l'intérieur",
+        "acronym": "MI",
+        "slug": "ministere-de-linterieur",
+        "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a.jpg",
+        "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a-100.jpg",
+        "page": "https://www.data.gouv.fr/organizations/ministere-de-linterieur",
+        "permissions": {
+          "edit": false,
+          "delete": false,
+          "members": false,
+          "harvest": false,
+          "private": false
+        },
+        "uri": "https://www.data.gouv.fr/api/1/organizations/ministere-de-linterieur/",
+        "id": "534fff91a3a7292c64a77f53",
+        "class": "Organization"
+      },
+      "owner": null,
+      "temporal_coverage": {
+        "start": "2017-04-23",
+        "end": "2017-04-27"
+      },
+      "spatial": {
+        "geom": null,
+        "zones": [
+          "country:fr"
+        ],
+        "granularity": "fr:commune"
+      },
+      "license": "fr-lo",
+      "access_type": "open",
+      "access_audiences": [],
+      "access_type_reason_category": null,
+      "access_type_reason": null,
+      "authorization_request_url": null,
+      "uri": "https://www.data.gouv.fr/api/1/datasets/election-presidentielle-des-23-avril-et-7-mai-2017-resultats-definitifs-du-1er-tour-par-bureaux-de-vote/",
+      "page": "https://www.data.gouv.fr/datasets/election-presidentielle-des-23-avril-et-7-mai-2017-resultats-definitifs-du-1er-tour-par-bureaux-de-vote",
+      "last_update": "2017-04-27T10:10:03.696000+00:00",
+      "archived": null,
+      "doi": null,
+      "quality": {
+        "license": true,
+        "temporal_coverage": true,
+        "spatial": true,
+        "update_frequency": true,
+        "dataset_description_quality": false,
+        "has_resources": true,
+        "has_open_format": true,
+        "all_resources_available": true,
+        "resources_documentation": true,
+        "update_fulfilled_in_time": true,
+        "score": 0.8888888888888888
+      },
+      "harvest": null,
+      "geopf": null,
+      "internal": {
+        "created_at_internal": "2017-04-27T10:08:56.834000+00:00",
+        "last_modified_internal": "2017-04-27T10:10:03.696000+00:00"
+      },
+      "contact_points": [],
+      "featured": true,
+      "permissions": {
+        "delete": false,
+        "edit": false,
+        "edit_resources": false
+      }
+    },
+    {
+      "id": "5369937da3a729239d2041e6",
+      "title": "Election présidentielle 2012 - Résultats",
+      "acronym": null,
+      "slug": "election-presidentielle-2012-resultats-572126",
+      "description": "Résultats de l’élection présidentielle 2012, tours 1 et 2, par communes",
+      "description_short": null,
+      "created_at": "2013-07-08T15:39:55.417000+00:00",
+      "last_modified": "2016-03-14T23:33:01.506000+00:00",
+      "deleted": null,
+      "private": false,
+      "tags": [],
+      "badges": [],
+      "resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/5369937da3a729239d2041e6/resources/?page=1&page_size=50",
+        "type": "GET",
+        "total": 1
+      },
+      "community_resources": {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/1/datasets/community_resources/?dataset=5369937da3a729239d2041e6&page=1&page_size=50",
+        "type": "GET",
+        "total": 1
+      },
+      "frequency": "unknown",
+      "frequency_date": null,
+      "extras": {
+        "Date de production des données": "19/03/2013",
+        "Langue": "français",
+        "Type de données": "non communiqué",
+        "datagouv_ckan_id": "7c38c60c-929e-4db7-8335-e3e585d06298",
+        "datagouv_ckan_last_sync": "2014-09-17T04:09:01.074000"
+      },
+      "metrics": {
+        "discussions": 2,
+        "discussions_open": 2,
+        "reuses": 17,
+        "reuses_by_months": {
+          "2024-08": 0,
+          "2024-09": 0,
+          "2024-10": 0,
+          "2024-11": 0,
+          "2024-12": 0,
+          "2025-01": 0,
+          "2025-02": 0,
+          "2025-03": 0,
+          "2025-04": 0,
+          "2025-05": 0,
+          "2025-06": 0,
+          "2025-07": 0,
+          "2025-08": 0
+        },
+        "dataservices": 0,
+        "followers": 5,
+        "followers_by_months": {
+          "2024-12": 0,
+          "2025-01": 0,
+          "2025-02": 0,
+          "2025-03": 0,
+          "2025-04": 0,
+          "2025-05": 0,
+          "2025-06": 0,
+          "2025-07": 0,
+          "2025-08": 0,
+          "2025-09": 0,
+          "2025-10": 0,
+          "2025-11": 0,
+          "2025-12": 0
+        },
+        "views": 12664,
+        "resources_downloads": 1184
+      },
+      "organization": {
+        "badges": [
+          {
+            "kind": "public-service"
+          },
+          {
+            "kind": "certified"
+          }
+        ],
+        "name": "Ministère de l'intérieur",
+        "acronym": "MI",
+        "slug": "ministere-de-linterieur",
+        "logo": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a.jpg",
+        "logo_thumbnail": "https://udata-avatars.s3.rbx.io.cloud.ovh.net/e1/27853c13394328b06c071c7953856a-100.jpg",
+        "page": "https://www.data.gouv.fr/organizations/ministere-de-linterieur",
+        "permissions": {
+          "edit": false,
+          "delete": false,
+          "members": false,
+          "harvest": false,
+          "private": false
+        },
+        "uri": "https://www.data.gouv.fr/api/1/organizations/ministere-de-linterieur/",
+        "id": "534fff91a3a7292c64a77f53",
+        "class": "Organization"
+      },
+      "owner": null,
+      "temporal_coverage": {
+        "start": "2012-04-22",
+        "end": "2012-05-06"
+      },
+      "spatial": {
+        "geom": null,
+        "zones": [
+          "country:fr"
+        ],
+        "granularity": "other"
+      },
+      "license": "fr-lo",
+      "access_type": "open",
+      "access_audiences": [],
+      "access_type_reason_category": null,
+      "access_type_reason": null,
+      "authorization_request_url": null,
+      "uri": "https://www.data.gouv.fr/api/1/datasets/election-presidentielle-2012-resultats-572126/",
+      "page": "https://www.data.gouv.fr/datasets/election-presidentielle-2012-resultats-572126",
+      "last_update": "2014-01-06T09:32:19.757000+00:00",
+      "archived": null,
+      "doi": null,
+      "quality": {
+        "license": true,
+        "temporal_coverage": true,
+        "spatial": true,
+        "update_frequency": false,
+        "dataset_description_quality": false,
+        "has_resources": true,
+        "has_open_format": false,
+        "all_resources_available": true,
+        "resources_documentation": false,
+        "score": 0.4444444444444444
+      },
+      "harvest": null,
+      "geopf": null,
+      "internal": {
+        "created_at_internal": "2013-07-08T15:39:55.417000+00:00",
+        "last_modified_internal": "2016-03-14T23:33:01.506000+00:00"
+      },
+      "contact_points": [],
+      "featured": false,
+      "permissions": {
+        "delete": false,
+        "edit": false,
+        "edit_resources": false
+      }
+    }
+  ],
+  "page": 1,
+  "page_size": 5,
+  "total": 235,
+  "next_page": "https://www.data.gouv.fr/api/2/datasets/search/?q=%C3%A9lections+pr%C3%A9sidentielles&page_size=5&page=2",
+  "previous_page": null,
+  "facets": {
+    "format_family": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "tabular",
+        "count": 208
+      },
+      {
+        "name": "machine_readable",
+        "count": 111
+      },
+      {
+        "name": "other",
+        "count": 71
+      },
+      {
+        "name": "documents",
+        "count": 24
+      },
+      {
+        "name": "geographical",
+        "count": 16
+      }
+    ],
+    "access_type": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "open",
+        "count": 225
+      }
+    ],
+    "producer_type": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "local-authority",
+        "count": 135
+      },
+      {
+        "name": "public-service",
+        "count": 59
+      },
+      {
+        "name": "user",
+        "count": 19
+      },
+      {
+        "name": "not-specified",
+        "count": 9
+      },
+      {
+        "name": "company",
+        "count": 3
+      }
+    ],
+    "organization_id_with_name": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "534fff91a3a7292c64a77f53|Ministère de l'intérieur",
+        "count": 26
+      },
+      {
+        "name": "534fffb3a3a7292c64a78129|Toulouse métropole",
+        "count": 16
+      },
+      {
+        "name": "534fff94a3a7292c64a77fb5|Ministère de l'Europe et des Affaires Etrangères (MEAE)",
+        "count": 14
+      },
+      {
+        "name": "534fff89a3a7292c64a77eb7|Ville de Paris",
+        "count": 13
+      },
+      {
+        "name": "534fffb9a3a7292c64a78159|Ville de Nantes",
+        "count": 12
+      },
+      {
+        "name": "534fffb7a3a7292c64a78145|Ville d'Issy-les-Moulineaux",
+        "count": 11
+      },
+      {
+        "name": "580735be88ee3814295ff490|Rennes Métropole en accès libre",
+        "count": 9
+      },
+      {
+        "name": "54da1f52c751df59f7467389|Grand Poitiers Open Data",
+        "count": 8
+      },
+      {
+        "name": "5821930b88ee386862c65bb3|La Rochelle",
+        "count": 8
+      },
+      {
+        "name": "5420b971a3a7297b491991e1|Ressourcerie datalocale",
+        "count": 7
+      },
+      {
+        "name": "5b17dbeb88ee3869a59ebdca|Commune d'Anglet",
+        "count": 6
+      },
+      {
+        "name": "534fffb8a3a7292c64a7814c|Ville de Marseille",
+        "count": 5
+      },
+      {
+        "name": "56d5a6d4c751df360dabb90c|Ville de Tours",
+        "count": 5
+      },
+      {
+        "name": "534fff65a3a7292c64a77d76|Commune de Brocas",
+        "count": 4
+      },
+      {
+        "name": "538346d6a3a72906c7ec5c36|Angers Loire Métropole",
+        "count": 4
+      },
+      {
+        "name": "5ae6b61b88ee382152cd61a9|Communauté d'agglomération de La Rochelle",
+        "count": 4
+      },
+      {
+        "name": "5d1db3df8b4c416509fd0870|Mairie de Cannes",
+        "count": 4
+      },
+      {
+        "name": "6095142a84c45b36441511eb|Ville de Soissons",
+        "count": 4
+      },
+      {
+        "name": "6abf7447a5a90a1a5a37c426|2027etmoi",
+        "count": 4
+      },
+      {
+        "name": "534fffa7a3a7292c64a780c5|Région des Pays de la Loire",
+        "count": 2
+      },
+      {
+        "name": "540f9a01a3a72928898af4a3|Conseil constitutionnel",
+        "count": 2
+      },
+      {
+        "name": "59d6526ac751df274a175d35|Ville de Lanester",
+        "count": 2
+      },
+      {
+        "name": "5be06c41634f4158c956b300|Mulhouse Alsace Agglomération",
+        "count": 2
+      },
+      {
+        "name": "5e281d5b634f417c0c54ae2f|Département de la Seine-Maritime",
+        "count": 2
+      },
+      {
+        "name": "5ec3f79b3eabce838d9bb542|Communauté d'Agglomération de Bourges",
+        "count": 2
+      },
+      {
+        "name": "601ab7b9d3aff74e6fc4ea68|Mairie de Lille",
+        "count": 2
+      },
+      {
+        "name": "624d8fbe80fd4fefba11f149|Ville d'Evry-Courcouronnes",
+        "count": 2
+      },
+      {
+        "name": "64f04846c1f09daa9f42a1a7|Saintes Grandes Rives, l'Agglo",
+        "count": 2
+      },
+      {
+        "name": "66cddee833d30ced863c509c|Ville de Saint-Martin-de-Crau",
+        "count": 2
+      },
+      {
+        "name": "534fff8aa3a7292c64a77ecd|Mairie de Toulouse",
+        "count": 1
+      },
+      {
+        "name": "534fffb8a3a7292c64a78149|Ville de Digne-les-Bains",
+        "count": 1
+      },
+      {
+        "name": "534fffb9a3a7292c64a7815d|Ville de Rennes",
+        "count": 1
+      },
+      {
+        "name": "539a5b76a3a7293bc272836c|Ville de Besancon",
+        "count": 1
+      },
+      {
+        "name": "539ef700a3a72946de9ebe1f|ACTION Nogent-sur-Marne",
+        "count": 1
+      },
+      {
+        "name": "53ba4599a3a729219b7beaca|Ville de Saint-Malo",
+        "count": 1
+      },
+      {
+        "name": "543b8dd288ee3869dba42d04|Sciences Po",
+        "count": 1
+      },
+      {
+        "name": "544e1b0888ee38289ae1ed05|Département des Hauts-de-Seine",
+        "count": 1
+      },
+      {
+        "name": "566594f388ee38738640355c|Ville d'Antibes",
+        "count": 1
+      },
+      {
+        "name": "56a29970c751df2a1cade714|Institut de la statistique de la Polynésie française",
+        "count": 1
+      },
+      {
+        "name": "57ff946788ee384fa45ff490|Mairie de Rodez",
+        "count": 1
+      },
+      {
+        "name": "582a045088ee3875cec65bb4|Conseil départemental de la Haute-Garonne - Haute-Garonne Open Data",
+        "count": 1
+      },
+      {
+        "name": "58d53c4688ee380aeea5e932|Ville de Bayonne",
+        "count": 1
+      },
+      {
+        "name": "58de5ed288ee3830702efd74|Datactivist",
+        "count": 1
+      },
+      {
+        "name": "596ca1ecc751df20cc2b38df|Mairie de Boé",
+        "count": 1
+      },
+      {
+        "name": "59e05c6588ee386ef4f4f86d|Ville de Lorient",
+        "count": 1
+      },
+      {
+        "name": "5aec4c3e88ee381426c8df86|Ville d'Onet-le-Château",
+        "count": 1
+      },
+      {
+        "name": "5b277e1e88ee381dff24d745|CORBION",
+        "count": 1
+      },
+      {
+        "name": "5be9467a634f415a8620975f|Ville de Martigues",
+        "count": 1
+      },
+      {
+        "name": "619ca98909e3d55199adf273|NSPPolls",
+        "count": 1
+      },
+      {
+        "name": "619f6a6f7e3df0247d6a31e1|Commune de Marseillan",
+        "count": 1
+      }
+    ],
+    "last_update": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "last_3_years",
+        "count": 62
+      },
+      {
+        "name": "last_12_months",
+        "count": 46
+      },
+      {
+        "name": "last_30_days",
+        "count": 22
+      }
+    ],
+    "tag": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "elections",
+        "count": 93
+      },
+      {
+        "name": "election",
+        "count": 92
+      },
+      {
+        "name": "presidentielle",
+        "count": 60
+      },
+      {
+        "name": "vote",
+        "count": 58
+      },
+      {
+        "name": "citoyennete",
+        "count": 43
+      },
+      {
+        "name": "election-presidentielle",
+        "count": 34
+      },
+      {
+        "name": "presidentielles",
+        "count": 28
+      },
+      {
+        "name": "resultats",
+        "count": 28
+      },
+      {
+        "name": "elections-presidentielles",
+        "count": 27
+      },
+      {
+        "name": "bureaux-de-vote",
+        "count": 22
+      },
+      {
+        "name": "citoyennete-institution",
+        "count": 21
+      },
+      {
+        "name": "scrutin",
+        "count": 18
+      },
+      {
+        "name": "administration-gouvernement-finances-publiques-citoyennete",
+        "count": 17
+      },
+      {
+        "name": "resultat",
+        "count": 16
+      },
+      {
+        "name": "2017",
+        "count": 15
+      },
+      {
+        "name": "bureau-de-vote",
+        "count": 11
+      },
+      {
+        "name": "francais-etablis-hors-de-france",
+        "count": 11
+      },
+      {
+        "name": "francais-de-l-etranger",
+        "count": 10
+      },
+      {
+        "name": "participation",
+        "count": 10
+      },
+      {
+        "name": "tour",
+        "count": 10
+      },
+      {
+        "name": "candidats",
+        "count": 8
+      },
+      {
+        "name": "etat-civil",
+        "count": 8
+      },
+      {
+        "name": "president",
+        "count": 8
+      },
+      {
+        "name": "2022",
+        "count": 7
+      },
+      {
+        "name": "administration",
+        "count": 7
+      },
+      {
+        "name": "election-presidentielle-2017",
+        "count": 7
+      },
+      {
+        "name": "presidentielle-2027",
+        "count": 7
+      },
+      {
+        "name": "resulats",
+        "count": 7
+      },
+      {
+        "name": "administration-generale",
+        "count": 6
+      },
+      {
+        "name": "procuration",
+        "count": 6
+      },
+      {
+        "name": "republique",
+        "count": 6
+      },
+      {
+        "name": "consulaire",
+        "count": 5
+      },
+      {
+        "name": "elu",
+        "count": 5
+      },
+      {
+        "name": "legislatives",
+        "count": 5
+      },
+      {
+        "name": "second",
+        "count": 5
+      },
+      {
+        "name": "1er-tour",
+        "count": 4
+      },
+      {
+        "name": "administration-finances-publiques-citoyennete",
+        "count": 4
+      },
+      {
+        "name": "citizenship",
+        "count": 4
+      },
+      {
+        "name": "communes",
+        "count": 4
+      },
+      {
+        "name": "democratie",
+        "count": 4
+      },
+      {
+        "name": "europeennes",
+        "count": 4
+      },
+      {
+        "name": "francais-de-letranger",
+        "count": 4
+      },
+      {
+        "name": "government",
+        "count": 4
+      },
+      {
+        "name": "public-finances",
+        "count": 4
+      },
+      {
+        "name": "regionales",
+        "count": 4
+      },
+      {
+        "name": "1er",
+        "count": 3
+      },
+      {
+        "name": "2012",
+        "count": 3
+      },
+      {
+        "name": "2nd-tour",
+        "count": 3
+      },
+      {
+        "name": "bureau",
+        "count": 3
+      },
+      {
+        "name": "circonscriptions",
+        "count": 3
+      }
+    ],
+    "license": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "lov2",
+        "count": 96
+      },
+      {
+        "name": "fr-lo",
+        "count": 62
+      },
+      {
+        "name": "notspecified",
+        "count": 30
+      },
+      {
+        "name": "odc-odbl",
+        "count": 25
+      },
+      {
+        "name": "cc-by",
+        "count": 10
+      },
+      {
+        "name": "other-pd",
+        "count": 2
+      },
+      {
+        "name": "cc-by-sa",
+        "count": 1
+      },
+      {
+        "name": "odc-pddl",
+        "count": 1
+      },
+      {
+        "name": "other-at",
+        "count": 1
+      }
+    ],
+    "format": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "csv",
+        "count": 187
+      },
+      {
+        "name": "json",
+        "count": 112
+      },
+      {
+        "name": "zip",
+        "count": 59
+      },
+      {
+        "name": "xls",
+        "count": 26
+      },
+      {
+        "name": "xlsx",
+        "count": 21
+      },
+      {
+        "name": "txt",
+        "count": 11
+      },
+      {
+        "name": "shp",
+        "count": 10
+      },
+      {
+        "name": "pdf",
+        "count": 8
+      },
+      {
+        "name": "url",
+        "count": 8
+      },
+      {
+        "name": "geojson",
+        "count": 7
+      },
+      {
+        "name": "html",
+        "count": 6
+      },
+      {
+        "name": "parquet",
+        "count": 4
+      },
+      {
+        "name": "n3",
+        "count": 3
+      },
+      {
+        "name": "octet-stream",
+        "count": 3
+      },
+      {
+        "name": "ods",
+        "count": 3
+      },
+      {
+        "name": "turtle",
+        "count": 3
+      },
+      {
+        "name": "arcgis geoservices rest api",
+        "count": 2
+      },
+      {
+        "name": "gz",
+        "count": 2
+      },
+      {
+        "name": "kml",
+        "count": 2
+      },
+      {
+        "name": "ld+json",
+        "count": 2
+      },
+      {
+        "name": "rdf+xml",
+        "count": 2
+      },
+      {
+        "name": "web page",
+        "count": 2
+      },
+      {
+        "name": "gdb",
+        "count": 1
+      },
+      {
+        "name": "gpkg",
+        "count": 1
+      },
+      {
+        "name": "png",
+        "count": 1
+      },
+      {
+        "name": "vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "count": 1
+      },
+      {
+        "name": "xml",
+        "count": 1
+      }
+    ],
+    "schema": [
+      {
+        "name": "all",
+        "count": 235
+      }
+    ],
+    "geozone": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "country:fr",
+        "count": 38
+      },
+      {
+        "name": "country-group:world",
+        "count": 6
+      },
+      {
+        "name": "fr:commune:02722",
+        "count": 4
+      },
+      {
+        "name": "fr:commune:13097",
+        "count": 2
+      },
+      {
+        "name": "fr:epci:200036473",
+        "count": 2
+      },
+      {
+        "name": "country-subset:fr:metro",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:06004",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:12202",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:25056",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:31555",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:34150",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:35288",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:42218",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:47031",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:56121",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:64102",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:74010",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:76165",
+        "count": 1
+      },
+      {
+        "name": "fr:commune:86194",
+        "count": 1
+      },
+      {
+        "name": "fr:departement:987",
+        "count": 1
+      }
+    ],
+    "granularity": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "fr:commune",
+        "count": 29
+      },
+      {
+        "name": "other",
+        "count": 26
+      },
+      {
+        "name": "country",
+        "count": 21
+      },
+      {
+        "name": "fr:departement",
+        "count": 11
+      },
+      {
+        "name": "country-group",
+        "count": 3
+      },
+      {
+        "name": "fr:epci",
+        "count": 2
+      },
+      {
+        "name": "fr:region",
+        "count": 2
+      },
+      {
+        "name": "fr:collectivite",
+        "count": 1
+      }
+    ],
+    "badge": [
+      {
+        "name": "all",
+        "count": 235
+      }
+    ],
+    "topics": [
+      {
+        "name": "all",
+        "count": 235
+      },
+      {
+        "name": "65b22219ffcf892bd066df76",
+        "count": 1
+      },
+      {
+        "name": "69bd1daefe8c270b107e8710",
+        "count": 1
+      },
+      {
+        "name": "69c189bd12661a481c5aa4a3",
+        "count": 1
+      }
+    ]
+  }
+}

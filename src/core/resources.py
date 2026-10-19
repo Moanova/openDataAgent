@@ -174,7 +174,7 @@ def lister_ressources(
         "id": id_jeu,
         "licence": data.get("license"),
         "organisation": (data.get("organization") or {}).get("name", ""),
-        "derniere_maj": data.get("last_modified"),
+        "derniere_maj": data.get("last_update"),
         "licence_conditionnelle": bool(_jeux_conditionnels.get(id_jeu, False)),
     }
     ressources_normalisees = [_normaliser_ressource(r) for r in data.get("resources", [])]

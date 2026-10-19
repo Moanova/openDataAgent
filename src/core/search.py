@@ -33,6 +33,21 @@ _BADGES_VERS_TYPE = {
 }
 
 
+def _nb_ressources(jeu: Dict[str, Any]) -> int:
+    """Resout le nombre de ressources d'un jeu selon le format du payload.
+
+    API v2 (T11.3) : `resources` est une sous-ressource paginee
+    (dictionnaire rel/href/total) ; les autres formats (liste embarquee,
+    ancienne v1 ou fixtures de test) restent toleres.
+    """
+    resources = jeu.get("resources")
+    if isinstance(resources, dict):
+        return int(resources.get("total") or 0)
+    if isinstance(resources, list):
+        return len(resources)
+    return 0
+
+
 def _type_organisation(jeu: Dict[str, Any]) -> Optional[str]:
     """Resout le type d'organisation depuis les badges de l'organisation.
 
@@ -115,6 +130,21 @@ def rechercher_jeux(
             "Limite ajustée à la valeur par défaut (10)",
             limite_demandee=limite,
         )
+
+    # T11.3 : l'API v2 ne supporte pas la fenêtre de mise à jour (sondage S11.0) ;
+    # le paramètre est déprécié au contrat (v1.3.0), accepté pour compatibilité mais
+    # ignoré — signalé à l'appelant sans faire échouer la recherche.
+    avertissement_fenetre = ""
+    if fenetre_maj != "toutes":
+        avertissement_fenetre = (
+            "Le paramètre 'fenetre_maj' est déprécié et ignoré : "
+            "l'API v2 de data.gouv.fr ne supporte pas la fenêtre de mise à jour."
+        )
+        logger.warning(
+            "fenetre_maj deprecie et ignore (API v2)",
+            fenetre_maj=fenetre_maj,
+        )
+        log_to_file("fenetre_maj deprecie et ignore (API v2)", fenetre_maj=fenetre_maj)
     
     # Appel reel a l'API data.gouv.fr via la couche HTTP (T3.1.1)
     try:
@@ -215,7 +245,7 @@ def rechercher_jeux(
         # Retour normalisé
         return {
             "statut": "succes",
-            "message": "",
+            "message": avertissement_fenetre,
             "donnees": {
                 "total_trouves": data["total"],
                 "jeux": [
@@ -225,8 +255,8 @@ def rechercher_jeux(
                         "organisation": (jeu.get("organization") or {}).get("name", ""),
                         "licence": jeu["license"],
                         "licence_conditionnelle": conditionnelle,
-                        "derniere_maj": jeu.get("last_modified"),
-                        "nb_ressources": len(jeu["resources"]),
+                        "derniere_maj": jeu.get("last_update"),
+                        "nb_ressources": _nb_ressources(jeu),
                         "url": jeu.get("page", ""),
                     }
                     for jeu, conditionnelle in jeux_acceptes

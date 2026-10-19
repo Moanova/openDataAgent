@@ -5,8 +5,8 @@
     {
       "nom": "rechercher_jeux",
       "fichier": "rechercher_jeux.json",
-      "version": "1.2.0",
-      "changelog": "Ajout du marquage licence_conditionnelle par jeu et du compteur acceptes_licence_conditionnelle (T7.5 : licences conditionnelles)."
+      "version": "1.3.0",
+      "changelog": "Deprecation du parametre fenetre_maj (T11.3, migration API v2) : accepte pour compatibilite mais ignore ; avertissement dans le message de reponse si une valeur autre que \"toutes\" est fournie. La source de verite derniere_maj passe a last_update (v2)."
     },
     {
       "nom": "lister_ressources",

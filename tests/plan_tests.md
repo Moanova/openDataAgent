@@ -50,7 +50,7 @@ Tests isolés, sans réseau. La couche HTTP est simulée.
 | TU-12 | rechercher_jeux avec mots_cles vide | erreur_parametres, jamais d'appel HTTP | Bloquant (CA-5) |
 | TU-13 | limite omise | valeur par défaut 10 appliquée | Bloquant |
 | TU-14 | limite au-delà du maximum | corrigée au maximum, pas d'exception | Bloquant (CA-5) |
-| TU-15 | tri et fenetre_maj valides | traduction correcte vers les paramètres API (sort, last_update_range) | Bloquant |
+| TU-15 | tri valide | traduction correcte vers les paramètres API v2 (sort) ; `fenetre_maj` déprécié : jamais traduit, avertissement dans `message` (T11.3) | Bloquant |
 | TU-16 | tri invalide | repli sur pertinence ou erreur_parametres, selon spécification | Avertissement |
 
 ### 3.4 Réponses normalisées
@@ -291,3 +291,19 @@ Implémentation : `tests/unit/test_extraction.py` (7 tests TU-47..53), `tests/un
 - Fixtures de réponses réelles : enregistrées une fois par version majeure des API, stockées dans le dépôt.
 - Journaux de conversations agentiques : conservés avec le contexte d'exécution (modèle, prompt, date), servant aux tests TA et à l'audit.
 - Résultats des exécutions de validation : consignés avec la version du code et les seuils mesurés (tokens, invocations, durées), pour le suivi des critères non fonctionnels.
+
+---
+
+## Tests T11.3 — Migration API v2 (18/10/2026)
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-15b | `fenetre_maj != "toutes"` : paramètre ignoré (jamais `last_update_range` dans l'URL), avertissement dépréciation dans `message`, recherche en succès | Succès + avertissement explicite | Bloquant |
+| TU-15c | `derniere_maj` alimenté depuis `last_update` (v2), pas `last_modified` | Valeur exacte de `last_update` | Bloquant |
+| TU-54 | Inventaire v2 : deux appels (détail + sous-ressource), payload reconstitué (liste `resources` plate), `page_size` 50 | Succès, `resources` liste plate au format cœur | Bloquant |
+| TU-55 | Inventaire v2 : boucle sur `next_page` (2 pages, 50 + 10 ressources) | 60 ressources agrégées, arrêt sur `next_page` absent | Bloquant |
+| TU-56 | Inventaire v2 : `next_page` aberrant inépuisable → plafond 20 pages | `echec_technique` explicite « plafond atteint » | Bloquant |
+| TU-57 | Inventaire v2 : 404 sur le détail → `jeu_introuvable`, aucun second appel | Statut exact, 1 seul appel HTTP | Bloquant |
+| TU-58 | Inventaire v2 : jeu sans ressource (total 0) | Succès, liste vide | Non bloquant |
+| TC-03 | Manifeste : `rechercher_jeux` en v1.3.0 (dépréciation `fenetre_maj`) | Version exacte | Bloquant |
+| TB-01b | Validation en réel : recherche « élections présidentielles » — le jeu du Ministère de l'Intérieur en page 1 (moteur v2) | Cas étalon satisfait | Bloquant (E8) |

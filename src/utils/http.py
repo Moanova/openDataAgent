@@ -32,8 +32,10 @@ load_dotenv()
 
 logger = get_logger("openDataAgent.utils.http")
 
-URL_BASE_DEFAUT = "https://www.data.gouv.fr/api/1/"
+URL_BASE_DEFAUT = "https://www.data.gouv.fr/api/2/"
 URL_BASE_TABULAIRE_DEFAUT = "https://tabular-api.data.gouv.fr/api"
+PAGE_SIZE_INVENTAIRE = 50
+PLAFOND_PAGES_INVENTAIRE = 20
 DELAIS_TENTATIVES = (1, 2)
 STATUTS_TRANSITOIRES = {429, 502, 503}
 
@@ -145,6 +147,16 @@ def appel_api(
     return ResultatAppel(statut="echec_technique", erreur="Tentatives epuisees")
 
 
+def _numero_page_depuis_url(url_next: Optional[str]) -> Optional[int]:
+    """Extrait le numero de page d'une URL `next_page` de l'API v2."""
+    from urllib.parse import urlparse, parse_qs
+
+    if not url_next:
+        return None
+    numero = parse_qs(urlparse(url_next).query).get("page")
+    return int(numero[0]) if numero else None
+
+
 def rechercher_jeux_api(
     mots_cles: list,
     tri: str = "pertinence",
@@ -153,16 +165,18 @@ def rechercher_jeux_api(
     page: int = 1,
     **kwargs: Any,
 ) -> ResultatAppel:
-    """Appelle l'endpoint de recherche /api/1/datasets/ (v1).
+    """Appelle l'endpoint de recherche /api/2/datasets/search/ (v2).
 
     Traduit les arguments normalisés vers les paramètres de l'API et
     valide la reponse contre le schema jsonschema de l'outil (T2.2) ;
     une reponse invalide produit un échec propre sans exception.
+    Le tri `pertinence` est le tri implicite du moteur v2 (celui du site).
+    Le parametre `fenetre_maj` est accepte pour compatibilite mais ignore :
+    l'API v2 ne supporte pas `last_update_range` (HTTP 400, sondage S11.0) ;
+    sa deprecation est tracee au niveau du coeur et du contrat (v1.3.0).
     Expose dans `donnees` la pagination normalisée `page_suivante`
-    (numero entier extrait de l'URL `next_page` de la v1, null si absente).
+    (numero entier extrait de l'URL `next_page` de la v2, null si absente).
     """
-    from urllib.parse import urlparse, parse_qs
-
     from src.contracts.validation_api import valider_reponse_api
 
     TRIS_API = {"recent": "-last_update", "vues": "-views", "reutilisations": "-reuses"}
@@ -174,10 +188,8 @@ def rechercher_jeux_api(
     }
     if tri != "pertinence":
         params["sort"] = TRIS_API[tri]
-    if fenetre_maj != "toutes":
-        params["last_update_range"] = fenetre_maj
 
-    resultat = appel_api("/datasets/", params=params, **kwargs)
+    resultat = appel_api("/datasets/search/", params=params, **kwargs)
     if not resultat.reussi:
         return resultat
 
@@ -189,22 +201,23 @@ def rechercher_jeux_api(
             erreur="Reponse de recherche invalide : " + " ; ".join(validation.erreurs),
         )
 
-    next_page = resultat.donnees.get("next_page")
-    page_suivante = None
-    if next_page:
-        numero = parse_qs(urlparse(next_page).query).get("page")
-        if numero:
-            page_suivante = int(numero[0])
-    resultat.donnees["page_suivante"] = page_suivante
+    resultat.donnees["page_suivante"] = _numero_page_depuis_url(resultat.donnees.get("next_page"))
     return resultat
 
 
 def lister_ressources_api(id_jeu: str, **kwargs: Any) -> ResultatAppel:
-    """Appelle l'endpoint de detail d'un jeu /api/1/datasets/{id}/ (v1).
+    """Inventorie les ressources d'un jeu via l'API v2 (deux appels).
 
-    Valide la réponse contre le schéma jsonschema de l'outil (T2.2) ;
-    une réponse invalide produit un échec propre sans exception.
-    Un 404 produit le statut `jeu_introuvable`.
+    En v2, `resources` n'est plus embarque dans le detail du jeu mais
+    expose en sous-ressource paginee (sondage S11.0) :
+    1. GET /api/2/datasets/{id} : metadonnees du jeu (404 -> `jeu_introuvable`) ;
+    2. GET /api/2/datasets/{id}/resources/ : ressources paginees, boucle
+       sur `next_page` jusqu'a epuisement (jamais au-dela : la v2 peut
+       repondre 400 ou une liste vide au-dela du total).
+    Plafond de securite `PLAFOND_PAGES_INVENTAIRE` (garde anti-boucle).
+    Le payload retourne est reconstitue au format attendu par le coeur
+    (dictionnaire du jeu avec liste `resources` plate), de sorte que la
+    normalisation aval ne change pas (isolant HTTP, T11.3).
     """
     from src.contracts.validation_api import valider_reponse_api
 
@@ -212,14 +225,38 @@ def lister_ressources_api(id_jeu: str, **kwargs: Any) -> ResultatAppel:
     if not resultat.reussi:
         return resultat
 
-    validation = valider_reponse_api("lister_ressources", resultat.donnees)
+    jeu = resultat.donnees
+    ressources: list = []
+    numero_page: Optional[int] = 1
+    pages = 0
+    while numero_page is not None and pages < PLAFOND_PAGES_INVENTAIRE:
+        resultat_ressources = appel_api(
+            f"/datasets/{id_jeu}/resources/",
+            params={"page": numero_page, "page_size": PAGE_SIZE_INVENTAIRE},
+            **kwargs,
+        )
+        if not resultat_ressources.reussi:
+            return resultat_ressources
+        ressources.extend(resultat_ressources.donnees.get("data", []))
+        numero_page = _numero_page_depuis_url(resultat_ressources.donnees.get("next_page"))
+        pages += 1
+
+    if numero_page is not None:
+        return ResultatAppel(
+            statut="echec_technique",
+            status_code=resultat.status_code,
+            erreur=f"Inventaire interrompu : plafond de {PLAFOND_PAGES_INVENTAIRE} pages atteint",
+        )
+
+    jeu["resources"] = ressources
+    validation = valider_reponse_api("lister_ressources", jeu)
     if not validation.valide:
         return ResultatAppel(
             statut="echec_technique",
             status_code=resultat.status_code,
             erreur="Réponse d'inventaire invalide : " + " ; ".join(validation.erreurs),
         )
-    return resultat
+    return ResultatAppel(statut="succes", status_code=resultat.status_code, donnees=jeu)
 
 
 def _base_tabulaire() -> str:

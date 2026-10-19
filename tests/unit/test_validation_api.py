@@ -78,13 +78,15 @@ def test_tu35_champ_obligatoire_absent(fixture_recherche):
 # ---------------------------------------------------------------------------
 
 def test_tu36_type_inattendu_chemin_erreur(fixture_recherche):
+    # T11.3 : en v2, `resources` est une sous-ressource (rel/href/total) ;
+    # le type inattendu est testé sur son champ `total`.
     donnees = json.loads(json.dumps(fixture_recherche))
-    donnees["data"][0]["resources"][0]["filesize"] = "45231"
+    donnees["data"][0]["resources"]["total"] = "seize"
 
     resultat = valider_reponse_api("rechercher_jeux", donnees)
     assert not resultat.valide
     assert len(resultat.erreurs) == 1
-    assert "/data/0/resources/0/filesize" in resultat.erreurs[0]
+    assert "/data/0/resources/total" in resultat.erreurs[0]
 
 
 # ---------------------------------------------------------------------------

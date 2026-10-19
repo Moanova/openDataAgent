@@ -24,9 +24,46 @@ from src.core.resources import lister_ressources
 from src.core.download import telecharger_brut
 from src.utils.registry import RegistreSourcesInaccessibles
 
-URL_RECHERCHE = "https://www.data.gouv.fr/api/1/datasets/"
+URL_RECHERCHE = "https://www.data.gouv.fr/api/2/datasets/search/"
 def url_jeu(id_jeu: str) -> str:
-    return f"https://www.data.gouv.fr/api/1/datasets/{id_jeu}/"
+    return f"https://www.data.gouv.fr/api/2/datasets/{id_jeu}/"
+
+
+def url_ressources(id_jeu: str) -> str:
+    return f"https://www.data.gouv.fr/api/2/datasets/{id_jeu}/resources/"
+
+
+def _mocker_inventaire_v2(id_jeu, detail, ressources):
+    """Ajoute les deux reponses v2 : detail du jeu + sous-ressource paginee."""
+    responses.add(responses.GET, url_jeu(id_jeu), json=detail, status=200)
+    responses.add(
+        responses.GET,
+        url_ressources(id_jeu),
+        json={"data": ressources, "total": len(ressources), "page": 1,
+              "page_size": 50, "next_page": None, "previous_page": None},
+        status=200,
+    )
+
+
+def _split_v2(payload):
+    """Scinde un payload inventaire {.., resources: [liste]} en (detail, ressources) v2."""
+    detail = {k: v for k, v in payload.items() if k != "resources"}
+    detail["resources"] = {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/%s/resources/" % payload.get("id", "x"),
+        "total": len(payload.get("resources", [])),
+    }
+    return detail, payload.get("resources", [])
+
+
+def _detail_inventaire_v2(jeu_recherche):
+    """Convertit un jeu au format recherche v2 en payload d'inventaire avec ressources plates."""
+    payload = dict(jeu_recherche)
+    payload["resources"] = [
+        {"id": f"res-{jeu_recherche['id']}", "title": f"Fichier {jeu_recherche['id']}",
+         "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 10}
+    ]
+    return payload
 URL_FICHIER = "https://exemple.org/donnees/budget.csv"
 def ping_tabulaire(id_ressource: str) -> str:
     return f"https://tabular-api.data.gouv.fr/api/resources/{id_ressource}/"
@@ -45,11 +82,10 @@ def _jeu(id_: str, titre: str, licence: str, organisation: str = "Org") -> dict:
         "page": f"https://www.data.gouv.fr/datasets/{id_}",
         "created_at": "2024-01-01T00:00:00+00:00",
         "last_modified": "2026-09-01T00:00:00+00:00",
+        "last_update": "2026-09-01T00:00:00+00:00",
         "license": licence,
         "organization": {"name": organisation},
-        "resources": [
-            {"id": f"res-{id_}", "title": f"Fichier {id_}", "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 10}
-        ],
+        "resources": {"rel": "subsection", "href": f"https://www.data.gouv.fr/api/2/datasets/{id_}/resources/", "total": 1},
     }
 
 
@@ -87,7 +123,7 @@ def test_ti08_flux_complet_exclusion_et_echec(registre, tmp_path, monkeypatch):
         ],
     }
     responses.add(responses.GET, ping_tabulaire("res-telecharge"), json={"links": []}, status=200)
-    responses.add(responses.GET, url_jeu("jeu-ouvert"), json=reponse_inventaire, status=200)
+    _mocker_inventaire_v2("jeu-ouvert", *_split_v2(reponse_inventaire))
 
     inventaire = lister_ressources("jeu-ouvert", registre=registre)
     assert inventaire["statut"] == "succes"
@@ -136,7 +172,7 @@ def test_flux_complet_telechargement_reussi(registre, tmp_path, monkeypatch):
     assert recherche["donnees"]["jeux"][0]["id"] == "jeu-ok"
 
     responses.add(responses.GET, ping_tabulaire("res-ok"), json={"links": []}, status=200)
-    responses.add(responses.GET, url_jeu("jeu-ok"), json={
+    _mocker_inventaire_v2("jeu-ok", *_split_v2({
         "id": "jeu-ok",
         "title": "Jeu OK",
         "license": "fr-lo",
@@ -144,7 +180,7 @@ def test_flux_complet_telechargement_reussi(registre, tmp_path, monkeypatch):
         "resources": [
             {"id": "res-ok", "title": "Fichier", "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 5}
         ],
-    }, status=200)
+    }))
     inventaire = lister_ressources("jeu-ok", registre=registre)
     assert inventaire["statut"] == "succes"
 
@@ -174,7 +210,7 @@ def test_entree_exclusion_non_alteree_par_echec(registre, tmp_path, monkeypatch)
 
     # Un echec de telechargement sur une autre source n'altere pas l'entree existante
     responses.add(responses.GET, ping_tabulaire("res-autre"), json={"links": []}, status=200)
-    responses.add(responses.GET, url_jeu("jeu-autre"), json={
+    _mocker_inventaire_v2("jeu-autre", *_split_v2({
         "id": "jeu-autre",
         "title": "Jeu autre",
         "license": "lov2",
@@ -182,7 +218,7 @@ def test_entree_exclusion_non_alteree_par_echec(registre, tmp_path, monkeypatch)
         "resources": [
             {"id": "res-autre", "title": "F", "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 1}
         ],
-    }, status=200)
+    }))
     lister_ressources("jeu-autre", registre=registre)
     responses.add(responses.GET, URL_FICHIER, body=b"non", status=503)
     responses.add(responses.GET, URL_FICHIER, body=b"non", status=503)
@@ -212,13 +248,13 @@ def test_t521_flux_complet_avec_exclusion_licence(registre, tmp_path, monkeypatc
     assert recherche["donnees"]["exclus_licence"] == 1
 
     responses.add(responses.GET, ping_tabulaire("res-jeu-ouvert"), json={"links": []}, status=200)
-    responses.add(responses.GET, url_jeu("jeu-ouvert"), json={
+    _mocker_inventaire_v2("jeu-ouvert", *_split_v2({
         "id": "jeu-ouvert", "title": "Jeu Ouvert", "license": "lov2",
         "organization": {"name": "Insee"},
         "resources": [
             {"id": "res-jeu-ouvert", "title": "Budget", "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 7}
         ],
-    }, status=200)
+    }))
     inventaire = lister_ressources("jeu-ouvert", registre=registre)
     assert inventaire["statut"] == "succes"
 
@@ -250,13 +286,13 @@ def test_t521_ressource_hors_chaine_refusee(registre, tmp_path, monkeypatch):
     assert recherche["statut"] == "succes"
 
     responses.add(responses.GET, ping_tabulaire("res-jeu-a"), json={"links": []}, status=200)
-    responses.add(responses.GET, url_jeu("jeu-a"), json={
+    _mocker_inventaire_v2("jeu-a", *_split_v2({
         "id": "jeu-a", "title": "Jeu A", "license": "lov2",
         "organization": {"name": "Insee"},
         "resources": [
             {"id": "res-jeu-a", "title": "Fichier", "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 5}
         ],
-    }, status=200)
+    }))
     inventaire = lister_ressources("jeu-a", registre=registre)
     assert inventaire["statut"] == "succes"
 
@@ -299,13 +335,13 @@ def test_t522_rechargement_entre_executions(tmp_path, monkeypatch):
     assert recherche["donnees"]["exclus_licence"] == 1
 
     responses.add(responses.GET, ping_tabulaire("res-jeu-ouvert"), json={"links": []}, status=200)
-    responses.add(responses.GET, url_jeu("jeu-ouvert"), json={
+    _mocker_inventaire_v2("jeu-ouvert", *_split_v2({
         "id": "jeu-ouvert", "title": "Jeu Ouvert", "license": "lov2",
         "organization": {"name": "Insee"},
         "resources": [
             {"id": "res-jeu-ouvert", "title": "Budget", "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 5}
         ],
-    }, status=200)
+    }))
     inventaire = lister_ressources("jeu-ouvert", registre=registre_1)
     assert inventaire["statut"] == "succes"
 
@@ -413,7 +449,7 @@ def test_t107_flux_complet_voie1_extraction(registre, tmp_path, monkeypatch):
     assert recherche["statut"] == "succes"
 
     responses.add(responses.GET, ping_tabulaire("res-jeu-ouvert"), json={"links": []}, status=200)
-    responses.add(responses.GET, url_jeu("jeu-ouvert"), json=_jeu("jeu-ouvert", "Jeu Ouvert", "lov2", "Insee"), status=200)
+    _mocker_inventaire_v2("jeu-ouvert", *_split_v2(_detail_inventaire_v2(_jeu("jeu-ouvert", "Jeu Ouvert", "lov2", "Insee"))))
     inventaire = lister_ressources("jeu-ouvert", registre=registre)
     assert inventaire["statut"] == "succes"
 

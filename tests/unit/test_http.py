@@ -2,15 +2,16 @@
 # ---------------------------------------------------------------------
 # Application  : openDataAgent
 # Script       : test_http.py
-# Version      : 1
-# Date         : 12-10-2026
+# Version      : 2
+# Date         : 18-10-2026
 # Design       : TSC
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------
 """Tests unitaires du client HTTP data.gouv.fr (src/utils/http.py, T3.1.1).
 
 Couvre TU-15, TU-17 a TU-20 du plan de tests, sans reseau : la couche
-HTTP est simulee avec `responses`.
+HTTP est simulee avec `responses`. Version 2 (T11.3) : endpoints v2,
+fenetre_maj depreciee, inventaire en sous-ressource paginee.
 """
 import json
 from pathlib import Path
@@ -18,10 +19,17 @@ from pathlib import Path
 import pytest
 import responses
 
-from src.utils.http import appel_api, rechercher_jeux_api
+from src.utils.http import (
+    PAGE_SIZE_INVENTAIRE,
+    PLAFOND_PAGES_INVENTAIRE,
+    appel_api,
+    lister_ressources_api,
+    rechercher_jeux_api,
+)
 
 REPERTOIRE_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "api"
-URL_RECHERCHE = "https://www.data.gouv.fr/api/1/datasets/"
+URL_RECHERCHE = "https://www.data.gouv.fr/api/2/datasets/search/"
+URL_RESSOURCES = "https://www.data.gouv.fr/api/2/datasets/62581fdf02e05e365ea227a1/resources/"
 
 
 @pytest.fixture
@@ -30,22 +38,40 @@ def fixture_recherche() -> dict:
         return json.load(flux)
 
 
+@pytest.fixture
+def fixture_inventaire() -> dict:
+    with open(REPERTOIRE_FIXTURES / "lister_ressources_reussite.json", encoding="utf-8") as flux:
+        return json.load(flux)
+
+
 @responses.activate
 def test_succes_recherche_validee(fixture_recherche):
-    # Réf. tests/plan_tests.md : TU-15 (tri et fenetre_maj valides -> traduction correcte vers les paramètres API)
+    # Réf. tests/plan_tests.md : TU-15 (tri valide -> traduction correcte vers les paramètres API v2)
     responses.add(responses.GET, URL_RECHERCHE, json=fixture_recherche, status=200)
 
-    resultat = rechercher_jeux_api(["dette", "publique"], tri="vues", fenetre_maj="12_mois", limite=10, page=3)
+    resultat = rechercher_jeux_api(["dette", "publique"], tri="vues", limite=10, page=3)
 
     assert len(responses.calls) == 1
     requete = responses.calls[0].request
     assert "q=dette+publique" in requete.url
     assert "sort=-views" in requete.url
-    assert "last_update_range=12_mois" in requete.url
     assert "page_size=10" in requete.url
     assert "page=3" in requete.url
     assert resultat.reussi
-    assert resultat.donnees["total"] == 1
+    assert resultat.donnees["total"] == 235
+
+
+@responses.activate
+def test_fenetre_maj_ignoree_en_v2(fixture_recherche):
+    # T11.3 : l'API v2 ne supporte pas last_update_range (400) ; le paramètre
+    # est accepté pour compatibilité mais jamais traduit vers l'API.
+    responses.add(responses.GET, URL_RECHERCHE, json=fixture_recherche, status=200)
+
+    resultat = rechercher_jeux_api(["dette"], tri="recent", fenetre_maj="12_mois", limite=10, page=1)
+
+    requete = responses.calls[0].request.url
+    assert "last_update_range" not in requete
+    assert resultat.reussi
 
 
 @responses.activate
@@ -57,7 +83,6 @@ def test_succes_parametres_defauts_omis(fixture_recherche):
 
     requete = responses.calls[0].request.url
     assert "sort" not in requete
-    assert "last_update_range" not in requete
     assert resultat.reussi
 
 
@@ -76,7 +101,7 @@ def test_erreur_500_echec_technique():
 @responses.activate
 def test_404_jeu_introuvable():
     # Réf. tests/plan_tests.md : TU-18 (jeu inexistant 404 -> statut jeu_introuvable)
-    responses.add(responses.GET, "https://www.data.gouv.fr/api/1/datasets/inconnu/", json={"message": "not found"}, status=404)
+    responses.add(responses.GET, "https://www.data.gouv.fr/api/2/datasets/inconnu/", json={"message": "not found"}, status=404)
 
     resultat = appel_api("/datasets/inconnu/")
 
@@ -92,7 +117,7 @@ def test_expiration_delai_echec_technique():
     for _ in range(3):
         responses.add(responses.GET, URL_RECHERCHE, body=ConnectTimeout("delai expire"))
 
-    resultat = appel_api("/datasets/", nb_tentatives=3)
+    resultat = appel_api("/datasets/search/", nb_tentatives=3)
 
     assert not resultat.reussi
     assert resultat.statut == "echec_technique"
@@ -105,7 +130,7 @@ def test_429_puis_succes(fixture_recherche):
     responses.add(responses.GET, URL_RECHERCHE, json={}, status=429)
     responses.add(responses.GET, URL_RECHERCHE, json=fixture_recherche, status=200)
 
-    resultat = appel_api("/datasets/", params={"q": "dette"})
+    resultat = appel_api("/datasets/search/", params={"q": "dette"})
 
     assert resultat.reussi
     assert len(responses.calls) == 2
@@ -117,7 +142,7 @@ def test_503_persistant_echec_technique():
     for _ in range(3):
         responses.add(responses.GET, URL_RECHERCHE, json={}, status=503)
 
-    resultat = appel_api("/datasets/", nb_tentatives=3)
+    resultat = appel_api("/datasets/search/", nb_tentatives=3)
 
     assert resultat.statut == "echec_technique"
     assert len(responses.calls) == 3
@@ -125,9 +150,9 @@ def test_503_persistant_echec_technique():
 
 @responses.activate
 def test_page_suivante_extraite_de_next_page(fixture_recherche):
-    # Réf. tests/plan_tests.md : TU-15 (pagination -> page_suivante extrait de l'URL next_page v1)
+    # Réf. tests/plan_tests.md : TU-15 (pagination -> page_suivante extrait de l'URL next_page v2)
     donnees = json.loads(json.dumps(fixture_recherche))
-    donnees["next_page"] = "https://www.data.gouv.fr/api/1/datasets/?q=dette&page=2&page_size=10"
+    donnees["next_page"] = "https://www.data.gouv.fr/api/2/datasets/search/?q=dette&page=2&page_size=10"
     responses.add(responses.GET, URL_RECHERCHE, json=donnees, status=200)
 
     resultat = rechercher_jeux_api(["dette"])
@@ -166,10 +191,139 @@ def test_reponse_invalide_contre_schema_echec_propre():
 ])
 @responses.activate
 def test_tri_recents_et_reutilisations_traduits(fixture_recherche, tri, sort_attendu):
-    # Régression : les clés de TRIS_API étaient accentuées ("récent", "réutilisations")
+    # Régression : les clés de TRIS_API étaient accentuées ("récént", "réutilisations")
     # alors que l'enum vaut recent/reutilisations -> KeyError -> echec_technique
     # (constaté en trace agentique du 18/10/2026, 2 invocations perdues).
     responses.add(responses.GET, URL_RECHERCHE, json=fixture_recherche, status=200)
     resultat = rechercher_jeux_api(["dette"], tri=tri, limite=10, page=1)
     assert resultat.reussi
     assert f"sort={sort_attendu}" in responses.calls[0].request.url
+
+
+# ---------------------------------------------------------------------------
+# T11.3 — Inventaire v2 : sous-ressource paginée (E2)
+# ---------------------------------------------------------------------------
+
+
+def _page_ressources(items, total, next_page=None):
+    return {
+        "data": items,
+        "total": total,
+        "page": 1,
+        "page_size": PAGE_SIZE_INVENTAIRE,
+        "next_page": next_page,
+        "previous_page": None,
+    }
+
+
+def _ressource(n):
+    return {
+        "id": f"res-{n}",
+        "title": f"ressource {n}",
+        "url": f"https://static.data.gouv.fr/ressource-{n}.csv",
+        "format": "csv",
+        "mime": "text/csv",
+        "filesize": 100,
+        "filetype": "file",
+    }
+
+
+def _detail_jeu(nb_declare):
+    return {
+        "id": "62581fdf02e05e365ea227a1",
+        "title": "Election présidentielle 2022",
+        "slug": "election-presidentielle-2022",
+        "page": "https://www.data.gouv.fr/fr/datasets/election-presidentielle-2022/",
+        "created_at": "2022-04-14T15:21:35.194000+00:00",
+        "last_modified": "2022-04-19T11:44:16.818000+00:00",
+        "last_update": "2022-04-14T15:26:17.908000+00:00",
+        "license": "fr-lo",
+        "organization": {"name": "Ministère de l'intérieur", "badges": [{"kind": "public-service"}]},
+        "resources": {"rel": "subsection", "href": URL_RESSOURCES, "total": nb_declare},
+    }
+
+
+@responses.activate
+def test_inventaire_v2_deux_appels_et_payload_reconstitue():
+    # T11.3 (E2) : détail v2 puis sous-ressource paginée ; le payload
+    # reconstitué expose une liste `resources` plate au format attendu par le cœur.
+    jeu = _detail_jeu(nb_declare=3)
+    ressources = [_ressource(n) for n in range(3)]
+    responses.add(responses.GET, "https://www.data.gouv.fr/api/2/datasets/62581fdf02e05e365ea227a1/", json=jeu, status=200)
+    responses.add(responses.GET, URL_RESSOURCES, json=_page_ressources(ressources, 3, next_page=None), status=200)
+
+    resultat = lister_ressources_api("62581fdf02e05e365ea227a1")
+
+    assert len(responses.calls) == 2
+    assert "page_size=%d" % PAGE_SIZE_INVENTAIRE in responses.calls[1].request.url
+    assert "page=1" in responses.calls[1].request.url
+    assert resultat.reussi
+    assert isinstance(resultat.donnees["resources"], list)
+    assert len(resultat.donnees["resources"]) == 3
+    assert resultat.donnees["id"] == jeu["id"]
+    assert resultat.donnees["last_update"] == "2022-04-14T15:26:17.908000+00:00"
+    assert resultat.donnees["organization"]["name"] == "Ministère de l'intérieur"
+
+
+@responses.activate
+def test_inventaire_v2_boucle_sur_next_page():
+    # T11.3 (E2, décision 3) : pagination arrêtée sur next_page absent —
+    # 2 pages de ressources (50 + 10) itérées via next_page.
+    jeu = _detail_jeu(nb_declare=60)
+    page1 = _page_ressources([_ressource(n) for n in range(50)], 60,
+                             next_page=URL_RESSOURCES + "?page=2&page_size=%d" % PAGE_SIZE_INVENTAIRE)
+    page2 = _page_ressources([_ressource(n) for n in range(50, 60)], 60, next_page=None)
+    responses.add(responses.GET, "https://www.data.gouv.fr/api/2/datasets/62581fdf02e05e365ea227a1/", json=jeu, status=200)
+    responses.add(responses.GET, URL_RESSOURCES, json=page1, status=200)
+    responses.add(responses.GET, URL_RESSOURCES, json=page2, status=200)
+
+    resultat = lister_ressources_api("62581fdf02e05e365ea227a1")
+
+    assert len(responses.calls) == 3
+    assert "page=2" in responses.calls[2].request.url
+    assert resultat.reussi
+    assert len(resultat.donnees["resources"]) == 60
+
+
+@responses.activate
+def test_inventaire_v2_plafond_de_pages_anti_boucle():
+    # T11.3 (E2) : garde anti-boucle — un next_page aberrant qui ne s'épuise
+    # jamais déclenche le plafond et produit echec_technique explicite.
+    jeu = _detail_jeu(nb_declare=1000)
+    page_bouclante = _page_ressources([_ressource(0)], 1000,
+                                      next_page=URL_RESSOURCES + "?page=2&page_size=%d" % PAGE_SIZE_INVENTAIRE)
+    responses.add(responses.GET, "https://www.data.gouv.fr/api/2/datasets/62581fdf02e05e365ea227a1/", json=jeu, status=200)
+    for _ in range(PLAFOND_PAGES_INVENTAIRE + 2):
+        responses.add(responses.GET, URL_RESSOURCES, json=page_bouclante, status=200)
+
+    resultat = lister_ressources_api("62581fdf02e05e365ea227a1")
+
+    assert not resultat.reussi
+    assert resultat.statut == "echec_technique"
+    assert "plafond" in (resultat.erreur or "")
+    assert len(responses.calls) == 1 + PLAFOND_PAGES_INVENTAIRE
+
+
+@responses.activate
+def test_inventaire_v2_404_jeu_introuvable():
+    # T11.3 (E2) : le 404 du détail produit toujours jeu_introuvable
+    # (pas de second appel vers la sous-ressource).
+    responses.add(responses.GET, "https://www.data.gouv.fr/api/2/datasets/inconnu/", json={"message": "not found"}, status=404)
+
+    resultat = lister_ressources_api("inconnu")
+
+    assert resultat.statut == "jeu_introuvable"
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_inventaire_v2_ressources_vides_reponse_valide():
+    # T11.3 (E2) : jeu sans ressource (total 0) — liste vide, succès propre.
+    jeu = _detail_jeu(nb_declare=0)
+    responses.add(responses.GET, "https://www.data.gouv.fr/api/2/datasets/62581fdf02e05e365ea227a1/", json=jeu, status=200)
+    responses.add(responses.GET, URL_RESSOURCES, json=_page_ressources([], 0, next_page=None), status=200)
+
+    resultat = lister_ressources_api("62581fdf02e05e365ea227a1")
+
+    assert resultat.reussi
+    assert resultat.donnees["resources"] == []

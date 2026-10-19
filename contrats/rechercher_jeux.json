@@ -31,7 +31,7 @@
             "12_mois",
             "3_ans"
           ],
-          "description": "Restriction temporelle sur la dernière mise à jour."
+          "description": "DEPRECIE (v1.3.0, T11.3) : accepte pour compatibilite mais ignore ; l'API v2 de data.gouv.fr ne supporte pas la fenetre de mise a jour. Toute valeur autre que \"toutes\" produit un avertissement dans le message de reponse."
         },
         "limite": {
           "type": "integer",

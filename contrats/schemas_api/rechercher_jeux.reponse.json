@@ -1,14 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "openDataAgent:schemas_api/rechercher_jeux.reponse",
-  "title": "Reponse de l'API data.gouv.fr /api/1/datasets/",
-  "description": "Schema de validation de la charge utile brute retournee par l'API de recherche de jeux de donnees (v1), avant tout traitement.",
+  "title": "Reponse de l'API data.gouv.fr /api/2/datasets/search/",
+  "description": "Schema de validation de la charge utile brute retournee par l'API de recherche de jeux de donnees (v2, T11.3), avant tout traitement.",
   "type": "object",
   "properties": {
     "data": {
       "type": "array",
       "description": "Liste des jeux de donnees retournes pour la page courante.",
-      "items": { "$ref": "#/$defs/jeu" }
+      "items": {
+        "$ref": "#/$defs/jeu"
+      }
     },
     "total": {
       "type": "integer",
@@ -20,21 +22,37 @@
       "minimum": 1,
       "description": "Numero de la page courante."
     },
-    "next_page": {
-      "type": ["string", "null"],
-      "description": "URL de la page suivante, null si derniere page."
-    },
-    "previous_page": {
-      "type": ["string", "null"],
-      "description": "URL de la page precedente, null si premiere page."
-    },
     "page_size": {
       "type": "integer",
       "minimum": 1,
       "description": "Taille de page demandee."
+    },
+    "next_page": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "URL de la page suivante, null si derniere page."
+    },
+    "previous_page": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "URL de la page precedente, null si premiere page."
+    },
+    "facets": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Facettes de la recherche v2 (non exploitees)."
     }
   },
-  "required": ["data", "total"],
+  "required": [
+    "data",
+    "total"
+  ],
   "additionalProperties": true,
   "$defs": {
     "jeu": {
@@ -52,56 +70,99 @@
           "type": "string",
           "description": "Slug du jeu de donnees."
         },
-        "url": {
+        "page": {
           "type": "string",
-          "description": "URL de la fiche du jeu sur data.gouv.fr."
+          "description": "URL de la fiche du jeu sur data.gouv.fr (v2 : remplace url)."
         },
         "created_at": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "description": "Date de creation (ISO 8601)."
         },
         "last_modified": {
-          "type": "string",
-          "description": "Date de derniere modification (ISO 8601)."
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Date de derniere modification des metadonnees (ISO 8601)."
         },
         "last_update": {
-          "type": "string",
-          "description": "Date de derniere mise a jour d'une ressource (ISO 8601)."
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Date de derniere mise a jour d'une ressource (ISO 8601) ; source du mapping derniere_maj (T11.3)."
         },
         "license": {
-          "type": ["string", "null"],
-          "description": "Identifiant de la licence (ex : lov2, odc-odbl, notspecified)."
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Identifiant de la licence (ex : fr-lo, odc-odbl, notspecified)."
         },
         "organization": {
-          "type": ["object", "null"],
+          "type": [
+            "object",
+            "null"
+          ],
           "properties": {
             "name": {
               "type": "string",
               "description": "Nom de l'organisation."
+            },
+            "badges": {
+              "type": "array",
+              "description": "Badges uData de l'organisation (public-service, local-authority, certified) - chantier B T7.5.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": true
+              }
             }
           },
-          "required": ["name"],
+          "required": [
+            "name"
+          ],
           "additionalProperties": true
         },
         "resources": {
-          "type": "array",
-          "description": "Ressources du jeu.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string", "description": "Identifiant unique de la ressource." },
-              "title": { "type": "string", "description": "Titre de la ressource." },
-              "url": { "type": "string", "description": "URL de telechargement de la ressource." },
-              "format": { "type": ["string", "null"], "description": "Format declare de la ressource." },
-              "mime": { "type": ["string", "null"], "description": "Type MIME de la ressource." },
-              "filesize": { "type": ["integer", "null"], "description": "Taille du fichier en octets, null si inconnue." }
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Sous-ressource paginee v2 (rel/href/total) ; l'inventaire requiert un second appel.",
+          "properties": {
+            "rel": {
+              "type": "string"
             },
-            "required": ["id", "title", "url"],
-            "additionalProperties": true
-          }
+            "href": {
+              "type": "string"
+            },
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "href",
+            "total"
+          ],
+          "additionalProperties": true
         }
       },
-      "required": ["id", "title", "resources"],
+      "required": [
+        "id",
+        "title"
+      ],
       "additionalProperties": true
     }
   }

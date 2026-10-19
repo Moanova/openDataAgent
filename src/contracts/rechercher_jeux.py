@@ -48,7 +48,11 @@ class RechercherJeuxInput(BaseModel):
     )
     fenetre_maj: FenetreMaj = Field(
         default=FenetreMaj.TOUTES,
-        description="Restriction temporelle sur la dernière mise à jour.",
+        description=(
+            "DEPRECIE (v1.3.0, T11.3) : accepté pour compatibilité mais ignoré ; "
+            "l'API v2 de data.gouv.fr ne supporte pas la fenêtre de mise à jour. "
+            "Toute valeur autre que \"toutes\" produit un avertissement dans le message de réponse."
+        ),
     )
     limite: int = Field(
         default=10,

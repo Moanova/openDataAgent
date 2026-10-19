@@ -23,7 +23,33 @@ from src.core.resources import inventaire, lister_ressources
 from src.utils.registry import RegistreSourcesInaccessibles
 
 REPERTOIRE_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "api"
-URL_JEU = "https://www.data.gouv.fr/api/1/datasets/67660551c8588734a16a6a60/"
+URL_JEU = "https://www.data.gouv.fr/api/2/datasets/67660551c8588734a16a6a60/"
+
+
+def _split_fixture_v2(fixture):
+    """Scinde la fixture v2 reconstituée : detail (resources en subsection) + liste plate."""
+    detail = {k: v for k, v in fixture.items() if k != "resources"}
+    detail["resources"] = {
+        "rel": "subsection",
+        "href": "https://www.data.gouv.fr/api/2/datasets/%s/resources/" % fixture["id"],
+        "total": len(fixture["resources"]),
+    }
+    return detail, fixture["resources"]
+
+
+def _mocker_jeu_v2(id_jeu, detail, ressources):
+    """Ajoute les deux réponses v2 : détail du jeu + sous-ressource paginée."""
+    import responses as _responses
+    base = "https://www.data.gouv.fr/api/2/datasets/"
+    _responses.add(_responses.GET, base + id_jeu + "/", json=detail, status=200)
+    _responses.add(
+        _responses.GET,
+        base + id_jeu + "/resources/",
+        json={"data": ressources, "total": len(ressources), "page": 1,
+              "page_size": 50, "next_page": None, "previous_page": None},
+        status=200,
+    )
+
 
 
 @pytest.fixture
@@ -41,7 +67,7 @@ def registre(tmp_path) -> RegistreSourcesInaccessibles:
 @patch("src.core.resources.est_indexee_api_tabulaire", return_value=False)
 def test_inventaire_complet(mock_indexee, fixture_ressources, registre):
     # Réf. tests/plan_tests.md : TI-01 (chaîne recherche → inventaire → inventaire complet, métadonnées enregistrées)
-    responses.add(responses.GET, URL_JEU, json=fixture_ressources, status=200)
+    _mocker_jeu_v2("67660551c8588734a16a6a60", *_split_fixture_v2(fixture_ressources))
 
     reponse = lister_ressources("67660551c8588734a16a6a60", registre=registre)
 
@@ -67,7 +93,7 @@ def test_hebergement_plateforme_depuis_filetype(mock_indexee, fixture_ressources
     donnees = json.loads(json.dumps(fixture_ressources))
     donnees["resources"][0]["filetype"] = "file"
     donnees["resources"][1]["filetype"] = "remote" if len(donnees["resources"]) > 1 else None
-    responses.add(responses.GET, URL_JEU, json=donnees, status=200)
+    _mocker_jeu_v2("67660551c8588734a16a6a60", *_split_fixture_v2(donnees))
 
     reponse = lister_ressources("67660551c8588734a16a6a60", registre=registre)
 
@@ -81,7 +107,12 @@ def test_hebergement_plateforme_depuis_filetype(mock_indexee, fixture_ressources
 @patch("src.core.resources.est_indexee_api_tabulaire", return_value=False)
 def test_indetermination_vide_apres_classification(mock_indexee, fixture_ressources, registre):
     # Réf. tests/plan_tests.md : TU-05/TU-07 via le flux (ressources classées -> indetermination vide)
-    responses.add(responses.GET, URL_JEU, json=fixture_ressources, status=200)
+    # Fixture v2 (T11.3) : seules les ressources classables sont retenues ; la ressource
+    # `txt` de la capture réelle est inclassable et alimente l'indétermination (comportement
+    # conforme au contrat, couvert par test_ressource_inclassable_dans_indetermination).
+    detail, ressources = _split_fixture_v2(fixture_ressources)
+    detail["resources"]["total"] = 2
+    _mocker_jeu_v2("67660551c8588734a16a6a60", detail, [r for r in ressources if r.get("format") != "txt"])
 
     reponse = lister_ressources("67660551c8588734a16a6a60", registre=registre)
 
@@ -108,7 +139,7 @@ def test_ressource_inclassable_dans_indetermination(mock_indexee, registre):
             }
         ],
     }
-    responses.add(responses.GET, "https://www.data.gouv.fr/api/1/datasets/jeu-x/", json=reponse_api, status=200)
+    _mocker_jeu_v2("jeu-x", *_split_fixture_v2(reponse_api))
 
     reponse = lister_ressources("jeu-x", registre=registre)
 
@@ -131,7 +162,7 @@ def test_coherence_inclusion_exclusion_indetermination(mock_indexee, registre):
             {"id": "res-nu", "title": "Fichier sans metadonnees", "url": "https://exemple.fr/f", "format": None, "mime": None, "filesize": None},
         ],
     }
-    responses.add(responses.GET, "https://www.data.gouv.fr/api/1/datasets/jeu-mixte/", json=reponse_api, status=200)
+    _mocker_jeu_v2("jeu-mixte", *_split_fixture_v2(reponse_api))
 
     reponse = lister_ressources("jeu-mixte", registre=registre)
     donnees = reponse["donnees"]
@@ -161,7 +192,7 @@ def test_indetermination_autoportante_pour_agent(mock_indexee, registre):
             {"id": "res-a", "title": "Ressource A", "url": "https://exemple.fr/a", "format": "bin", "mime": None, "filesize": 1},
         ],
     }
-    responses.add(responses.GET, "https://www.data.gouv.fr/api/1/datasets/jeu-a3/", json=reponse_api, status=200)
+    _mocker_jeu_v2("jeu-a3", *_split_fixture_v2(reponse_api))
 
     reponse = lister_ressources("jeu-a3", registre=registre)
     donnees = reponse["donnees"]
@@ -211,7 +242,7 @@ def test_decharger_charger_round_trip(mock_indexee, fixture_ressources, registre
     # Réf. T10.2 — dump/rechargement sans perte, métadonnées complètes
     import src.core.resources as module
     module._inventaire.clear()
-    responses.add(responses.GET, URL_JEU, json=fixture_ressources, status=200)
+    _mocker_jeu_v2("67660551c8588734a16a6a60", *_split_fixture_v2(fixture_ressources))
     lister_ressources("67660551c8588734a16a6a60", registre=registre)
 
     dump = module.decharger_inventaire()

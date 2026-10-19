@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "openDataAgent:schemas_api/lister_ressources.reponse",
-  "title": "Reponse de l'API data.gouv.fr /api/1/datasets/{id}/",
-  "description": "Schema de validation du detail d'un jeu de donnees (inventaire des ressources, API v1), charge utile brute retournee par l'API avant tout traitement.",
+  "title": "Inventaire v2 reconstitue : detail /api/2/datasets/{id} + ressources paginees /api/2/datasets/{id}/resources/",
+  "description": "Schema de validation du payload reconstitue par la couche HTTP (T11.3) : metadonnees du jeu (v2) et liste plate des ressources issue de la sous-ressource paginee, avant traitement par le coeur.",
   "type": "object",
   "properties": {
     "id": {
@@ -14,27 +14,46 @@
       "description": "Titre du jeu de donnees."
     },
     "slug": {
-      "type": "string",
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "Slug du jeu de donnees."
     },
-    "url": {
-      "type": "string",
-      "description": "URL de la fiche du jeu sur data.gouv.fr."
+    "page": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "URL de la fiche du jeu sur data.gouv.fr (v2)."
     },
     "created_at": {
-      "type": "string",
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "Date de creation (ISO 8601)."
     },
     "last_modified": {
-      "type": "string",
-      "description": "Date de derniere modification (ISO 8601)."
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Date de derniere modification des metadonnees (ISO 8601)."
+    },
+    "last_update": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Date de derniere mise a jour d'une ressource (ISO 8601) ; source du mapping derniere_maj (T11.3)."
     },
     "license": {
       "type": [
         "string",
         "null"
       ],
-      "description": "Identifiant de la licence (ex : lov2, odc-odbl, notspecified)."
+      "description": "Identifiant de la licence."
     },
     "organization": {
       "type": [
@@ -45,6 +64,22 @@
         "name": {
           "type": "string",
           "description": "Nom de l'organisation."
+        },
+        "badges": {
+          "type": "array",
+          "description": "Badges uData de l'organisation (chantier B T7.5).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": true
+          }
         }
       },
       "required": [
@@ -54,7 +89,7 @@
     },
     "resources": {
       "type": "array",
-      "description": "Inventaire complet des ressources du jeu.",
+      "description": "Inventaire complet des ressources du jeu (liste plate reconstituee depuis la sous-ressource paginee v2).",
       "items": {
         "type": "object",
         "properties": {
@@ -98,6 +133,13 @@
             ],
             "description": "Taille du fichier en octets, null si inconnue."
           },
+          "filetype": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Type d'hebergement (file = heberge sur la plateforme, remote sinon)."
+          },
           "created_at": {
             "type": [
               "string",
@@ -120,10 +162,6 @@
         ],
         "additionalProperties": true
       }
-    },
-    "last_update": {
-      "type": "string",
-      "description": "Date de derniere mise a jour d'une ressource (ISO 8601)."
     }
   },
   "required": [

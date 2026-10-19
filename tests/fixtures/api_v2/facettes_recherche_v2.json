@@ -1,0 +1,1130 @@
+{
+  "facets": {
+    "format_family": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "tabular",
+        "count": 1550
+      },
+      {
+        "name": "machine_readable",
+        "count": 897
+      },
+      {
+        "name": "other",
+        "count": 625
+      },
+      {
+        "name": "documents",
+        "count": 200
+      },
+      {
+        "name": "geographical",
+        "count": 180
+      }
+    ],
+    "access_type": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "open",
+        "count": 1818
+      }
+    ],
+    "producer_type": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "local-authority",
+        "count": 1091
+      },
+      {
+        "name": "public-service",
+        "count": 533
+      },
+      {
+        "name": "company",
+        "count": 71
+      },
+      {
+        "name": "user",
+        "count": 67
+      },
+      {
+        "name": "not-specified",
+        "count": 49
+      },
+      {
+        "name": "association",
+        "count": 7
+      }
+    ],
+    "organization_id_with_name": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "534fff91a3a7292c64a77f53|Ministère de l'intérieur",
+        "count": 200
+      },
+      {
+        "name": "534fffb9a3a7292c64a78159|Ville de Nantes",
+        "count": 121
+      },
+      {
+        "name": "534fffb3a3a7292c64a78129|Toulouse métropole",
+        "count": 106
+      },
+      {
+        "name": "538346d6a3a72906c7ec5c36|Angers Loire Métropole",
+        "count": 70
+      },
+      {
+        "name": "534fff89a3a7292c64a77eb7|Ville de Paris",
+        "count": 63
+      },
+      {
+        "name": "6051e57a4cf15370201d7298|ELECTRO-MOBILITY",
+        "count": 60
+      },
+      {
+        "name": "534fffb7a3a7292c64a78145|Ville d'Issy-les-Moulineaux",
+        "count": 59
+      },
+      {
+        "name": "5420b971a3a7297b491991e1|Ressourcerie datalocale",
+        "count": 51
+      },
+      {
+        "name": "580735be88ee3814295ff490|Rennes Métropole en accès libre",
+        "count": 50
+      },
+      {
+        "name": "534fffb8a3a7292c64a7814c|Ville de Marseille",
+        "count": 39
+      },
+      {
+        "name": "534fff8ea3a7292c64a77f02|Ministères économiques et financiers",
+        "count": 38
+      },
+      {
+        "name": "5821930b88ee386862c65bb3|La Rochelle",
+        "count": 38
+      },
+      {
+        "name": "54da1f52c751df59f7467389|Grand Poitiers Open Data",
+        "count": 37
+      },
+      {
+        "name": "534fffa7a3a7292c64a780c5|Région des Pays de la Loire",
+        "count": 32
+      },
+      {
+        "name": "534fff65a3a7292c64a77d76|Commune de Brocas",
+        "count": 31
+      },
+      {
+        "name": "56d5a6d4c751df360dabb90c|Ville de Tours",
+        "count": 31
+      },
+      {
+        "name": "5e281d5b634f417c0c54ae2f|Département de la Seine-Maritime",
+        "count": 30
+      },
+      {
+        "name": "5b17dbeb88ee3869a59ebdca|Commune d'Anglet",
+        "count": 29
+      },
+      {
+        "name": "534fff94a3a7292c64a77fb5|Ministère de l'Europe et des Affaires Etrangères (MEAE)",
+        "count": 26
+      },
+      {
+        "name": "54aff788c751df39e138127d|Département des Côtes d'Armor",
+        "count": 26
+      },
+      {
+        "name": "534fff63a3a7292c64a77d67|Commission Nationale des Comptes de Campagne et des Financements Politiques (CNCCFP)",
+        "count": 25
+      },
+      {
+        "name": "6095142a84c45b36441511eb|Ville de Soissons",
+        "count": 21
+      },
+      {
+        "name": "534fff58a3a7292c64a77cf6|Autorité de régulation des communications électroniques, des postes et de la distribution de la presse (ARCEP)",
+        "count": 18
+      },
+      {
+        "name": "534fffb8a3a7292c64a78149|Ville de Digne-les-Bains",
+        "count": 18
+      },
+      {
+        "name": "548b19c6c751df1e6e4120e7|Commune de Ville-d'Avray",
+        "count": 17
+      },
+      {
+        "name": "5d1db3df8b4c416509fd0870|Mairie de Cannes",
+        "count": 17
+      },
+      {
+        "name": "5ec3f79b3eabce838d9bb542|Communauté d'Agglomération de Bourges",
+        "count": 17
+      },
+      {
+        "name": "66cddee833d30ced863c509c|Ville de Saint-Martin-de-Crau",
+        "count": 17
+      },
+      {
+        "name": "534fffa8a3a7292c64a780c8|Région Île-de-France",
+        "count": 16
+      },
+      {
+        "name": "56dfe50288ee384349cfd996|Communauté d'Agglomération Plaine Vallée",
+        "count": 15
+      },
+      {
+        "name": "601ab7b9d3aff74e6fc4ea68|Mairie de Lille",
+        "count": 13
+      },
+      {
+        "name": "5b0863e088ee382b48ed72ea|Section Cadastre-Topographie de la Polynésie française",
+        "count": 12
+      },
+      {
+        "name": "5df935d8634f414e69469492|Région Hauts-de-France",
+        "count": 12
+      },
+      {
+        "name": "55263369c751df702faec475|Occitanie Pyrénées en Intelligence Géomatique",
+        "count": 11
+      },
+      {
+        "name": "5ae6b61b88ee382152cd61a9|Communauté d'agglomération de La Rochelle",
+        "count": 11
+      },
+      {
+        "name": "57d90ef4c751df44fb79df72|Département du Loiret",
+        "count": 10
+      },
+      {
+        "name": "534fff86a3a7292c64a77eab|Les Lilas",
+        "count": 9
+      },
+      {
+        "name": "566594f388ee38738640355c|Ville d'Antibes",
+        "count": 9
+      },
+      {
+        "name": "582a045088ee3875cec65bb4|Conseil départemental de la Haute-Garonne - Haute-Garonne Open Data",
+        "count": 9
+      },
+      {
+        "name": "5a3a7cd8c751df3092aea45a|Ville du Havre",
+        "count": 9
+      },
+      {
+        "name": "65708b236657229203845494|Dijon métropole",
+        "count": 9
+      },
+      {
+        "name": "534fff5ba3a7292c64a77d19|Brest métropole",
+        "count": 8
+      },
+      {
+        "name": "534fff8aa3a7292c64a77ecd|Mairie de Toulouse",
+        "count": 8
+      },
+      {
+        "name": "539ef700a3a72946de9ebe1f|ACTION Nogent-sur-Marne",
+        "count": 8
+      },
+      {
+        "name": "5437e8c288ee387cb68f5e87|Commune de Chaville",
+        "count": 8
+      },
+      {
+        "name": "559a4970c751df46a9a453ba|Région Bretagne",
+        "count": 8
+      },
+      {
+        "name": "59d6526ac751df274a175d35|Ville de Lanester",
+        "count": 8
+      },
+      {
+        "name": "64f04846c1f09daa9f42a1a7|Saintes Grandes Rives, l'Agglo",
+        "count": 8
+      },
+      {
+        "name": "534fff8ca3a7292c64a77edf|Ministère de l'Agriculture, de l'agro-alimentaire et de la souveraineté alimentaire",
+        "count": 7
+      },
+      {
+        "name": "544e1b0888ee38289ae1ed05|Département des Hauts-de-Seine",
+        "count": 7
+      }
+    ],
+    "last_update": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "last_3_years",
+        "count": 777
+      },
+      {
+        "name": "last_12_months",
+        "count": 445
+      },
+      {
+        "name": "last_30_days",
+        "count": 167
+      }
+    ],
+    "tag": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "election",
+        "count": 616
+      },
+      {
+        "name": "elections",
+        "count": 529
+      },
+      {
+        "name": "citoyennete",
+        "count": 251
+      },
+      {
+        "name": "vote",
+        "count": 250
+      },
+      {
+        "name": "citoyennete-institution",
+        "count": 211
+      },
+      {
+        "name": "legislatives",
+        "count": 128
+      },
+      {
+        "name": "resultats",
+        "count": 126
+      },
+      {
+        "name": "bureaux-de-vote",
+        "count": 125
+      },
+      {
+        "name": "scrutin",
+        "count": 84
+      },
+      {
+        "name": "administration-gouvernement-finances-publiques-citoyennete",
+        "count": 81
+      },
+      {
+        "name": "administration",
+        "count": 79
+      },
+      {
+        "name": "bureau-de-vote",
+        "count": 79
+      },
+      {
+        "name": "administration-finances-publiques-citoyennete",
+        "count": 70
+      },
+      {
+        "name": "elections-legislatives",
+        "count": 66
+      },
+      {
+        "name": "presidentielle",
+        "count": 65
+      },
+      {
+        "name": "resultat",
+        "count": 63
+      },
+      {
+        "name": "municipales",
+        "count": 60
+      },
+      {
+        "name": "elections-departementales",
+        "count": 54
+      },
+      {
+        "name": "participation",
+        "count": 54
+      },
+      {
+        "name": "tour",
+        "count": 51
+      },
+      {
+        "name": "elections-municipales",
+        "count": 49
+      },
+      {
+        "name": "etat-civil",
+        "count": 47
+      },
+      {
+        "name": "cantons",
+        "count": 46
+      },
+      {
+        "name": "candidats",
+        "count": 43
+      },
+      {
+        "name": "communes",
+        "count": 43
+      },
+      {
+        "name": "departementales",
+        "count": 43
+      },
+      {
+        "name": "elus",
+        "count": 43
+      },
+      {
+        "name": "finances-publiques",
+        "count": 43
+      },
+      {
+        "name": "legislative",
+        "count": 42
+      },
+      {
+        "name": "administration-generale",
+        "count": 41
+      },
+      {
+        "name": "donnees-ouvertes",
+        "count": 41
+      },
+      {
+        "name": "regionales",
+        "count": 41
+      },
+      {
+        "name": "canton",
+        "count": 40
+      },
+      {
+        "name": "democratie",
+        "count": 37
+      },
+      {
+        "name": "election-presidentielle",
+        "count": 34
+      },
+      {
+        "name": "2017",
+        "count": 33
+      },
+      {
+        "name": "elu",
+        "count": 32
+      },
+      {
+        "name": "europeennes",
+        "count": 31
+      },
+      {
+        "name": "citizenship",
+        "count": 30
+      },
+      {
+        "name": "government",
+        "count": 30
+      },
+      {
+        "name": "public-finances",
+        "count": 30
+      },
+      {
+        "name": "presidentielles",
+        "count": 29
+      },
+      {
+        "name": "2020",
+        "count": 28
+      },
+      {
+        "name": "administration-finances-publiques",
+        "count": 28
+      },
+      {
+        "name": "budget-de-letat",
+        "count": 28
+      },
+      {
+        "name": "elections-europeennes",
+        "count": 28
+      },
+      {
+        "name": "elections-presidentielles",
+        "count": 28
+      },
+      {
+        "name": "resulats",
+        "count": 28
+      },
+      {
+        "name": "elections-regionales",
+        "count": 26
+      },
+      {
+        "name": "procuration",
+        "count": 26
+      }
+    ],
+    "license": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "lov2",
+        "count": 832
+      },
+      {
+        "name": "fr-lo",
+        "count": 402
+      },
+      {
+        "name": "notspecified",
+        "count": 355
+      },
+      {
+        "name": "odc-odbl",
+        "count": 233
+      },
+      {
+        "name": "cc-by",
+        "count": 24
+      },
+      {
+        "name": "other-at",
+        "count": 13
+      },
+      {
+        "name": "cc-by-sa",
+        "count": 8
+      },
+      {
+        "name": "other-pd",
+        "count": 6
+      },
+      {
+        "name": "cc-zero",
+        "count": 5
+      },
+      {
+        "name": "other-open",
+        "count": 4
+      },
+      {
+        "name": "odc-pddl",
+        "count": 2
+      }
+    ],
+    "format": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "csv",
+        "count": 1393
+      },
+      {
+        "name": "json",
+        "count": 898
+      },
+      {
+        "name": "zip",
+        "count": 405
+      },
+      {
+        "name": "xls",
+        "count": 177
+      },
+      {
+        "name": "xlsx",
+        "count": 166
+      },
+      {
+        "name": "pdf",
+        "count": 102
+      },
+      {
+        "name": "shp",
+        "count": 98
+      },
+      {
+        "name": "txt",
+        "count": 80
+      },
+      {
+        "name": "geojson",
+        "count": 61
+      },
+      {
+        "name": "url",
+        "count": 56
+      },
+      {
+        "name": "web page",
+        "count": 48
+      },
+      {
+        "name": "ods",
+        "count": 40
+      },
+      {
+        "name": "wms",
+        "count": 35
+      },
+      {
+        "name": "wfs",
+        "count": 33
+      },
+      {
+        "name": "html",
+        "count": 26
+      },
+      {
+        "name": "parquet",
+        "count": 26
+      },
+      {
+        "name": "n3",
+        "count": 23
+      },
+      {
+        "name": "turtle",
+        "count": 23
+      },
+      {
+        "name": "vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "count": 22
+      },
+      {
+        "name": "ld+json",
+        "count": 21
+      },
+      {
+        "name": "rdf+xml",
+        "count": 21
+      },
+      {
+        "name": "octet-stream",
+        "count": 20
+      },
+      {
+        "name": "kml",
+        "count": 18
+      },
+      {
+        "name": "arcgis geoservices rest api",
+        "count": 14
+      },
+      {
+        "name": "dxf",
+        "count": 13
+      },
+      {
+        "name": "www:download-1.0-http--download",
+        "count": 13
+      },
+      {
+        "name": "esri shapefile (shp)",
+        "count": 12
+      },
+      {
+        "name": "gpkg",
+        "count": 11
+      },
+      {
+        "name": "kmz",
+        "count": 11
+      },
+      {
+        "name": "plain",
+        "count": 10
+      },
+      {
+        "name": "www:download-1.0-ftp--download",
+        "count": 9
+      },
+      {
+        "name": "www:link-1.0-http--link",
+        "count": 9
+      },
+      {
+        "name": "arcgis",
+        "count": 8
+      },
+      {
+        "name": "gz",
+        "count": 8
+      },
+      {
+        "name": "ogc:wms",
+        "count": 8
+      },
+      {
+        "name": "shapefile",
+        "count": 8
+      },
+      {
+        "name": "bin",
+        "count": 7
+      },
+      {
+        "name": "ogc:wfs",
+        "count": 6
+      },
+      {
+        "name": "xml",
+        "count": 6
+      },
+      {
+        "name": "7z",
+        "count": 5
+      },
+      {
+        "name": "mapinfo tab",
+        "count": 4
+      },
+      {
+        "name": "tiff",
+        "count": 4
+      },
+      {
+        "name": "vnd.ms-excel",
+        "count": 4
+      },
+      {
+        "name": "dbf",
+        "count": 3
+      },
+      {
+        "name": "gdb",
+        "count": 3
+      },
+      {
+        "name": "prj",
+        "count": 3
+      },
+      {
+        "name": "shx",
+        "count": 3
+      },
+      {
+        "name": "cpg",
+        "count": 2
+      },
+      {
+        "name": "fr",
+        "count": 2
+      },
+      {
+        "name": "gpx+xml",
+        "count": 2
+      }
+    ],
+    "schema": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "etalab/schema-irve-statique",
+        "count": 36
+      },
+      {
+        "name": "etalab/schema-vehicules-faibles-emissions-renouvellement-parc",
+        "count": 4
+      },
+      {
+        "name": "scdl/deliberations",
+        "count": 4
+      },
+      {
+        "name": "139bercy/format-commande-publique",
+        "count": 2
+      },
+      {
+        "name": "cnigfr/schema-carte-communale",
+        "count": 2
+      },
+      {
+        "name": "cnigfr/schema-accessibilite-voirie",
+        "count": 1
+      },
+      {
+        "name": "etalab/indice-durabilite-lave-linge",
+        "count": 1
+      },
+      {
+        "name": "etalab/indice-durabilite-televiseur",
+        "count": 1
+      },
+      {
+        "name": "etalab/schema-decp-dpa",
+        "count": 1
+      }
+    ],
+    "geozone": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "country:fr",
+        "count": 252
+      },
+      {
+        "name": "fr:commune:02722",
+        "count": 19
+      },
+      {
+        "name": "fr:commune:13097",
+        "count": 16
+      },
+      {
+        "name": "fr:departement:987",
+        "count": 14
+      },
+      {
+        "name": "country-group:world",
+        "count": 13
+      },
+      {
+        "name": "country-subset:fr:metro",
+        "count": 13
+      },
+      {
+        "name": "country-group:ue",
+        "count": 10
+      },
+      {
+        "name": "fr:commune:06004",
+        "count": 9
+      },
+      {
+        "name": "fr:commune:76351",
+        "count": 9
+      },
+      {
+        "name": "fr:commune:31555",
+        "count": 8
+      },
+      {
+        "name": "fr:epci:200036473",
+        "count": 8
+      },
+      {
+        "name": "fr:epci:242900314",
+        "count": 8
+      },
+      {
+        "name": "fr:commune:25056",
+        "count": 6
+      },
+      {
+        "name": "fr:commune:64102",
+        "count": 5
+      },
+      {
+        "name": "fr:commune:74010",
+        "count": 5
+      },
+      {
+        "name": "country-subset:fr:dromcom",
+        "count": 4
+      },
+      {
+        "name": "fr:commune:40025",
+        "count": 4
+      },
+      {
+        "name": "fr:commune:42218",
+        "count": 3
+      },
+      {
+        "name": "fr:commune:74012",
+        "count": 3
+      },
+      {
+        "name": "fr:commune:74281",
+        "count": 3
+      },
+      {
+        "name": "fr:departement:74",
+        "count": 3
+      },
+      {
+        "name": "fr:epci:200011773",
+        "count": 3
+      },
+      {
+        "name": "fr:epci:200033116",
+        "count": 3
+      },
+      {
+        "name": "fr:epci:200066793",
+        "count": 3
+      },
+      {
+        "name": "fr:epci:200067551",
+        "count": 3
+      },
+      {
+        "name": "fr:region:84",
+        "count": 3
+      },
+      {
+        "name": "fr:commune:34150",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:35288",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:47031",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:49007",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:50502",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:74011",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:74043",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:74056",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:74243",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:74249",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:76165",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:77238",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:81271",
+        "count": 2
+      },
+      {
+        "name": "fr:commune:93045",
+        "count": 2
+      },
+      {
+        "name": "fr:epci:200023372",
+        "count": 2
+      },
+      {
+        "name": "fr:epci:200046977",
+        "count": 2
+      },
+      {
+        "name": "fr:epci:200069250",
+        "count": 2
+      },
+      {
+        "name": "fr:epci:247400583",
+        "count": 2
+      },
+      {
+        "name": "fr:epci:247400682",
+        "count": 2
+      },
+      {
+        "name": "fr:epci:247400690",
+        "count": 2
+      },
+      {
+        "name": "fr:epci:247400773",
+        "count": 2
+      },
+      {
+        "name": "fr:region:28",
+        "count": 2
+      },
+      {
+        "name": "country:be",
+        "count": 1
+      },
+      {
+        "name": "country:bg",
+        "count": 1
+      }
+    ],
+    "granularity": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "other",
+        "count": 316
+      },
+      {
+        "name": "fr:commune",
+        "count": 192
+      },
+      {
+        "name": "country",
+        "count": 83
+      },
+      {
+        "name": "fr:departement",
+        "count": 41
+      },
+      {
+        "name": "fr:canton",
+        "count": 22
+      },
+      {
+        "name": "fr:epci",
+        "count": 21
+      },
+      {
+        "name": "fr:region",
+        "count": 20
+      },
+      {
+        "name": "fr:collectivite",
+        "count": 14
+      },
+      {
+        "name": "poi",
+        "count": 6
+      },
+      {
+        "name": "country-group",
+        "count": 5
+      },
+      {
+        "name": "fr:arrondissement",
+        "count": 1
+      },
+      {
+        "name": "fr:iris",
+        "count": 1
+      }
+    ],
+    "badge": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "inspire",
+        "count": 24
+      },
+      {
+        "name": "hvd",
+        "count": 1
+      },
+      {
+        "name": "spd",
+        "count": 1
+      }
+    ],
+    "topics": [
+      {
+        "name": "all",
+        "count": 1943
+      },
+      {
+        "name": "65e9aa6cb5c809c30c70ee02",
+        "count": 44
+      },
+      {
+        "name": "69aea5dff97ef1fc29836765",
+        "count": 17
+      },
+      {
+        "name": "68889f00bd51536864e35316",
+        "count": 4
+      },
+      {
+        "name": "6a84700a0fa17b5ccf09a7b1",
+        "count": 4
+      },
+      {
+        "name": "6a8599542ad95ce5362d5ff7",
+        "count": 4
+      },
+      {
+        "name": "69bd1daefe8c270b107e8710",
+        "count": 2
+      },
+      {
+        "name": "69c189bd12661a481c5aa4a3",
+        "count": 2
+      },
+      {
+        "name": "65a9238c202514467c0163d2",
+        "count": 1
+      },
+      {
+        "name": "65b10aa72d0c187ecf296930",
+        "count": 1
+      },
+      {
+        "name": "65b22219ffcf892bd066df76",
+        "count": 1
+      },
+      {
+        "name": "690b5f6dec83300a693af800",
+        "count": 1
+      },
+      {
+        "name": "6a7f1a61ba154470f6a0e9a2",
+        "count": 1
+      }
+    ]
+  }
+}

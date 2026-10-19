@@ -386,3 +386,53 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun.
+
+## **Séance du 18/10/2026 (3) — Validation T7.5/T10.7, kanban, et sondage S11.0 (T11.3)**
+
+### **Contexte**
+- Reprise du projet : confirmation de l'état de T7.5, T10.1, T10.7 puis démarrage de T11.3 par le sondage préalable S11.0.
+
+### **Actions réalisées**
+1. **Validation actée par le concepteur** : T7.5 et T10.7 validées en local — les deux tâches déplacées en ✅ Terminé du kanban (351 tests verts sur la relance complète de la suite). T10.1 conservée en 🚧 En cours (chantier 2, normalisation B7, vu ultérieurement).
+2. **Kanban** : T7.5 (avec chantiers A/B) et T10.7 déplacés en Terminé ; T11.3 déplacée en En cours avec le sondage S11.0 coché.
+3. **Sondage S11.0 réalisé en réel sur l'API v2** (`/api/2/datasets/search/`, détail, ressources paginées, organisations, API tabulaire) :
+   - **Cas étalon confirmé** : « élections présidentielles » en v2 → jeux du Ministère de l'Intérieur en positions 1, 3, 4, 5 de la page 1 ; total 235 (vs 41 en v1) ;
+   - **`organization` identique en v2** avec `badges` (`public-service`/`certified` vérifiés) — le chantier B de T7.5 reste intact après bascule ;
+   - **Tris** : `-last_update`, `-views`, `-reuses` OK (mapping TRIS inchangé) ; le tri par défaut v2 est la pertinence (moteur du site) ; `title`/`-last_modified` rejetés (400) ;
+   - **Fenêtre de mise à jour** : `last_update_range` rejeté en v2 (400) — décision à trancher (recommandation : déprécier `fenetre_maj`, évolution de contrat) ;
+   - **Inventaire** : `resources` en sous-ressource paginée en v2 (subsection avec `href`/`total`) — second appel requis dans `lister_ressources_api` ;
+   - **Pagination** : page au-delà du total → 400 (s'arrêter sur `next_page` absent) ;
+   - **`last_modified` vs `last_update`** : sémantiques distinctes (métadonnées vs données) — mapping recommandé `derniere_maj` ← `last_update` ;
+   - **API tabulaire intacte** : ping 200 sur CSV indexé, enveloppe `/data/` inchangée — `est_indexee_api_tabulaire`, `interroger_ressource_api`, `profil_ressource_api` hors périmètre, confirmé ;
+   - **Bonus T11.2** : `/api/2/organizations/search/` sondé, même enveloppe — T11.2 pourra baser sur la v2 d'emblée.
+4. **Fixtures v2 réelles capturées** dans `tests/fixtures/api_v2/` : recherche (cas étalon), ressources paginées du jeu étalon (16), détail de jeu, facettes.
+5. **Documentation** : rapport de sondage complet `docs/tasks/T11.3_sondage_S11.0.md` (cartographie champ par champ, décisions à trancher).
+
+### **Décisions**
+- Mapping `derniere_maj` ← `last_update` (recommandé, à acter par le concepteur).
+- Fenêtre de mise à jour : dépréciation du paramètre `fenetre_maj` recommandée (option b) — HTTP 400 v2 sans équivalent simple.
+- Pagination : arrêt sur `next_page` absent, pas sur le 400.
+
+### **Blocages**
+- Aucun. 4 points à trancher par le concepteur avant implémentation (mapping `derniere_maj`, fenêtre, plafond inventaire, arrêt pagination) — listés dans `docs/tasks/T11.3_sondage_S11.0.md`.
+
+
+## **Séance du 19/10/2026 — T11.3 : implémentation complète de la migration v1 → v2 (E1..E7)**
+
+### **Contexte**
+- Suite du sondage S11.0 : implémentation de la migration sur la base des 4 décisions actées par le concepteur (mapping `derniere_maj` ← `last_update`, dépréciation `fenetre_maj`, arrêt pagination sur `next_page` absent, inventaire en sous-ressource paginée).
+
+### **Actions réalisées**
+1. **E1 — Recherche v2** (`src/utils/http.py`) : URL base `/api/2/`, endpoint `/datasets/search/`, `fenetre_maj` accepté mais jamais traduit (`last_update_range` rejeté en 400 par la v2), tri `pertinence` implicite du moteur v2, extraction `page_suivante` inchangée (même format `next_page`).
+2. **E2 — Inventaire v2** : deux appels séquentiels (détail `/api/2/datasets/{id}` puis sous-ressource `/resources/` paginée), boucle sur `next_page` (décision 3), `page_size` 50, plafond 20 pages en garde anti-boucle (échec explicite), payload **reconstitué** au format cœur — la normalisation aval ne change pas.
+3. **E3 — Normalisation** : `derniere_maj` ← `last_update` dans `search.py` et `resources.py` ; `_nb_ressources()` lit `resources.total` (subsection v2).
+4. **E4 — Dépréciation `fenetre_maj`** : avertissement explicite dans `message` si valeur ≠ `toutes` (recherche en succès) ; contrat `rechercher_jeux` **v1.3.0** (JSON + Pydantic + manifeste, changelog documenté) ; retrait complet prévu avec T7.4.
+5. **E5 — Schémas jsonschema v2** : `rechercher_jeux.reponse.json` (enveloppe v2, `page` au lieu de `url`, `organization.badges`, `resources` subsection) et `lister_ressources.reponse.json` (payload reconstitué).
+6. **E6 — Fixtures et tests** : fixtures v2 réelles substituées dans `tests/fixtures/api/` (captures du sondage conservées dans `tests/fixtures/api_v2/`) ; migration de tous les mocks vers la v2 ; 10 nouveaux tests (fenêtre ignorée, mapping `last_update`, boucle/plafond/404/vides inventaire, manifeste v1.3.0). **361 tests verts** (351 avant).
+7. **E7 — Documentation** : sections « Source API (T11.3) » dans les deux docs d'architecture, 6 décisions dans `decisions_conception.md`, section T11.3 dans `plan_tests.md` (TU-15 mis à jour, TU-15b/c, TU-54..58, TC-03, TB-01b), suivi `docs/tasks/T11.3_migration_v2.md`, kanban et SESSIONS à jour.
+
+### **Décisions**
+- Toutes celles actées en début de séance (4 points tranchés) ; ajout : retrait complet de `fenetre_maj` différé à T7.4 (autres sources), pour ne pas fracasser la compatibilité CLI/agent inutilement.
+
+### **Blocages**
+- Aucun. Reste E8 : validation en réel par le concepteur (TB-01 rejoué + cas étalon « élections présidentielles »).
