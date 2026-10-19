@@ -472,3 +472,8 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun.
+
+### Complément — création T10.8 (manifeste d'acquisition)
+- Question du concepteur : en mode manuel, rien ne permet de relier les fichiers de `data/raw` aux jeux de données correspondants (nommage issu de l'URL de la ressource ; inventaire T10.2 non écrit en mode agentique).
+- Analyse stockage/storage.py : l'horodatage isole l'exécution, mais le lien fichier → jeu n'existe que par croisement inventaire (CLI uniquement) + journal conversation.jsonl (à parser). Manque aussi au cœur : `_jeu_courant` ne retient ni le titre ni l'URL du jeu (pourtant dans le payload v2).
+- **T10.8 créée** (kanban, section 12) : manifeste `data/raw/<id_execution>/manifeste_acquisitions.json`, écrit au cœur à chaque acquisition (les deux voies), additif sans évolution de contrat, en-tête avec la demande utilisateur, enrichissement de `_jeu_courant` (titre/url) en prérequis E0. Plan complet E0..E6 dans `docs/tasks/T10.8_manifeste_acquisitions.md`.
