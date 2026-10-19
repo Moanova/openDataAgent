@@ -314,3 +314,50 @@ def test_prompt_garde_fou_t531_inchange():
     import inspect
     source = inspect.getsource(creer_agent)
     assert "PROMPT_SYSTEME" in source
+
+
+# ---------------------------------------------------------------------------
+# Externalisation du prompt (19/10/2026) : config/prompt_systeme.txt
+# ---------------------------------------------------------------------------
+
+
+def test_prompt_systeme_charge_depuis_config():
+    # Le prompt n'est plus en dur dans le code : il est chargé depuis
+    # config/prompt_systeme.txt au démarrage du module.
+    from src.agent import agent as module
+
+    assert module.CHEMIN_PROMPT_SYSTEME.exists()
+    assert module.PROMPT_SYSTEME == module._charger_prompt_systeme()
+    assert module.PROMPT_SYSTEME.strip()
+    assert len(module.PROMPT_SYSTEME) > 1000
+
+
+def test_prompt_systeme_absent_echec_explicite(tmp_path):
+    # Un prompt absent produit une ValueError explicite au chargement,
+    # jamais un agent silencieusement démarré sans consignes.
+    import pytest
+    from src.agent.agent import _charger_prompt_systeme
+
+    with pytest.raises(ValueError, match="absent"):
+        _charger_prompt_systeme(tmp_path / "introuvable.txt")
+
+
+def test_prompt_systeme_vide_echec_explicite(tmp_path):
+    import pytest
+    from src.agent.agent import _charger_prompt_systeme
+
+    chemin = tmp_path / "vide.txt"
+    chemin.write_text("   \n  ", encoding="utf-8")
+    with pytest.raises(ValueError, match="vide"):
+        _charger_prompt_systeme(chemin)
+
+
+def test_prompt_consigne_integrite_registre():
+    # Verrou anti-hallucination (constat du 19/10/2026 : l'étape A4 citait un
+    # chemin local jamais retourné par un outil) : seules les acquisitions
+    # réelles peuvent figurer en "données acquises".
+    from src.agent.agent import PROMPT_SYSTEME
+
+    assert "Intégrité du registre" in PROMPT_SYSTEME
+    assert "N'invente jamais un chemin local" in PROMPT_SYSTEME
+    assert "jamais dans les données acquises" in PROMPT_SYSTEME

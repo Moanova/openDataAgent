@@ -436,3 +436,23 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun. Reste E8 : validation en réel par le concepteur (TB-01 rejoué + cas étalon « élections présidentielles »).
+
+
+## **Séance du 19/10/2026 (2) — Correctifs post-validation locale : .env v1, intégrité A4, externalisation du prompt**
+
+### **Contexte**
+- Retours du concepteur après tests locaux de la v2 (T11.3 E8 en cours) : diagnostic du 404 (`jeu_introuvable` systématique) puis analyse du second test (acquisition partielle + synthèse A4 trompeuse).
+
+### **Actions réalisées**
+1. **Diagnostic 404** : `DATA_GOUV_API_URL` du `.env` local pointait encore sur `api/1` — le chemin v2 `/datasets/search/` sur base v1 n'existe pas (404). Correctif côté concepteur : passage de la variable à `api/2` (ou suppression : le défaut du code est v2). Reproduit et confirmé en réel.
+2. **Analyse du second test** : 1 seul fichier réellement acquis (log conforme) mais la synthèse A4 citait 3 chemins dont un `.txt` jamais téléchargé — hallucination de l'étape A4. Cause contributive : plafond d'invocations (8/10) expliquant l'acquisition unique et la proposition du 2nd tour ; le concepteur écarte la consigne de budget (T11.1 multi-tours la rendra caduque).
+3. **Verrou anti-hallucination A4** : consigne « Intégrité du registre » ajoutée au prompt — ne citer en données acquises que les acquisitions réellement retournées par un outil (`chemin_local`, statut succes), jamais de chemin inventé.
+4. **Externalisation du prompt** : `config/prompt_systeme.txt` (plaintext versionné), chargé par `_charger_prompt_systeme()` dans `src/agent/agent.py` ; échec explicite au démarrage si absent/vide (jamais d'agent sans consignes) ; l'empreinte du prompt reste comparée aux agents persistants (comportement inchangé). 4 nouveaux tests (chargement, absent, vide, consigne intégrité). **365 tests verts**.
+5. **Docs** : README (structure + section prompt externalisé).
+
+### **Décisions**
+- Format plaintext (`config/prompt_systeme.txt`) plutôt que JSON : le prompt est un texte long, lisible et diffable tel quel ; même convention que `politique_licences.json` pour l'emplacement (config/ versionné).
+- Pas de consigne de budget d'invocations : rendue caduque par T11.1 (plafond par tour, propose-puis-acquiert).
+
+### **Blocages**
+- Aucun.

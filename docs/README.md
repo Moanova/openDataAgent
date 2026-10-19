@@ -13,6 +13,9 @@
 ```
 openDataAgent/
 ├── .env                         # Variables d'environnement
+├── config/
+│   ├── politique_licences.json  # Politique de licences paramétrée (T7.5)
+│   └── prompt_systeme.txt       # Prompt système de l'agent (externalisé du code)
 ├── requirements.txt             # Dépendances Python
 ├── venv/                        # Environnement virtuel (ignoré par Git)
 │
@@ -266,6 +269,8 @@ Toute licence fermée ou commerciale est refusée, **quelle que soit l'organisat
 ### Paramétrage de la politique
 
 La liste des licences (acceptées, conditionnelles, types d'organisation de confiance) est paramétrée dans [`config/politique_licences.json`](../config/politique_licences.json), avec une clé par source de données (préparation de l'ouverture à d'autres sites, T7.4). En l'absence ou en cas d'invalidité du fichier, une politique intégrée équivalente s'applique (comportement sûr).
+
+Le **prompt système** de l'agent est externalisé dans [`config/prompt_systeme.txt`](../config/prompt_systeme.txt) : toute évolution des consignes (étapes A1 à A4) se fait dans ce fichier versionné, sans modification de code. Le démarrage échoue explicitement si le fichier est absent ou vide — jamais d'agent lancé sans consignes. L'empreinte du prompt chargé est comparée à celle d'un éventuel agent console persistant (`MISTRAL_AGENT_ID`) : en cas de divergence, un agent éphémère est créé.
 
 ---
 
