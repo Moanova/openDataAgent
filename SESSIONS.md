@@ -514,3 +514,20 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun. Concepteur reteste en local.
+
+
+## **Séance du 19/10/2026 (6) — Clôture : retest T10.8, question API beta.agents vs chat.completions, revue kanban**
+
+### **Contexte**
+- Retest du concepteur après la clarification A4 : l'agent détecte et analyse pertinemment les jeux des 2 tours 2022 mais demande toujours à l'utilisateur la permission de télécharger — comportement propose-puis-acquiert confirmé en mode one-shot. **Décision du concepteur : ce comportement sera réglé avec T11.1 (multi-tours)**, pas par une nouvelle itération de prompt one-shot.
+
+### **Question de conception traitée : `client.beta.agents` vs `chat.completions`**
+- Constat du concepteur : ni handoff multi-agents ni conservation de contexte serveur ne sont utilisés (agents éphémères, boucle d'outils et historique côté client) — l'API Agents n'apporte donc rien de fonctionnel en l'état.
+- Analyse partagée : l'équivalence fonctionnelle est réelle ; mais (1) la dimension pédagogique est un objectif explicite du projet, (2) `MISTRAL_AGENT_ID` (agent console persistant + garde d'empreinte) ne fonctionne qu'avec `beta.agents`, (3) T11.1 peut justifier l'API Agents si l'option « conversation côté serveur » est retenue, (4) l'architecture isole le contact API dans `boucle.py`/`agent.py` : la migration resterait peu coûteuse et différable sans dette.
+- **Décision : garder `beta.agents`** ; la question est inscrite comme point de design à trancher en tête de chantier T11.1 (contexte client vs serveur) dans le kanban.
+
+### **Revue du kanban (clôture de séance)**
+- Vérification « toutes les tâches terminées en section Terminé » : conforme — T7.5, T10.7, T11.3 y sont ; les entrées cochées restantes dans leurs sections d'origine (Prompt A1/A2, chantiers A/B T7.5) suivent la convention du projet (traçabilité locale). Tâches ouvertes légitimes : T7.1..T7.4 (optionnelles), T10.1 (en cours), T10.6 (optionnel), T10.8 (en cours — validation réelle partielle : en-tête du manifeste validé, entrées en attente d'acquisition effective), T11.1, T11.2.
+
+### **Blocages**
+- Aucun. Séance close ; prochaine étape naturelle : T11.1 (multi-tours), qui résoudra le comportement propose-puis-acquiert observé.
