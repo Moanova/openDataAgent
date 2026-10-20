@@ -89,15 +89,8 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 > Issu de la séance du 18/10/2026 (retours d'usage du concepteur sur le flux agentique) : l'arbitrage final de pertinence doit pouvoir se faire *pendant* la conversation, pas seulement après l'acquisition.
 
-- [ ] **T11.1** *(en cours — décisions actées le 20/10/2026, consignées dans `docs/design/decisions_conception.md`)* : Mode conversationnel multi-tours (`chat`) : boucle REPL où l'utilisateur raffine sa demande par une succession de prompts, l'agent conservant le contexte jusqu'à la fin de conversation (mot-clé de clôture `stop`). Décisions actées :
-  - **contexte côté serveur** : API Conversations (`client.beta.conversations.start_stream`/`append_stream`), l'agent se souvient — seul le nouveau prompt est envoyé ; la boucle tool-calling reste **côté client** (`function.call.delta` → `executer_outil` → entrées `function.result`) ; clôture de l'arbitrage API : `beta.agents` reste retenu (l'option serveur n'existe que dans la famille beta) ;
-  - **propose-puis-acquiert** : les tours explorent (recherche, inventaire, interrogation — pas d'écriture disque) ; `extraire_ressource`/`telecharger_brut` ne s'exécutent qu'après validation explicite de l'utilisateur (évite les fichiers orphelins de tentatives rejetées) ;
-  - plafond d'invocations **par tour** (réinitialisé à chaque prompt utilisateur), pas de plafond global (évolution future consignée : plafond global de sécurité si conversations longues) ;
-  - **pas d'étape A0** pour l'instant (évolution future consignée : question de clarification si demande ambiguë) ;
-  - clôture par mot-clé `stop` (insensible à la casse) ; **plus de mode one-shot** : `chat "prompt"` = premier message, la conversation se poursuit en REPL ; `EOF`/`Interrupt` clôturent proprement ;
-  - journal multi-tours : une conversation = un `id_execution`, événements `debut_tour`/`fin_tour` (chaque tour horodaté avec son compte d'invocations et sa synthèse), `contexte` avec empreinte du prompt, `fin` avec totaux.
-  Composants touchés : `src/main.py` (commande chat, REPL + clôture, conversation supprimée en finally à côté de l'agent), `src/agent/boucle.py` (`ConversationServeur` + `tour_conversation`, suppression de la boucle one-shot), `src/agent/agent.py` (inchangé, l'agent reste éphémère), `config/prompt_systeme.txt` (A4 devient proposition en attente de validation, intégration du feedback, section multi-tours), `src/agent/journal.py` (schéma multi-tours). **Aucune évolution de contrat cœur** : la conversation est une couche au-dessus des outils existants.
-  Prérequis : tests d'intégration multi-tours simulés (exploration → correction utilisateur → raffinement → acquisition validée).
+> ✅ T11.1 terminée le 20/10/2026 (validation réelle par le concepteur) — déplacée en colonne ✅ Terminé.
+
 - [ ] **T11.2** : Outil `rechercher_organisations` + filtre organisation sur `rechercher_jeux` (issu du constat des traces du 18/10/2026 : l'agent a consacré 3 invocations à chercher "Ministère de l'Intérieur" en mots-clés, sans succès — il n'existe aucun moyen direct de cibler un producteur). Chantier :
   - fonction cœur de recherche d'organisations par nom (endpoint `/api/1/organizations/`, déjà sondé — pagination, nom, slug, id, badges) ;
   - filtre optionnel `organisation` (id ou slug) sur `rechercher_jeux` (paramètre supporté par l'API v1) — évolution de contrat (v1.2.0 → v1.3.0) ;
@@ -117,9 +110,6 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 ## 🚧 En cours
 
-- [ ] **T11.1** *(en cours — mode conversationnel multi-tours, décisions actées le 20/10/2026)* : voir section 11 pour le détail complet. **E0..E7 + E8a/E8b faits (401 tests verts), reste E8 : validation réelle par le concepteur** (2 tests réels du 20/10 : deltas fragmentés corrigés en E8a, manifeste Windows corrigé en E8b, à re-valider ; checklist dans `docs/tasks/T11.1_chat_multi_tours.md`).
-
-
 
 - [ ] **T10.1** : Réaliser la mise à disposition des données vers la partie 2 (maillon B7 → P du schéma de conception, `docs/design/conception.mmd`). **Écart le plus structurel** : en l'état, seule la voie 2 (téléchargement brut) matérialise les données sur disque ; la voie 1 (extraction via API tabulaire) ne persiste rien (exploration conversationnelle uniquement) et aucune normalisation commune B7 n'existe dans le code. Chantiers : persistance des extractions tabulaires (ex. export paginé vers `data/raw/`) et pipeline de normalisation commun aux deux voies. Évolution de contrat probable (v1.2.0, ex. option `destination` sur `interroger_ressource` ou nouvel outil). *(En cours — périmètre précisé : cette entrée porte le chantier 2, pipeline de normalisation commun B7 aux deux voies ; le chantier 1, persistance des extractions de la voie 1, est séparé dans T10.7 ci-dessous ; séquence : T10.7 puis T10.1)*
 
@@ -127,6 +117,7 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 ## ✅ Terminé
 
+- [X] **T11.1** : Mode conversationnel multi-tours (`chat`) — REPL, contexte côté serveur (API Conversations), propose-puis-acquiert, plafond par tour, clôture `stop`, journal multi-tours. *(Terminé le 20/10/2026 — E0..E7 + E8a/E8b : 401 tests verts ; validation réelle par le concepteur en 2 runs (conversation complète jusqu'à l'acquisition de 3 ressources) ; correctifs post-test : reconstitution des `function.call.delta` fragmentés (E8a), écriture atomique du manifeste en `os.replace` (E8b) ; décisions dans `docs/design/decisions_conception.md`, suivi dans `docs/tasks/T11.1_chat_multi_tours.md`)*
 - [X] **T11.3** : Migration de l'API data.gouv.fr v1 → v2 pour la recherche et l'inventaire (décision concepteur du 18/10/2026 : bascule pleine v2, pas d'adaptateur — l'adaptateur par source n'aura de sens qu'avec T7.4). Contexte : le moteur v2 est celui du site (pertinence très supérieure constatée sur « élections présidentielles » : jeux du Ministère de l'Intérieur en tête vs jeux communaux en v1 ; total 235 vs 41) ; le choix v1 historique était un arbitrage de cohérence docs/code, pas de pertinence (SESSIONS.md, séance du 13/10). Périmètre :
   - **S11.0 sondage préalable ✅** : cartographie champ par champ v1/v2 réalisée en réel (`/api/2/datasets/search/`, détail, ressources paginées, tri, fenêtre, `last_modified` vs `last_update`, badges `organization` confirmés identiques — chantier B T7.5 intact), fixtures v2 réelles capturées dans `tests/fixtures/api_v2/`, API tabulaire vérifiée intacte (ping 200 sur CSV indexé). Constats clés : cas étalon « élections présidentielles » confirmé en v2 (Ministère de l'Intérieur en tête de page 1, total 235) ; `last_update_range` rejeté en v2 (décision à trancher : déprécier le paramètre `fenetre_maj`) ; `resources` en sous-ressource paginée (second appel requis pour l'inventaire) ; pagination au-delà du total → 400 (s'arrêter sur `next_page` absent). Voir `docs/tasks/T11.3_sondage_S11.0.md` ;
   - `src/utils/http.py` : URL base, `rechercher_jeux_api`, `lister_ressources_api` (attention : `resources` en sous-ressource paginée en v2 — impact sur l'inventaire) ;

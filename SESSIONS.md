@@ -617,3 +617,25 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun.
+
+
+---
+
+## **Séance du 20/10/2026 (4) — Clôture : T11.1 terminée (E8 validée), fin de séance**
+
+### **Contexte**
+- Le concepteur confirme que le 2nd test réel (avec le correctif E8b) a fonctionné correctement à tous les niveaux : conversation complète jusqu'à l'acquisition, manifeste complet. Il fera quelques tests supplémentaires ultérieurement.
+
+### **Actions réalisées**
+1. **T11.1 passée en ✅ Terminé** : entrée déplacée de 🚧 En cours vers ✅ Terminé dans le kanban (note de déplacement en tête de section 11) ; section 11 cochée avec note de clôture.
+2. **Suivi T11.1** (`docs/tasks/T11.1_chat_multi_tours.md`) : E8 cochée — validation réelle par le concepteur (2 runs du 20/10/2026 : conversation complète 5 tours, 3 acquisitions, journal + manifeste T10.8 conformes après correctifs E8a/E8b). **T11.1 : E0..E8 tous faits.**
+3. **SESSIONS.md** : entrée de clôture.
+
+### **État en fin de séance**
+- **401 tests verts.**
+- **T11.1 : ✅ Terminé** (E0..E8, validée en réel par le concepteur).
+- Tâches ouvertes restantes : T10.1 (en cours), T10.6 (optionnel), T10.8 (validation réelle partielle — manifeste validé en réel via T11.1 E8, reste la validation du mode manuel), T11.2, T7.1..T7.4 (optionnelles).
+- Prochaine étape naturelle : **T11.2** (outil `rechercher_organisations` + filtre producteur) ou poursuite de **T10.1** (normalisation B7).
+
+### **Blocages**
+- Aucun. Séance close.
