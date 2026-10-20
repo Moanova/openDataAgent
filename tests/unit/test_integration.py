@@ -479,3 +479,138 @@ def test_t107_flux_complet_voie1_extraction(registre, tmp_path, monkeypatch):
     contenu = chemin.read_text(encoding="utf-8")
     assert "theme" in contenu.splitlines()[0]
     assert contenu.count("\n") == 3  # en-tête + 2 lignes
+
+
+# ---------------------------------------------------------------------
+# T11.1 — TI-18 : scénario multi-tours simulé (SDK Conversations simulé)
+# ---------------------------------------------------------------------
+
+def test_t118_scenario_multi_tours_simule(tmp_path, monkeypatch):
+    # R\u00e9f. T11.1 TI-18 \u2014 exploration -> correction utilisateur -> raffinement
+    # -> acquisition valid\u00e9e. L'API Conversations et le coeur sont simules.
+    from types import SimpleNamespace
+    from unittest.mock import MagicMock
+
+    import src.agent.outils as module_outils
+    from src.agent.agent import Agent
+    from src.agent.boucle import cloturer_conversation, creer_conversation, tour_conversation
+    from src.agent.journal import JournalConversation, lire_journal
+
+    # --- Coeur simul\u00e9 : recherche, inventaire, t\u00e9l\u00e9chargement ---
+    recherche = MagicMock(return_value={
+        "statut": "succes", "message": "",
+        "donnees": {"jeux": [{"id": "jeu-1", "titre": "Jeu 1", "licence": "lov2"}],
+                    "total_trouves": 1, "exclus_licence": 0,
+                    "page_courante": 1, "page_suivante": None},
+    })
+    inventaire = MagicMock(return_value={
+        "statut": "succes", "message": "",
+        "donnees": {"ressources": [{"id": "res-1", "titre": "fichier.csv", "classe": "fichier_tabulaire",
+                                    "api_tabulaire": False, "format": "csv"}],
+                    "indetermination": []},
+    })
+    telechargement = MagicMock(return_value={
+        "statut": "succes", "message": "",
+        "donnees": {"chemin_local": "data/raw/id_multi/res-1_fichier.csv", "format": "csv", "licence": "lov2"},
+    })
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", recherche)
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "lister_ressources", inventaire)
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "telecharger_brut", telechargement)
+
+    # --- Helpers \u00e9v\u00e9nements Conversations ---
+    def evt_started(cid="conv-multi"):
+        return SimpleNamespace(event="conversation.response.started",
+                               data=SimpleNamespace(type="conversation.response.started", conversation_id=cid))
+
+    def evt_msg(texte):
+        return SimpleNamespace(event="message.output.delta",
+                               data=SimpleNamespace(type="message.output.delta", id="m",
+                                                     content={"type": "text", "text": texte}, role="assistant"))
+
+    def evt_call(nom, args, cid="c1"):
+        return SimpleNamespace(event="function.call.delta",
+                               data=SimpleNamespace(type="function.call.delta", id=f"fc-{cid}", name=nom,
+                                                     tool_call_id=cid, arguments=json.dumps(args)))
+
+    def evt_done():
+        return SimpleNamespace(event="conversation.response.done",
+                               data=SimpleNamespace(type="conversation.response.done",
+                                                     usage=SimpleNamespace(total_tokens=10)))
+
+    # --- Sc\u00e9nario : 3 tours ---
+    # Tour 1 (exploration) : recherche + inventaire, synth\u00e8se = proposition
+    # Tour 2 (correction) : l'utilisateur restreint, l'agent relance la recherche
+    # Tour 3 (validation) : l'utilisateur valide, l'agent t\u00e9l\u00e9charge
+    client = MagicMock()
+    streams = [
+        # Tour 1 : start_stream -> recherche + inventaire (2 tool_calls en un stream,
+        #          puis append avec les r\u00e9sultats -> proposition)
+        iter([evt_started(), evt_msg("Je recherche."), evt_call("rechercher_jeux", {"mots_cles": ["dette"]}, "c1"), evt_done()]),
+        iter([evt_call("lister_ressources", {"id_jeu": "jeu-1"}, "c2"), evt_done()]),
+        iter([evt_msg("Proposition : jeu-1, ressource res-1. Validez-vous ?"), evt_done()]),
+        # Tour 2 : append_stream (message utilisateur) -> nouvelle recherche affin\u00e9e
+        iter([evt_msg("Restreins aux donn\u00e9es r\u00e9centes."), evt_call("rechercher_jeux", {"mots_cles": ["dette", "2026"]}, "c3"), evt_done()]),
+        iter([evt_msg("Jeu retenu : jeu-1. Confirmez l'acquisition ?"), evt_done()]),
+        # Tour 3 : append_stream (validation) -> t\u00e9l\u00e9chargement
+        iter([evt_msg("Oui, acquiert."), evt_call("telecharger_brut", {"id_ressource": "res-1"}, "c4"), evt_done()]),
+        iter([evt_msg("Fichier acquis : data/raw/id_multi/res-1_fichier.csv (lov2)."), evt_done()]),
+    ]
+    client.beta.conversations.start_stream.side_effect = [streams[0]]
+    client.beta.conversations.append_stream.side_effect = streams[1:]
+
+    agent = Agent(client=client, agent_id="ag-multi", modele="m", outils=[], ephemere=True)
+    journal = JournalConversation("id_multi", modele="m", prompt="empreinte", plafond=10, repertoire=tmp_path)
+    conversation = creer_conversation(agent, "id_multi", plafond=10, journal=journal)
+
+    r1 = tour_conversation(conversation, "cherche des donn\u00e9es sur la dette publique")
+    assert r1["statut"] == "succes"
+    assert r1["donnees"]["numero_tour"] == 1
+    assert r1["donnees"]["nb_invocations"] == 2
+    assert conversation.conversation_id == "conv-multi"
+
+    r2 = tour_conversation(conversation, "restreins aux donn\u00e9es r\u00e9centes")
+    assert r2["statut"] == "succes"
+    assert r2["donnees"]["numero_tour"] == 2
+    assert r2["donnees"]["nb_invocations"] == 1
+
+    r3 = tour_conversation(conversation, "oui, acquiert res-1")
+    assert r3["statut"] == "succes"
+    assert r3["donnees"]["numero_tour"] == 3
+    assert r3["donnees"]["nb_invocations"] == 1
+    assert "acquis" in r3["donnees"]["synthese"].lower()
+
+    cloturer_conversation(conversation, "succes")
+
+    # --- V\u00e9rifications ---
+    # Le coeur a \u00e9t\u00e9 invoqu\u00e9 dans l'ordre attendu, avec l'id_execution de la conversation
+    recherche.assert_any_call(mots_cles=["dette"], id_execution="id_multi")
+    recherche.assert_any_call(mots_cles=["dette", "2026"], id_execution="id_multi")
+    inventaire.assert_called_once_with(id_jeu="jeu-1", id_execution="id_multi")
+    telechargement.assert_called_once_with(id_ressource="res-1", id_execution="id_multi")
+    assert recherche.call_count == 2
+
+    # Le contexte serveur est conserv\u00e9 : un seul start_stream, le reste en append_stream
+    assert client.beta.conversations.start_stream.call_count == 1
+    assert client.beta.conversations.append_stream.call_count == 6
+    # Chaque append_stream apr\u00e8s le premier tour porte le conversation_id
+    for appel in client.beta.conversations.append_stream.call_args_list:
+        assert appel.kwargs["conversation_id"] == "conv-multi"
+
+    # Totaux de la conversation
+    assert conversation.nb_tours == 3
+    assert conversation.nb_invocations == 4
+
+    # Journal multi-tours : 3 debut_tour, 3 fin_tour, 1 contexte, 1 fin
+    enregistrements = lire_journal(journal.chemin)
+    evenements = [e["event"] for e in enregistrements]
+    assert evenements.count("debut_tour") == 3
+    assert evenements.count("fin_tour") == 3
+    assert evenements[0] == "contexte"
+    assert evenements[-1] == "fin"
+    assert enregistrements[-1]["nb_tours"] == 3
+    assert enregistrements[-1]["nb_invocations"] == 4
+    numeros = [e["numero_tour"] for e in enregistrements if e["event"] == "debut_tour"]
+    assert numeros == [1, 2, 3]
+
+    # La conversation a \u00e9t\u00e9 supprim\u00e9e c\u00f4t\u00e9 serveur
+    client.beta.conversations.delete.assert_called_once_with(conversation_id="conv-multi")

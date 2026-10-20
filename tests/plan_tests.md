@@ -326,3 +326,56 @@ Implémentation : `tests/unit/test_extraction.py` (7 tests TU-47..53), `tests/un
 | TU-E12 | CLI `acquisitions` : absent -> erreur code 1 ; existant -> affichage lisible (fichier, voie, jeu, licence conditionnelle) | Sorties exactes | Bloquant |
 | TU-E13 | CLI `download` : consigne de la demande dans le manifeste | En-tête `demande` écrit | Bloquant |
 | TI-17 | Flux deux voies (extraction puis téléchargement) dans une même exécution | Un manifeste, 2 entrées ordonnées aux voies distinctes | Bloquant |
+
+
+## Tests T11.1 — Mode conversationnel multi-tours (20/10/2026)
+
+Contexte côté serveur (API Conversations `client.beta.conversations`), boucle tool-calling côté client, plafond par tour, propose-puis-acquiert, clôture par `stop`. La boucle one-shot (`boucle_conversation`) est supprimée ; les tests TU-B4..TU-B10 sont remplacés par TU-B13..TU-B22.
+
+### Tests unitaires — boucle multi-tours (`tests/unit/test_boucle.py`)
+
+| R\u00e9f. | Objectif | R\u00e9sultat attendu | Criticit\u00e9 |
+|---|---|---|---|
+| TU-B13 | `creer_conversation` : contexte (empreinte du prompt, pas le texte), plafond | Champs exacts, empreinte \u2264 16 caract\u00e8res | Bloquant |
+| TU-B14 | Tour avec r\u00e9ponse directe (start_stream) | `succes`, synth\u00e8se, 0 invocation, `conversation_id` lu | Bloquant |
+| TU-B15 | Tour avec tool_call \u2192 ex\u00e9cution locale \u2192 `function.result` renvoy\u00e9 | R\u00e9sultat exact dans l'entr\u00e9e `function.result`, `append_stream` appel\u00e9 | Bloquant |
+| TU-B16 | Multi-tours : contexte serveur conserv\u00e9 | Un seul `start_stream`, `append_stream` avec le `conversation_id`, seul le nouveau message envoy\u00e9 | Bloquant |
+| TU-B17 | Plafond r\u00e9initialis\u00e9 par tour | Tour 1 plafonn\u00e9 \u2192 tour 2 repart \u00e0 0 | Bloquant (CA-11) |
+| TU-B18 | Erreur c\u0153ur renvoy\u00e9e tel quel | `function.result` avec le statut d'erreur | Bloquant (CA-2) |
+| TU-B19 | tool_call illisible (arguments non-JSON) | `erreur_parametres` renvoy\u00e9e, tour continue | Bloquant (CA-2) |
+| TU-B20 | Erreur SDK sur `start_stream` | `echec_technique` propre, 0 invocation | Bloquant (CA-2) |
+| TU-B21 | \u00c9v\u00e9nement `conversation.response.error` | `echec_technique` avec le message serveur | Bloquant (CA-2) |
+| TU-B22 | `PLAFOND_INVOCATIONS` dans l'environnement | Plafond r\u00e9solu depuis l'env | Avertissement (CA-11) |
+| TU-C9 | S\u00e9quence d'\u00e9v\u00e9nements multi-tours | `contexte, debut_tour, ..., fin_tour` exacts | Bloquant (CA-2) |
+
+### Tests unitaires — journal multi-tours (`tests/unit/test_journal.py`)
+
+| R\u00e9f. | Objectif | R\u00e9sultat attendu | Criticit\u00e9 |
+|---|---|---|---|
+| TU-C10 | `fin` avec totaux de conversation | `nb_tours`, `nb_invocations` exacts | Bloquant (CA-2) |
+
+### Tests unitaires — prompt (`tests/unit/test_agent.py`)
+
+| R\u00e9f. | Objectif | R\u00e9sultat attendu | Criticit\u00e9 |
+|---|---|---|---|
+| TU-D5 | Propose-puis-acquiert dans le prompt | `PROPOSE-PUIS-ACQUIERT`, `Ne les invoque JAMAIS`, `FEEDBACK UTILISATEUR` pr\u00e9sents ; consigne one-shot retir\u00e9e | Avertissement |
+| TU-D6 | Section MULTI-TOURS dans le prompt | `MULTI-TOURS`, plafond par tour, mot-cl\u00e9 `stop` pr\u00e9sents | Avertissement |
+
+### Tests unitaires — CLI `chat` REPL (`tests/unit/test_cli.py`)
+
+| R\u00e9f. | Objectif | R\u00e9sultat attendu | Criticit\u00e9 |
+|---|---|---|---|
+| TU-E14 | REPL deux tours puis EOF | 2 tours conduits, cl\u00f4ture (conversation + agent) en finally | Bloquant (CA-2) |
+| TU-E15 | Mot-cl\u00e9 `stop` (insensible \u00e0 la casse) | Cl\u00f4ture sans tour, agent d\u00e9truit | Bloquant |
+| TU-E16 | EOF (Ctrl+D) | Cl\u00f4ture propre, code 0 | Bloquant |
+| TU-E17 | `--plafond` propag\u00e9 par tour | `creer_conversation` re\u00e7oit le plafond | Avertissement |
+| TU-E18 | `--json` : totaux conversation | `nb_tours`, `nb_invocations`, `conversation_id`, `journal`, `agent_detruit`, `conversation_supprimee` | Avertissement |
+| TU-E19 | \u00c9chec technique d'un tour | Cl\u00f4ture quand m\u00eame (finally), statut affich\u00e9 | Bloquant (CA-2) |
+| TU-E20 | Exception inattendue dans un tour | Cl\u00f4ture quand m\u00eame (finally) | Bloquant (CA-2) |
+| TU-E21 | Prompt vide explicite (`chat "   "`) | Code 2 | Avertissement |
+
+### Tests d'int\u00e9gration — sc\u00e9nario multi-tours simul\u00e9 (`tests/unit/test_integration.py`)
+
+| R\u00e9f. | Objectif | R\u00e9sultat attendu | Criticit\u00e9 |
+|---|---|---|---|
+| TI-18 | Sc\u00e9nario complet : exploration \u2192 correction utilisateur \u2192 raffinement \u2192 acquisition valid\u00e9e (SDK Conversations + c\u0153ur simul\u00e9s) | 3 tours, 4 invocations, ordre des appels c\u0153ur exact, un seul `start_stream`, journal multi-tours conforme, conversation supprim\u00e9e | Bloquant (CA-2, CA-3, CA-11) |

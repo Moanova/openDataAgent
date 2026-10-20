@@ -28,7 +28,12 @@ from src.core.extraction import extraire_ressource
 from src.core.query import interroger_ressource
 from src.utils.logging import configure_logging
 from src.agent.agent import creer_agent, detruire_agent
-from src.agent.boucle import PLAFOND_DEFAUT, boucle_conversation
+from src.agent.boucle import (
+    PLAFOND_DEFAUT,
+    cloturer_conversation,
+    creer_conversation,
+    tour_conversation,
+)
 from src.agent.journal import REPERTOIRE_JOURNAUX
 from src.core.manifeste import consigner_demande, lire_manifeste
 from src.core.vocabulaires import (
@@ -358,23 +363,23 @@ def acquisitions(
 
 @app.command()
 def chat(
-    prompt: List[str] = typer.Argument(..., help="Demande en francais : l'agent conduit recherche, sélection et acquisition."),
-    plafond: int = typer.Option(10, "--plafond", min=1, help="Nombre maximum d'invocations d'outils."),
+    prompt: Optional[List[str]] = typer.Argument(None, help="Premier message de la conversation (optionnel : le REPL le demande sinon)."),
+    plafond: int = typer.Option(10, "--plafond", min=1, help="Nombre maximum d'invocations d'outils par tour."),
     id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
-    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute de la réponse normalisée."),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute (par tour, réponse normalisée)."),
 ) -> None:
-    """Conversation agentique : crée l'agent, conduit le flux, journalise, detruit l'agent."""
-    texte = " ".join(prompt).strip()
-    if not texte:
-        typer.secho("Le prompt ne peut pas être vide.", fg=typer.colors.RED, err=True)
-        raise typer.Exit(code=2)
+    """Conversation agentique multi-tours (T11.1) : REPL, mot-clé de clôture `stop`."""
     identifiant = id_execution or _id_execution_auto()
     configure_logging(id_execution=identifiant)
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
 
-    consigner_demande(identifiant, texte)
+    premier_message = " ".join(prompt).strip() if prompt else ""
+    if prompt is not None and not premier_message:
+        typer.secho("Le prompt ne peut pas être vide.", fg=typer.colors.RED, err=True)
+        raise typer.Exit(code=2)
+
     creation = creer_agent(identifiant)
     if creation["statut"] != "succes":
         typer.secho(f"[{creation['statut']}] {creation['message']}", fg=typer.colors.RED, err=True)
@@ -384,37 +389,81 @@ def chat(
         raise typer.Exit(code=1)
     agent = creation["donnees"]["agent"]
 
+    conversation = None
+    destruction = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
+    suppression = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     try:
-        reponse = boucle_conversation(agent, texte, plafond=plafond, id_execution=identifiant)
+        conversation = creer_conversation(agent, identifiant, plafond=plafond)
+        if premier_message:
+            consigner_demande(identifiant, premier_message)
+        if not sortie_json:
+            typer.secho(
+                "Conversation ouverte. Mot-clé de clôture : stop (ou Ctrl+D / Ctrl+C).",
+                fg=typer.colors.BLUE,
+                err=True,
+            )
+        while True:
+            try:
+                message = premier_message or typer.prompt("vous", prompt_suffix="> ")
+            except (EOFError, KeyboardInterrupt, StopIteration):
+                if not sortie_json:
+                    typer.echo("")
+                break
+            premier_message = ""
+            message = (message or "").strip()
+            if not message:
+                continue
+            if message.lower() == "stop":
+                break
+            reponse = tour_conversation(conversation, message)
+            _afficher_tour(reponse, sortie_json)
+            if reponse["statut"] not in ("succes",):
+                break
     finally:
+        if conversation is not None:
+            suppression = cloturer_conversation(conversation)
         destruction = detruire_agent(agent)
 
     chemin_journal = REPERTOIRE_JOURNAUX / identifiant / "conversation.jsonl"
     if sortie_json:
         import json
-        charge = dict(reponse)
-        charge["donnees"] = dict(reponse.get("donnees", {}), journal=str(chemin_journal))
-        if destruction["statut"] == "succes":
-            charge["donnees"]["agent_detruit"] = destruction["donnees"].get("detruit", False)
+        charge = {
+            "statut": "succes",
+            "message": "",
+            "donnees": {
+                "nb_tours": conversation.nb_tours if conversation else 0,
+                "nb_invocations": conversation.nb_invocations if conversation else 0,
+                "plafond": plafond,
+                "conversation_id": conversation.conversation_id if conversation else None,
+                "journal": str(chemin_journal),
+                "agent_detruit": destruction["donnees"].get("detruit", False),
+                "conversation_supprimee": suppression["donnees"].get("supprimee", False),
+            },
+        }
         typer.echo(json.dumps(charge, ensure_ascii=False, indent=2))
-    elif reponse["statut"] == "succes":
-        donnees = reponse["donnees"]
-        typer.echo(f"statut : {reponse['statut']}")
-        if reponse["message"]:
-            typer.echo(reponse["message"])
-        typer.echo(f"invocations d'outils : {donnees['nb_invocations']}/{donnees['plafond']}")
+    else:
+        typer.secho(f"journal de conversation : {chemin_journal}", fg=typer.colors.BLUE)
         if destruction["statut"] != "succes" or not destruction["donnees"].get("detruit", True):
             typer.secho(f"destruction de l'agent : {destruction['statut']} {destruction['message']}", fg=typer.colors.YELLOW, err=True)
-        typer.echo("")
-        typer.echo(donnees["reponse_agent"])
-        typer.echo("")
-        typer.secho(f"journal de conversation : {chemin_journal}", fg=typer.colors.BLUE)
-    else:
-        typer.secho(f"[{reponse['statut']}] {reponse['message']}", fg=typer.colors.RED, err=True)
-        typer.secho(f"journal de conversation : {chemin_journal}", fg=typer.colors.BLUE, err=True)
+        if suppression["statut"] != "succes":
+            typer.secho(f"suppression de la conversation : {suppression['message']}", fg=typer.colors.YELLOW, err=True)
 
+
+def _afficher_tour(reponse: dict, sortie_json: bool) -> None:
+    """Affiche le résultat d'un tour de conversation (T11.1)."""
+    import json as _json
+    if sortie_json:
+        typer.echo(_json.dumps(reponse, ensure_ascii=False, indent=2))
+        return
+    donnees = reponse["donnees"]
+    typer.echo(f"--- tour {donnees['numero_tour']} : {donnees['nb_invocations']}/{donnees['plafond']} invocation(s) ---")
     if reponse["statut"] != "succes":
-        raise typer.Exit(code=1)
+        typer.secho(f"[{reponse['statut']}] {reponse['message']}", fg=typer.colors.RED, err=True)
+    elif reponse["message"]:
+        typer.secho(reponse["message"], fg=typer.colors.YELLOW, err=True)
+    if donnees.get("synthese"):
+        typer.echo(donnees["synthese"])
+    typer.echo("")
 
 
 if __name__ == "__main__":

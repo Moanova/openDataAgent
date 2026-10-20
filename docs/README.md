@@ -110,10 +110,10 @@ Le projet s'utilise via une **CLI** (Command Line Interface) avec Typer. Voici l
 | `query`    | Interroge une ressource indexée par l'API tabulaire. | `python -m src.main query <id_ressource>`    |
 | `extract`  | Extrait une ressource indexée vers un CSV local (voie 1 matérialisée). | `python -m src.main extract <id_ressource>` |
 | `download` | Télécharge une ressource non indexée.                | `python -m src.main download <id_ressource>` |
-| `chat`     | Conversation agentique : un prompt libre, l'agent conduit le flux complet. | `python -m src.main chat "cherche les données de la dette publique"` |
+| `chat`     | Conversation agentique multi-tours (REPL, mot-clé `stop`) : l'agent conduit le flux de bout en bout. | `python -m src.main chat` |
 | `acquisitions` | Affiche le manifeste d'acquisition d'une exécution : relie chaque fichier de `data/raw/<id>/` à son jeu, sa licence et sa mention d'attribution. | `python -m src.main acquisitions 20261019_175304` |
 
-Les cinq premières commandes (`search`, `list`, `query`, `extract`, `download`) sont le mode manuel : l'utilisateur joue lui-même les étapes de sélection. La commande `chat` est le mode agentique : l'agent Mistral conduit le flux de bout en bout (reformulation, sélection, acquisition) en s'appuyant sur les mêmes fonctions.
+Les cinq premières commandes (`search`, `list`, `query`, `extract`, `download`) sont le mode manuel : l'utilisateur joue lui-même les étapes de sélection. La commande `chat` est le mode agentique multi-tours : l'agent Mistral conduit le flux de bout en bout (reformulation, sélection, acquisition sur validation) en s'appuyant sur les mêmes fonctions, et la conversation se poursuit d'un message à l'autre jusqu'au mot-clé `stop`.
 
 ### ⌨️ Options des commandes
 
@@ -176,25 +176,27 @@ python -m src.main query <id_ressource> --id-execution dette-publique --page 2
 - **Sans `--id-execution`** : un identifiant est généré automatiquement (horodatage) et **affiché dans la sortie de chaque commande** (`id_execution : ...`) — relevez-le pour le reprendre sur la commande suivante et retrouver vos artefacts (logs, inventaire).
 - **Avec `--id-execution`** : vous choisissez le nom du flux ; utile pour conduire un travail de fond nommé, isoler deux investigations parallèles (deux ids = deux inventaires isolés) ou reprendre un flux interrompu (même id, seul l'inventaire est conservé).
 - **Enrichissement cumulatif** : plusieurs `list` sur des jeux différents sous le même id enrichissent le même inventaire ; les entrées existantes ne sont jamais écrasées.
-- **Mode `chat` inchangé** : l'agent tient l'inventaire en mémoire dans son processus unique, l'inventaire n'y est pas persisté.
+- **Mode `chat` inchangé** : l'agent tient l'inventaire en mémoire dans son processus unique, l'inventaire n'y est pas persisté entre les tours.
 - Un `download` sans inventaire correspondant (id jamais utilisé par un `list`) répond toujours `ressource_introuvable` (« identifiant jamais vu par le flux courant ni par une exécution antérieure réactivée sous le même id ») — convention 1 du contrat global.
 
-### 💬 Commande `chat` (mode agentique)
+### 💬 Commande `chat` (mode agentique multi-tours)
 
 **Usage** :
 
 ```bash
-python -m src.main chat "<demande en français>" [options]
+python -m src.main chat ["<premier message>"] [options]
 ```
+
+L'argument `prompt` est **optionnel** : s'il est omis, la commande ouvre directement une boucle interactive (REPL) et vous demande chaque message à la suite (`vous> `). Le mode est toujours multi-tours : il n'y a pas de mode one-shot.
 
 **Paramètres** :
 
 | Paramètre | Description | Défaut |
 |---|---|---|
-| `prompt` (argument) | La demande en français, entre guillemets ou en mots séparés. Obligatoire. | — |
-| `--plafond` | Nombre maximum d'invocations d'outils par conversation. | 10 |
+| `prompt` (argument) | Premier message de la conversation, entre guillemets ou en mots séparés. Optionnel : le REPL le demande sinon. | — |
+| `--plafond` | Nombre maximum d'invocations d'outils **par tour** (réinitialisé à chaque message). | 10 |
 | `--id-execution` | Identifiant d'exécution (traces et nom du journal). | Horodatage auto |
-| `--json` | Sortie JSON brute (réponse normalisée + journal + statut de destruction). | Désactivé |
+| `--json` | Sortie JSON brute (une réponse normalisée par tour, puis les totaux à la clôture). | Désactivé |
 
 **Variables d'environnement** (fichier `.env`) :
 
@@ -205,31 +207,42 @@ python -m src.main chat "<demande en français>" [options]
 | `PLAFOND_INVOCATIONS` | Plafond si `--plafond` n'est pas fourni. | 10 |
 | `MISTRAL_AGENT_ID` | (Optionnel) Agent console persistant à réutiliser — uniquement s'il est strictement conforme au dépôt (modèle, prompt, outils), sinon agent éphémère créé. | Non défini |
 
-**Déroulement d'une exécution** :
+**Déroulement d'une conversation** :
 
-1. Création d'un agent éphémère sur la console Mistral (visible pendant l'exécution, supprimé à la fin).
-2. L'agent conduit la conversation : il reformule la demande, appelle les outils (`rechercher_jeux`, `lister_ressources`, `interroger_ressource`, `telecharger_brut`), exécute le code local qui dialogue avec data.gouv.fr.
-3. Destruction systématique de l'agent (même en cas d'erreur).
-4. Affichage : statut, nombre d'invocations/plafond, synthèse de l'agent (données acquises avec chemins et licences, sources retenues, sources écartées avec motifs, limites).
+1. Création d'un agent éphémère sur la console Mistral (visible pendant la conversation, supprimé à la clôture).
+2. Ouverture d'une **conversation côté serveur** (API Conversations Mistral) : le contexte est conservé par le serveur, seul le nouveau message de chaque tour est envoyé.
+3. Boucle interactive : à chaque message (`vous> `), l'agent conduit un tour — il reformule, appelle les outils (`rechercher_jeux`, `lister_ressources`, `interroger_ressource`) et répond. **Acquisition sur validation** : `extraire_ressource` et `telecharger_brut` ne sont exécutés que lorsque vous validez explicitement la proposition de l'agent (propose-puis-acquiert).
+4. Clôture par le mot-clé `stop`, `Ctrl+D` ou `Ctrl+C` : la conversation serveur est supprimée et l'agent éphémère détruit — même en cas d'erreur (bloc `finally`).
 
 **Sortie** (exemple) :
 
 ```
-statut : succes
-invocations d'outils : 4/10
+id_execution : 20261020_093012
+Conversation ouverte. Mot-clé de clôture : stop (ou Ctrl+D / Ctrl+C).
+vous> cherche les données de la dette publique
+--- tour 1 : 3/10 invocation(s) ---
 
 Rapport :
-- Données acquises : data/raw/20261014_142233/fichier.csv (licence lov2)
-- Jeu retenu : Comptes des administrations publiques (Insee) — données à jour, organisation officielle
-- Sources écartées : 2 jeux (licence incompatible)
+- Sources retenues : Dette publique (DGFiP) — données à jour, organisation officielle
 - Limites : aucune
 
-journal de conversation : conversations/20261014_142233/conversation.jsonl
+vous> télécharge le CSV des dernières années
+--- tour 2 : 1/10 invocation(s) ---
+
+Rapport :
+- Données acquises : data/raw/20261020_093012/dette_publique.csv (licence lov2)
+- Jeu retenu : Dette publique (DGFiP)
+- Limites : aucune
+
+vous> stop
+journal de conversation : conversations/20261020_093012/conversation.jsonl
 ```
+
+Chaque tour affiche son compteur d'invocations sur le plafond **par tour** (`3/10`) : le plafond est réinitialisé à chaque message, il n'y a pas de plafond global de sécurité (consigné comme évolution future possible).
 
 Chaque exécution ayant acquis des données écrit un **manifeste d'acquisition** (`data/raw/<id_execution>/manifeste_acquisitions.json`, T10.8) : en-tête avec la demande utilisateur, une entrée par fichier acquis (voie, jeu de données, organisation, licence, mention d'attribution, troncature). C'est la source de vérité pour relier les fichiers téléchargés à leurs jeux de données — consultable avec la commande `acquisitions`, consommable par la normalisation (T10.1).
 
-Le journal JSONL (`conversations/<id_execution>/conversation.jsonl`) conserve la conversation complète : contexte (modèle, prompt, date), messages, raisonnements de l'agent, invocations d'outils avec arguments et résultats. Il sert à l'audit et aux tests agentiques (propriétés TA).
+Le journal JSONL (`conversations/<id_execution>/conversation.jsonl`) conserve la conversation complète selon un **schéma multi-tours** : un événement `contexte` (modèle, empreinte du prompt système, plafond, date), puis pour chaque tour un `debut_tour` et un `fin_tour` encadrant les raisonnements de l'agent, les invocations d'outils avec arguments et résultats, et les éventuelles erreurs (`plafond_atteint`, `erreur_api`), clos par un événement `fin`. Il sert à l'audit et aux tests agentiques (propriété TA).
 
 **Codes de sortie** : `0` succès ; `1` échec technique (clé absente, API injoignable, erreur en cours de conversation) ; `2` paramètres invalides.
 

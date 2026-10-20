@@ -277,3 +277,71 @@ Chaque acquisition réussie (`telecharger_brut`, `extraire_ressource`) ajoute un
 #### Justification
 - Symétrie manuel/agentique déjà retenue pour l'extraction (T10.7) : même principe.
 - La traçabilité ne doit pas introduire de nouveau point de défaillance sur le chemin d'acquisition.
+
+
+---
+
+## 20/10/2026 — T11.1 : mode conversationnel multi-tours
+
+### 1. Conservation du contexte côté serveur (API Conversations)
+
+#### Décision
+Le contexte conversationnel est conservé **côté serveur** via l'API Conversations du SDK (`client.beta.conversations`) : la conversation est créée par `start_stream` (premier message), poursuivie par `append_stream` (message utilisateur ou résultats d'outils). Seul le nouveau contenu est envoyé à chaque appel ; l'historique complet vit sur la console Mistral. La boucle tool-calling reste **côté client** : les `function.call.delta` émis par le serveur sont exécutés localement (`executer_outil`) et leurs résultats renvoyés au serveur par des entrées `function.result`.
+
+#### Justification
+- Décision du concepteur (20/10/2026) : l'option (b) du kanban est retenue — l'agent se souvient, seul le nouveau prompt est envoyé.
+- Le `conversation_id` est porté par l'événement `conversation.response.started` du stream ; `append_stream` le prend en paramètre d'URL.
+- Conséquence sur l'arbitrage API tranché le 19/10 : `client.beta.agents` reste l'API retenue — l'option serveur n'existe que dans la famille beta (agents + conversations), ce qui clôt définitivement la question `beta.agents` vs `chat.completions`.
+- La suppression de la conversation (`client.beta.conversations.delete`) est faite en fin de flux, dans le `finally` de la commande `chat`, à côté de la destruction de l'agent éphémère.
+
+### 2. Propose-puis-acquiert
+
+#### Décision
+En mode multi-tours, les tours conversationnels explorent (recherche, inventaire, interrogation — aucune écriture disque) ; `telecharger_brut` et `extraire_ressource` ne s'exécutent qu'après **validation explicite** de l'utilisateur. L'étape A4 du prompt devient une **proposition** (jeux retenus, ressources envisagées, voie d'acquisition proposée) en attente de confirmation.
+
+#### Justification
+- Évite les fichiers orphelins des tentatives rejetées par l'utilisateur en cours de conversation.
+- Résout le comportement propose-puis-acquiert observé en one-shot (séances du 19/10/2026) : en one-shot, personne ne répondait à la question de l'agent ; en multi-tours, la validation est un tour normal.
+
+### 3. Plafond d'invocations par tour
+
+#### Décision
+Le plafond d'invocations d'outils (défaut 10, `--plafond` / `PLAFOND_INVOCATIONS`) s'applique **par tour utilisateur** et est réinitialisé à chaque nouveau prompt. Aucun plafond global de conversation n'est instauré.
+
+#### Justification
+- La plupart des conversations n'auront que quelques tours ; un plafond global serait un garde-fou sans cas d'usage réel.
+- **Évolution future consignée** : un plafond global de sécurité (ex. 50 invocations par conversation) pourra être ajouté si des conversations longues se généralisent.
+
+### 4. Pas d'étape A0 (clarification avant recherche)
+
+#### Décision
+L'agent ne pose pas de question de clarification avant de lancer sa recherche : il commence directement, et l'utilisateur affine sa demande au tour suivant si les résultats ne sont pas satisfaisants.
+
+#### Justification
+- Le multi-tours rend l'A0 redondante : le feedback utilisateur joue déjà ce rôle au tour 2.
+- **Évolution future consignée** : une étape A0 (question de clarification si la demande est ambiguë) pourra être ajoutée si les retours d'usage montrent des premières recherches trop éloignées.
+
+### 5. Clôture par mot-clé `stop`, plus de mode one-shot
+
+#### Décision
+La commande `chat` déclenche directement le mode multi-tours (REPL). Le mot-clé de clôture est `stop` (insensible à la casse, en début de saisie). Le mode one-shot est supprimé : un prompt fourni en argument est simplement le **premier message** de la conversation, qui se poursuit en REPL. `EOF` (Ctrl+D) et `Interrupt` (Ctrl+C) clôturent aussi proprement.
+
+#### Justification
+- Le one-shot était un résidu de T4.3 ; le multi-tours le subsume (un seul tour = `chat "prompt"` puis `stop`).
+- Un seul chemin de code pour la commande `chat`.
+
+### 6. Journal multi-tours
+
+#### Décision
+Une conversation = un `id_execution` = un journal `conversations/<id_execution>/conversation.jsonl`. Le schéma évolue :
+- `contexte` (une fois, en-tête) : id_execution, modèle, **empreinte du prompt** (sha256 tronquée), plafond, date ;
+- `debut_tour` (par tour) : `numero_tour`, `contenu` (message utilisateur) ;
+- `raisonnement_agent`, `outil_invoque`, `outil_resultat`, `plafond_atteint`, `erreur_api` : inchangés, le champ `tour` porte le **numéro d'invocation dans le tour** (réinitialisé à chaque tour) ;
+- `fin_tour` (par tour) : `numero_tour`, `statut`, `nb_invocations` (du tour), `synthese` (texte final du tour), `plafond` ;
+- `fin` (une fois) : `statut`, `nb_tours`, `nb_invocations` (total conversation).
+
+Les événements `message_utilisateur` et `reponse_finale` de l'ancienne boucle one-shot sont supprimés (remplacés par `debut_tour`/`fin_tour`). Le rejeu `extraire_invocations` (base TA-01/TA-02) est inchangé.
+
+#### Justification
+- La granularité par tour préserve l'audit : chaque tour est horodaté avec son compte d'invocations et sa synthèse.
+- L'empreinte du prompt dans l'en-tête (au lieu du texte complet) garde le journal lisible tout en permettant de vérifier quelle version du prompt a servi.

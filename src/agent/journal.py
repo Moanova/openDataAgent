@@ -7,16 +7,19 @@
 # Design       : Mistral Vibe
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------
-"""Journal des conversations agentiques (T5.3.3).
+"""Journal des conversations agentiques (T5.3.3, schéma multi-tours T11.1).
 
-Conserve pour chaque exécution la conversation complète : contexte
-(modele, prompt, date, plafond), messages, invocations d'outils avec
-leurs arguments, résultats normalisés, raisonnements de l'agent
-(texte émis entre les tool_calls) et évènements de fin.
+Conserve pour chaque conversation : contexte (modèle, empreinte du
+prompt, date, plafond), un événement `debut_tour`/`fin_tour` par tour
+utilisateur (horodaté, avec son compte d'invocations et sa synthèse),
+les invocations d'outils avec leurs arguments, les résultats normalisés,
+les raisonnements de l'agent (texte émis entre les tool_calls) et un
+événement `fin` final (totaux de la conversation).
 
 Format : JSONL, un enregistrement par ligne, dans
-conversations/<id_execution>/conversation.jsonl. Ces journaux servent aux
-tests de proprietes TA (rejeu) et à l'audit (plan_tests section 9).
+conversations/<id_execution>/conversation.jsonl. Une conversation = un
+id_execution. Ces journaux servent aux tests de propriétés TA (rejeu)
+et à l'audit (plan_tests section 9).
 
 Aucune erreur d'écriture ne remonte vers la boucle : la journalisation
 ne doit jamais interrompre une acquisition."""
@@ -32,13 +35,13 @@ REPERTOIRE_JOURNAUX = Path("conversations")
 
 EVENEMENTS = (
     "contexte",
-    "message_utilisateur",
+    "debut_tour",
     "raisonnement_agent",
     "outil_invoque",
     "outil_resultat",
-    "reponse_finale",
     "plafond_atteint",
     "erreur_api",
+    "fin_tour",
     "fin",
 )
 

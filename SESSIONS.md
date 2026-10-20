@@ -531,3 +531,38 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun. Séance close ; prochaine étape naturelle : T11.1 (multi-tours), qui résoudra le comportement propose-puis-acquiert observé.
+
+
+---
+
+## **Séance du 20/10/2026 — T11.1 : mode conversationnel multi-tours (E0..E7)**
+
+### **Contexte**
+- Reprise du projet pour une courte séance : présentation du plan d'implémentation de **T11.1** (mode `chat` multi-tours), puis implémentation après arbitrage des 6 points de conception par le concepteur.
+- Contexte : le retest T10.8 du 19/10 avait confirmé un comportement propose-puis-acquiert en mode one-shot (l'agent attend une permission que personne ne donne) — T11.1 le résout structurellement.
+
+### **Décisions actées par le concepteur (6 points)**
+1. **Conservation du contexte côté serveur** via l'API Conversations (`client.beta.conversations`) — clôture la question beta.agents vs chat.completions inscrite le 19/10 : le mode `chat` passe sur `beta`, l'agent garde son empreinte (`MISTRAL_AGENT_ID` reste pertinent).
+2. **Acquisition sur validation (propose-puis-acquiert)** : `extraire_ressource`/`telecharger_brut` ne s'exécutent qu'après validation explicite de l'utilisateur.
+3. **Plafond d'invocations par tour** (réinitialisé à chaque message) ; pas de plafond global — consigné comme évolution future possible.
+4. **Pas d'étape A0** (pas de question de clarification avant recherche) — l'utilisateur affine au second tour ; consigné comme évolution future possible.
+5. **Mot-clé de clôture `stop`** ; `chat` déclenche directement le mode multi-tours, pas de mode one-shot conservé.
+6. **Schéma de journal multi-tours** approuvé (empreinte du prompt en `contexte`, `debut_tour`/`fin_tour` par tour).
+
+### **Actions réalisées**
+1. **E0 — Décisions consignées** : 6 décisions dans `docs/design/decisions_conception.md` (section « 20/10/2026 — T11.1 ») ; kanban T11.1 réécrit avec les décisions actées et déplacé en 🚧 En cours.
+2. **E1 — `src/agent/boucle.py` réécrit (v2)** : nouvelle API `ConversationServeur` + `creer_conversation` / `tour_conversation` / `cloturer_conversation` ; l'ancienne `boucle_conversation` est supprimée. Internes : `_envoyer` (`start_stream` au premier tour, `append_stream` ensuite), `_amorcer_conversation` (matérialise le stream pour lire le `conversation_id` de l'événement `conversation.response.started`), `_consommer_stream` (texte + tool calls + erreur), `_terminer_tour` (écrit `fin_tour`, cumule les totaux). Plafond par tour (compteur local réinitialisé à chaque tour). Invariant préservé : la boucle d'outils reste côté client, les résultats sont renvoyés au serveur en entrées `function.result`.
+3. **E2 — `src/main.py`** : commande `chat` réécrite — argument `prompt` optionnel, REPL (`typer.prompt("vous", prompt_suffix="> ")`), clôture sur `stop` (insensible à la casse) / Ctrl+D / Ctrl+C, message vide ignoré, `try/finally` avec `cloturer_conversation` (suppression `conversations.delete`) + `detruire_agent`, helper `_afficher_tour` (`--- tour N : X/10 invocation(s) ---`), sortie `--json` finale avec totaux (nb_tours, nb_invocations, plafond, conversation_id, journal, agent_détruit, conversation_supprimée).
+4. **E3 — `config/prompt_systeme.txt`** : A4 renommée « PROPOSITION ET SYNTHÈSE DU REGISTRE » (propose-puis-acquiert, feedback utilisateur, intégrité du registre sans l'ancienne consigne « conduis-la sans attendre une autorisation »), nouvelle section « MULTI-TOURS », plafond « par tour de conversation (réinitialisé à chaque message) », cinq outils, frontière exploration/acquisition réservée aux outils d'acquisition validée.
+5. **E4 — `src/agent/journal.py`** : schéma multi-tours — `EVENEMENTS = (contexte, debut_tour, raisonnement_agent, outil_invoque, outil_resultat, plafond_atteint, erreur_api, fin_tour, fin)` ; `contexte` porte l'empreinte du prompt (sha256 tronqué à 16 caractères).
+6. **E5 — Tests** : `test_boucle.py` réécrit (28 tests : dispatch TU-B1..B3 + T10.4/T10.7 conservés, TU-B13..B22 nouveaux, clôture, schéma journal) ; `test_journal.py` adapté (9 tests + TU-C10) ; `test_cli.py` section chat remplacée (TU-E14..E21 : REPL 2 tours, mot-clé stop, EOF, plafond, `--json` totaux, échec tour, exception tour, prompt vide) ; `test_agent.py` 3 tests prompt mis à jour + 2 nouveaux (propose-puis-acquiert, multi-tours).
+7. **E6 — TI-18** (`test_integration.py`) : scénario multi-tours simulé en 3 tours (exploration → correction → validation → acquisition) avec streams Conversations mockés et outils cœur mockés — vérifie l'ordre des appels, un seul `start_stream`, 6 `append_stream` avec `conversation_id`, les totaux (3 tours, 4 invocations), le schéma journal (3 `debut_tour`, 3 `fin_tour`, `contexte`, `fin`), la suppression de la conversation.
+8. **E7 — Documentation** : `docs/tasks/T11.1_chat_multi_tours.md` (suivi complet E0..E8), section « Tests T11.1 » dans `tests/plan_tests.md`, section `chat` du README réécrite (usage REPL, paramètres, déroulement propose-puis-acquiert, exemple de sortie, schéma journal multi-tours), tableau récapitulatif des commandes et paragraphe introductif mis à jour.
+
+### **État en fin de séance**
+- **398 tests verts** (386 avant T11.1, +12).
+- T11.1 en 🚧 En cours : **E0..E7 faits, reste E8 (validation réelle par le concepteur)** — checklist dans `docs/tasks/T11.1_chat_multi_tours.md` (premier tour `start_stream` + `conversation_id`, boucle tool-calling, suppression conversation idempotente, prompt propose sans acquérir spontanément, journal réel, manifeste T10.8).
+- Non commité (attente instruction du concepteur).
+
+### **Blocages**
+- Aucun.

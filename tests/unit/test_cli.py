@@ -285,78 +285,175 @@ def test_download_ressource_introuvable_code_sortie(mock_download):
     assert resultat.exit_code == 2
 
 
-REPONSE_CHAT_SUCCES = {
+REPONSE_TOUR_SUCCES = {
     "statut": "succes",
     "message": "",
     "donnees": {
-        "reponse_agent": "Rapport : 1 jeu retenu, 1 fichier acquis (licence lov2).",
+        "numero_tour": 1,
+        "synthese": "Rapport : 1 jeu retenu, proposition d'acquisition.",
         "nb_invocations": 4,
         "plafond": 10,
+        "conversation_id": "conv-abc",
     },
 }
 
 AGENT_CHAT = type("AgentFaux", (), {})()
 
+CONVERSATION_FAUSSE = type("ConversationFausse", (), {
+    "nb_tours": 0,
+    "nb_invocations": 0,
+    "conversation_id": None,
+})()
+
 
 @patch("src.main.creer_agent")
-@patch("src.main.boucle_conversation")
+@patch("src.main.tour_conversation")
+@patch("src.main.cloturer_conversation")
+@patch("src.main.creer_conversation")
 @patch("src.main.detruire_agent")
-def test_chat_succes(mock_destruction, mock_boucle, mock_creation):
-    # Réf. tests/plan_tests.md : Annexe T4.3 — flux complet affiché, destruction systématique
+def test_chat_repl_deux_tours_puis_stop(mock_destruction, mock_creer_conv, mock_cloturer,
+                                       mock_tour, mock_creation, monkeypatch):
+    # Réf. T11.1 TU-E14 — REPL multi-tours : prompt argument + stop en saisie
     mock_creation.return_value = {"statut": "succes", "message": "", "donnees": {"agent": AGENT_CHAT}}
-    mock_boucle.return_value = REPONSE_CHAT_SUCCES
+    conversation = CONVERSATION_FAUSSE
+    mock_creer_conv.return_value = conversation
+    mock_tour.side_effect = [
+        REPONSE_TOUR_SUCCES,
+        {"statut": "succes", "message": "", "donnees": {
+            "numero_tour": 2, "synthese": "Fichier acquis.", "nb_invocations": 1,
+            "plafond": 10, "conversation_id": "conv-abc",
+        }},
+    ]
+    mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
+    saisies = iter(["oui, acquiert"])
+    def _prompt(*a, **k):
+        try:
+            return next(saisies)
+        except StopIteration:
+            raise EOFError
+    monkeypatch.setattr("typer.prompt", _prompt)
     resultat = runner.invoke(app, ["chat", "cherche", "la", "dette", "publique"])
     assert resultat.exit_code == 0
-    args_boucle = mock_boucle.call_args.args
-    kwargs_boucle = mock_boucle.call_args.kwargs
-    assert args_boucle[0] is AGENT_CHAT
-    assert args_boucle[1] == "cherche la dette publique"
-    assert kwargs_boucle["plafond"] == 10
-    assert kwargs_boucle["id_execution"]
-    assert "4/10" in resultat.output
-    assert "Rapport" in resultat.output
+    # Deux tours conduits (prompt argument + saisie), puis EOF clôture la conversation
+    assert mock_tour.call_count == 2
+    assert mock_tour.call_args_list[0].args[0] is conversation
+    assert mock_tour.call_args_list[0].args[1] == "cherche la dette publique"
+    assert mock_tour.call_args_list[1].args[1] == "oui, acquiert"
+    # La conversation est clôturée et l'agent détruit (finally)
+    mock_cloturer.assert_called_once_with(conversation)
+    mock_destruction.assert_called_once_with(AGENT_CHAT)
+    assert "tour 1" in resultat.output
+    assert "tour 2" in resultat.output
     assert "conversation.jsonl" in resultat.output
+
+
+@patch("src.main.creer_agent")
+@patch("src.main.tour_conversation")
+@patch("src.main.cloturer_conversation")
+@patch("src.main.creer_conversation")
+@patch("src.main.detruire_agent")
+def test_chat_mot_cle_stop_cloture_immediate(mock_destruction, mock_creer_conv, mock_cloturer,
+                                              mock_tour, mock_creation, monkeypatch):
+    # Réf. T11.1 TU-E15 — mot-clé stop (insensible à la casse) : clôture sans tour
+    mock_creation.return_value = {"statut": "succes", "message": "", "donnees": {"agent": AGENT_CHAT}}
+    mock_creer_conv.return_value = CONVERSATION_FAUSSE
+    mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
+    mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
+    monkeypatch.setattr("typer.prompt", lambda *a, **k: "STOP")
+    resultat = runner.invoke(app, ["chat"])
+    assert resultat.exit_code == 0
+    mock_tour.assert_not_called()
+    mock_cloturer.assert_called_once()
     mock_destruction.assert_called_once_with(AGENT_CHAT)
 
 
 @patch("src.main.creer_agent")
-@patch("src.main.boucle_conversation")
+@patch("src.main.tour_conversation")
+@patch("src.main.cloturer_conversation")
+@patch("src.main.creer_conversation")
 @patch("src.main.detruire_agent")
-def test_chat_plafond_propage(mock_destruction, mock_boucle, mock_creation):
-    # Réf. tests/plan_tests.md : Annexe T4.3 — --plafond propagé à la boucle
+def test_chat_eof_cloture_propre(mock_destruction, mock_creer_conv, mock_cloturer,
+                                 mock_tour, mock_creation, monkeypatch):
+    # Réf. T11.1 TU-E16 — EOF (Ctrl+D) : clôture propre, pas d'erreur
     mock_creation.return_value = {"statut": "succes", "message": "", "donnees": {"agent": AGENT_CHAT}}
-    mock_boucle.return_value = {
-        "statut": "succes", "message": "", "donnees": {"reponse_agent": "ok", "nb_invocations": 2, "plafond": 3},
-    }
+    mock_creer_conv.return_value = CONVERSATION_FAUSSE
+    mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
-    resultat = runner.invoke(app, ["chat", "x", "--plafond", "3", "--id-execution", "id_chat"])
+    def _eof(*a, **k):
+        raise EOFError
+    monkeypatch.setattr("typer.prompt", _eof)
+    resultat = runner.invoke(app, ["chat"])
     assert resultat.exit_code == 0
-    assert mock_boucle.call_args.kwargs["plafond"] == 3
-    assert mock_boucle.call_args.kwargs["id_execution"] == "id_chat"
+    mock_tour.assert_not_called()
+    mock_cloturer.assert_called_once()
+    mock_destruction.assert_called_once_with(AGENT_CHAT)
 
 
 @patch("src.main.creer_agent")
-@patch("src.main.boucle_conversation")
+@patch("src.main.tour_conversation")
+@patch("src.main.cloturer_conversation")
+@patch("src.main.creer_conversation")
 @patch("src.main.detruire_agent")
-def test_chat_sortie_json(mock_destruction, mock_boucle, mock_creation):
-    # Réf. tests/plan_tests.md : Annexe T4.3 — --json : réponse normalisée + journal + agent_detruit
+def test_chat_plafond_propage_par_tour(mock_destruction, mock_creer_conv, mock_cloturer,
+                                       mock_tour, mock_creation, monkeypatch):
+    # Réf. T11.1 TU-E17 — --plafond propagé à la création de conversation (par tour)
     mock_creation.return_value = {"statut": "succes", "message": "", "donnees": {"agent": AGENT_CHAT}}
-    mock_boucle.return_value = REPONSE_CHAT_SUCCES
+    mock_creer_conv.return_value = CONVERSATION_FAUSSE
+    mock_tour.return_value = REPONSE_TOUR_SUCCES
+    mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
+    monkeypatch.setattr("typer.prompt", lambda *a, **k: "stop")
+    resultat = runner.invoke(app, ["chat", "x", "--plafond", "3", "--id-execution", "id_chat"])
+    assert resultat.exit_code == 0
+    assert mock_creer_conv.call_args.kwargs["plafond"] == 3
+    assert mock_creer_conv.call_args.args[1] == "id_chat"
+
+
+@patch("src.main.creer_agent")
+@patch("src.main.tour_conversation")
+@patch("src.main.cloturer_conversation")
+@patch("src.main.creer_conversation")
+@patch("src.main.detruire_agent")
+def test_chat_sortie_json_totaux(mock_destruction, mock_creer_conv, mock_cloturer,
+                                 mock_tour, mock_creation, monkeypatch):
+    # Réf. T11.1 TU-E18 — --json : totaux conversation + journal + statuts de clôture
+    mock_creation.return_value = {"statut": "succes", "message": "", "donnees": {"agent": AGENT_CHAT}}
+    conversation = CONVERSATION_FAUSSE
+    conversation.nb_tours = 1
+    conversation.nb_invocations = 4
+    conversation.conversation_id = "conv-abc"
+    mock_creer_conv.return_value = conversation
+    mock_tour.return_value = REPONSE_TOUR_SUCCES
+    mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
+    mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
+    monkeypatch.setattr("typer.prompt", lambda *a, **k: "stop")
     resultat = runner.invoke(app, ["chat", "x", "--json"])
     assert resultat.exit_code == 0
-    charge = json.loads(resultat.output)
+    # Deux blocs JSON consécutifs (tour puis récapitulatif) : décodage brut
+    decodeur = json.JSONDecoder()
+    objets = []
+    reste = resultat.output.strip()
+    while reste:
+        objet, fin = decodeur.raw_decode(reste)
+        objets.append(objet)
+        reste = reste[fin:].strip()
+    assert len(objets) == 2
+    tour, charge = objets
+    assert tour["donnees"]["numero_tour"] == 1
     assert charge["statut"] == "succes"
+    assert charge["donnees"]["nb_tours"] == 1
     assert charge["donnees"]["nb_invocations"] == 4
+    assert charge["donnees"]["conversation_id"] == "conv-abc"
     assert charge["donnees"]["journal"].endswith("conversation.jsonl")
     assert charge["donnees"]["agent_detruit"] is True
+    assert charge["donnees"]["conversation_supprimee"] is True
 
 
 @patch("src.main.creer_agent")
 @patch("src.main.detruire_agent")
 def test_chat_echec_creation_agent(mock_destruction, mock_creation):
-    # Réf. tests/plan_tests.md : Annexe T4.3 — clé absente/erreur : code 1, suggestion affichée
+    # Réf. tests/plan_tests.md : Annexe T4.3 (T11.1) — clé absente/erreur : code 1, suggestion affichée
     mock_creation.return_value = {
         "statut": "echec_technique",
         "message": "Variable d'environnement MISTRAL_API_KEY absente ou vide.",
@@ -370,38 +467,53 @@ def test_chat_echec_creation_agent(mock_destruction, mock_creation):
 
 
 @patch("src.main.creer_agent")
-@patch("src.main.boucle_conversation")
+@patch("src.main.tour_conversation")
+@patch("src.main.cloturer_conversation")
+@patch("src.main.creer_conversation")
 @patch("src.main.detruire_agent")
-def test_chat_echec_conversation_destruction_malgre_tout(mock_destruction, mock_boucle, mock_creation):
-    # Réf. tests/plan_tests.md : Annexe T4.3 — échec en cours : agent quand même détruit (finally)
+def test_chat_echec_tour_cloture_malgre_tout(mock_destruction, mock_creer_conv, mock_cloturer,
+                                              mock_tour, mock_creation, monkeypatch):
+    # Réf. T11.1 TU-E19 — échec technique d'un tour : clôture quand même (finally)
     mock_creation.return_value = {"statut": "succes", "message": "", "donnees": {"agent": AGENT_CHAT}}
-    mock_boucle.return_value = {
-        "statut": "echec_technique", "message": "Echec de l'appel a l'API Mistral : 429", "donnees": {"nb_invocations": 0, "plafond": 10},
+    mock_creer_conv.return_value = CONVERSATION_FAUSSE
+    mock_tour.return_value = {
+        "statut": "echec_technique",
+        "message": "Echec de l'appel a l'API Mistral : 429",
+        "donnees": {"numero_tour": 1, "synthese": "", "nb_invocations": 0, "plafond": 10, "conversation_id": None},
     }
+    mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
+    monkeypatch.setattr("typer.prompt", lambda *a, **k: "stop")
     resultat = runner.invoke(app, ["chat", "x"])
-    assert resultat.exit_code == 1
+    assert resultat.exit_code == 0  # la commande se termine proprement malgré l'échec du tour
     assert "echec_technique" in (resultat.output + str(resultat.stderr))
-    assert "conversation.jsonl" in (resultat.output + str(resultat.stderr))
+    mock_cloturer.assert_called_once()
     mock_destruction.assert_called_once_with(AGENT_CHAT)
 
 
 @patch("src.main.creer_agent")
-@patch("src.main.boucle_conversation")
+@patch("src.main.tour_conversation")
+@patch("src.main.cloturer_conversation")
+@patch("src.main.creer_conversation")
 @patch("src.main.detruire_agent")
-def test_chat_exception_boucle_destruction_quand_meme(mock_destruction, mock_boucle, mock_creation):
-    # Test annexe : exception inattendue dans la boucle — la finally détruit l'agent
+def test_chat_exception_tour_cloture_quand_meme(mock_destruction, mock_creer_conv, mock_cloturer,
+                                                 mock_tour, mock_creation, monkeypatch):
+    # Réf. T11.1 TU-E20 — exception inattendue dans un tour : la finally clôture
     mock_creation.return_value = {"statut": "succes", "message": "", "donnees": {"agent": AGENT_CHAT}}
-    mock_boucle.side_effect = RuntimeError("bug inattendu")
+    mock_creer_conv.return_value = CONVERSATION_FAUSSE
+    mock_tour.side_effect = RuntimeError("bug inattendu")
+    mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
+    monkeypatch.setattr("typer.prompt", lambda *a, **k: "stop")
     resultat = runner.invoke(app, ["chat", "x"])
     assert resultat.exit_code != 0
+    mock_cloturer.assert_called_once()
     mock_destruction.assert_called_once_with(AGENT_CHAT)
 
 
-def test_chat_prompt_vide():
-    # Réf. tests/plan_tests.md : Annexe T4.3 — prompt vide : code 2
-    resultat = runner.invoke(app, ["chat"])
+def test_chat_prompt_vide_code_2():
+    # Réf. T11.1 TU-E21 — prompt vide fourni explicitement : code 2
+    resultat = runner.invoke(app, ["chat", "   "])
     assert resultat.exit_code == 2
 
 

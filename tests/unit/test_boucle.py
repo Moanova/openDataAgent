@@ -2,15 +2,16 @@
 # ---------------------------------------------------------------------
 # Application  : openDataAgent
 # Script       : test_boucle.py
-# Version      : 1
-# Date         : 14-10-2026
+# Version      : 2
+# Date         : 20-10-2026
 # Design       : TSC
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------
-"""Tests unitaires de la boucle de conversation (T5.3.2).
+"""Tests unitaires de la boucle de conversation multi-tours (T11.1).
 
-Refs tests/plan_tests.md : Annexes T5.3 (TU-B1..TU-B10). L'API Mistral
-et les fonctions coeur sont simulees : aucun reseau."""
+Refs tests/plan_tests.md : TU-B1..TU-B3 (dispatch, inchangés) et section
+T11.1 (TU-B13..TU-B22). L'API Mistral Conversations et les fonctions
+coeur sont simulees : aucun reseau."""
 import json
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -19,39 +20,80 @@ import pytest
 
 import src.agent.outils as module_outils
 from src.agent.agent import Agent
-from src.agent.boucle import PLAFOND_DEFAUT, boucle_conversation
+from src.agent.boucle import (
+    PLAFOND_DEFAUT,
+    ConversationServeur,
+    cloturer_conversation,
+    creer_conversation,
+    tour_conversation,
+)
+from src.agent.journal import JournalConversation
 from src.agent.outils import executer_outil
 
 
 # ---------------------------------------------------------------------
-# Helpers : reponses SDK simulees
+# Helpers : evenements SDK Conversations simules
 # ---------------------------------------------------------------------
 
-def _reponse_sdk(tool_calls=None, contenu=""):
-    message = SimpleNamespace(content=contenu, tool_calls=tool_calls or None)
-    return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+def _evt_started(conversation_id="conv-1"):
+    return SimpleNamespace(
+        event="conversation.response.started",
+        data=SimpleNamespace(type="conversation.response.started", conversation_id=conversation_id),
+    )
 
 
-def _tool_call_sdk(nom, arguments, id_appel="appel-1"):
-    fonction = SimpleNamespace(name=nom, arguments=json.dumps(arguments))
-    return SimpleNamespace(id=id_appel, function=fonction)
+def _evt_message(texte, id_msg="msg-1"):
+    return SimpleNamespace(
+        event="message.output.delta",
+        data=SimpleNamespace(
+            type="message.output.delta", id=id_msg,
+            content={"type": "text", "text": texte}, role="assistant",
+        ),
+    )
 
 
-def _agent(complete_side_effects=None):
+def _evt_call(nom, arguments, tool_call_id="call-1"):
+    return SimpleNamespace(
+        event="function.call.delta",
+        data=SimpleNamespace(
+            type="function.call.delta", id=f"fc-{tool_call_id}", name=nom,
+            tool_call_id=tool_call_id, arguments=json.dumps(arguments),
+        ),
+    )
+
+
+def _evt_done():
+    return SimpleNamespace(
+        event="conversation.response.done",
+        data=SimpleNamespace(type="conversation.response.done", usage=SimpleNamespace(total_tokens=42)),
+    )
+
+
+def _evt_erreur(message="boom"):
+    return SimpleNamespace(
+        event="conversation.response.error",
+        data=SimpleNamespace(type="conversation.response.error", message=message),
+    )
+
+
+def _agent():
     client = MagicMock()
-    if complete_side_effects is not None:
-        client.agents.complete.side_effect = complete_side_effects
     return Agent(client=client, agent_id="ag-test", modele="m", outils=[], ephemere=True)
 
 
+def _conversation(agent=None, plafond=10, journal=None):
+    agent = agent or _agent()
+    return creer_conversation(agent, "id_test", plafond=plafond, journal=journal)
+
+
 # ---------------------------------------------------------------------
-# executer_outil (TU-B1, TU-B2, TU-B3)
+# executer_outil (TU-B1, TU-B2, TU-B3 — inchanges, dispatch vers le coeur)
 # ---------------------------------------------------------------------
 
 def test_executer_outil_route_chaque_outil(monkeypatch):
-    # Réf. tests/plan_tests.md : TU-B1 — dispatch vers les 4 fonctions cœur
+    # Ref. tests/plan_tests.md : TU-B1 — dispatch vers les 5 fonctions coeur
     outils = {}
-    for nom in ("rechercher_jeux", "lister_ressources", "interroger_ressource", "telecharger_brut"):
+    for nom in ("rechercher_jeux", "lister_ressources", "interroger_ressource", "telecharger_brut", "extraire_ressource"):
         faux = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})
         monkeypatch.setitem(module_outils.TABLE_OUTILS, nom, faux)
         outils[nom] = faux
@@ -68,16 +110,19 @@ def test_executer_outil_route_chaque_outil(monkeypatch):
     executer_outil("telecharger_brut", {"id_ressource": "r1"}, "id")
     outils["telecharger_brut"].assert_called_once_with(id_ressource="r1", id_execution="id")
 
+    executer_outil("extraire_ressource", {"id_ressource": "r1"}, "id")
+    outils["extraire_ressource"].assert_called_once_with(id_ressource="r1", id_execution="id")
+
 
 def test_executer_outil_inconnu():
-    # Réf. tests/plan_tests.md : TU-B2 — outil hors table → erreur_parametres
+    # Ref. tests/plan_tests.md : TU-B2 — outil hors table → erreur_parametres
     reponse = executer_outil("outil_invente", {}, "id")
     assert reponse["statut"] == "erreur_parametres"
     assert "outil_invente" in reponse["message"]
 
 
 def test_executer_outil_arguments_invalides(monkeypatch):
-    # Réf. tests/plan_tests.md : TU-B2 — arguments invalides → erreur_parametres
+    # Ref. tests/plan_tests.md : TU-B2 — arguments invalides → erreur_parametres
     assert executer_outil("rechercher_jeux", {"mots_cles": []}, "id")["statut"] == "erreur_parametres"
     assert executer_outil("telecharger_brut", {}, "id")["statut"] == "erreur_parametres"
     assert executer_outil("lister_ressources", "pas un json{", "id")["statut"] == "erreur_parametres"
@@ -87,7 +132,7 @@ def test_executer_outil_arguments_invalides(monkeypatch):
 
 
 def test_executer_outil_id_execution_injecte_si_absent(monkeypatch):
-    # Réf. T10.3 — id_execution de la boucle injecté si l'agent ne le fournit pas
+    # Ref. T10.3 — id_execution de la boucle injecte si l'agent ne le fournit pas
     faux = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})
     monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", faux)
     reponse = executer_outil("rechercher_jeux", {"mots_cles": ["dette"]}, "id-boucle")
@@ -96,7 +141,7 @@ def test_executer_outil_id_execution_injecte_si_absent(monkeypatch):
 
 
 def test_executer_outil_id_execution_boucle_prioritaire(monkeypatch):
-    # Réf. T10.3 — id_execution fourni par l'agent : pas de conflit, celui de la boucle prime
+    # Ref. T10.3 — id_execution fourni par l'agent : pas de conflit, celui de la boucle prime
     faux = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})
     monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", faux)
     reponse = executer_outil(
@@ -109,7 +154,7 @@ def test_executer_outil_id_execution_boucle_prioritaire(monkeypatch):
 
 
 def test_executer_outil_arguments_json(monkeypatch):
-    # Réf. tests/plan_tests.md : TU-B3 — arguments en chaîne JSON acceptés
+    # Ref. tests/plan_tests.md : TU-B3 — arguments en chaine JSON acceptes
     faux = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})
     monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", faux)
     reponse = executer_outil("rechercher_jeux", json.dumps({"mots_cles": ["insee"]}), "id")
@@ -118,117 +163,12 @@ def test_executer_outil_arguments_json(monkeypatch):
 
 
 # ---------------------------------------------------------------------
-# boucle_conversation (TU-B4..TU-B10)
-# ---------------------------------------------------------------------
-
-def test_boucle_conversation_simple(monkeypatch):
-    # Réf. tests/plan_tests.md : TU-B4 — 1 tool_call puis réponse finale
-    mock_search = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"jeux": []}})
-    monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", mock_search)
-    appel_outil = _reponse_sdk(tool_calls=[_tool_call_sdk("rechercher_jeux", {"mots_cles": ["dette"]})])
-    final = _reponse_sdk(contenu="Voici les jeux trouves.")
-    agent = _agent([appel_outil, final])
-    reponse = boucle_conversation(agent, "cherche la dette publique", id_execution="id")
-    assert reponse["statut"] == "succes"
-    assert reponse["donnees"]["reponse_agent"] == "Voici les jeux trouves."
-    assert reponse["donnees"]["nb_invocations"] == 1
-    assert reponse["donnees"]["plafond"] == PLAFOND_DEFAUT
-    assert agent.client.agents.complete.call_count == 2
-    mock_search.assert_called_once()
-
-
-def test_boucle_multi_tours(monkeypatch):
-    # Réf. tests/plan_tests.md : TU-B5 — plusieurs tool_calls successifs
-    mock_search = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"jeux": [{"id": "abc"}]}})
-    mock_list = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"ressources": []}})
-    monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", mock_search)
-    monkeypatch.setitem(module_outils.TABLE_OUTILS, "lister_ressources", mock_list)
-    tour1 = _reponse_sdk(tool_calls=[_tool_call_sdk("rechercher_jeux", {"mots_cles": ["dette"]}, "a1")])
-    tour2 = _reponse_sdk(tool_calls=[_tool_call_sdk("lister_ressources", {"id_jeu": "abc"}, "a2")])
-    final = _reponse_sdk(contenu="Analyse complete.")
-    agent = _agent([tour1, tour2, final])
-    reponse = boucle_conversation(agent, "dette", id_execution="id")
-    assert reponse["statut"] == "succes"
-    assert reponse["donnees"]["nb_invocations"] == 2
-    messages_envoyes = agent.client.agents.complete.call_args_list[-1].kwargs["messages"]
-    roles = [m["role"] for m in messages_envoyes]
-    assert roles == ["user", "assistant", "tool", "assistant", "tool"]
-    resultats_outils = [m for m in messages_envoyes if m["role"] == "tool"]
-    assert all(json.loads(m["content"])["statut"] == "succes" for m in resultats_outils)
-
-
-def test_boucle_reponse_directe_sans_outil():
-    # Réf. tests/plan_tests.md : TU-B4 — réponse immédiate sans outil
-    agent = _agent([_reponse_sdk(contenu="Bonjour.")])
-    reponse = boucle_conversation(agent, "bonjour", id_execution="id")
-    assert reponse["statut"] == "succes"
-    assert reponse["donnees"]["nb_invocations"] == 0
-
-
-def test_boucle_plafond_atteint():
-    # Réf. tests/plan_tests.md : TU-B6 — plafond → arrêt propre, synthèse partielle
-    appel = _reponse_sdk(tool_calls=[_tool_call_sdk("rechercher_jeux", {"mots_cles": ["x"]})])
-    agent = _agent([appel] * 20)
-    reponse = boucle_conversation(agent, "x", plafond=3, id_execution="id")
-    assert reponse["statut"] == "succes"
-    assert reponse["donnees"]["nb_invocations"] == 3
-    assert reponse["donnees"]["plafond"] == 3
-    assert "plafond" in reponse["message"].lower()
-
-
-def test_boucle_erreur_outil_renvoyee_agent(monkeypatch):
-    # Réf. tests/plan_tests.md : TU-B7 — statut d'erreur du cœur renvoyé tel quel
-    mock_dl = MagicMock(return_value={"statut": "ressource_introuvable", "message": "inconnu", "donnees": {}})
-    monkeypatch.setitem(module_outils.TABLE_OUTILS, "telecharger_brut", mock_dl)
-    appel = _reponse_sdk(tool_calls=[_tool_call_sdk("telecharger_brut", {"id_ressource": "r1"})])
-    final = _reponse_sdk(contenu="Je n'ai pas trouve la ressource.")
-    agent = _agent([appel, final])
-    reponse = boucle_conversation(agent, "telecharge", id_execution="id")
-    assert reponse["statut"] == "succes"
-    contenu_outil = json.loads(agent.client.agents.complete.call_args_list[-1].kwargs["messages"][2]["content"])
-    assert contenu_outil["statut"] == "ressource_introuvable"
-
-
-def test_boucle_arguments_non_json():
-    # Réf. tests/plan_tests.md : TU-B8 — tool_call illisible → erreur_parametres à l'agent
-    appel = _tool_call_sdk("rechercher_jeux", None)
-    appel.function.arguments = "{pas du json"
-    tour = _reponse_sdk(tool_calls=[appel])
-    final = _reponse_sdk(contenu="Arguments corriges.")
-    agent = _agent([tour, final])
-    reponse = boucle_conversation(agent, "x", id_execution="id")
-    assert reponse["statut"] == "succes"
-    assert reponse["donnees"]["nb_invocations"] == 1
-    contenu_outil = json.loads(agent.client.agents.complete.call_args_list[-1].kwargs["messages"][2]["content"])
-    assert contenu_outil["statut"] == "erreur_parametres"
-
-
-def test_boucle_erreur_api():
-    # Réf. tests/plan_tests.md : TU-B9 — erreur API → echec_technique propre
-    agent = MagicMock()
-    agent.agent_id = "ag-test"
-    agent.client.agents.complete.side_effect = RuntimeError("429 rate limit")
-    reponse = boucle_conversation(agent, "x", id_execution="id")
-    assert reponse["statut"] == "echec_technique"
-    assert "429" in reponse["message"]
-    assert reponse["donnees"]["nb_invocations"] == 0
-
-
-def test_boucle_plafond_configure_par_env(monkeypatch):
-    # Réf. tests/plan_tests.md : TU-B10 — PLAFOND_INVOCATIONS respecté
-    monkeypatch.setenv("PLAFOND_INVOCATIONS", "2")
-    agent = _agent([])
-    reponse = boucle_conversation(agent, "bonjour", id_execution="id")
-    assert reponse["donnees"]["plafond"] == 2
-
-
-# ---------------------------------------------------------------------
-# T10.4 : validation Pydantic des arguments au runtime
+# T10.4 : validation Pydantic des arguments au runtime (inchanges)
 # ---------------------------------------------------------------------
 
 @patch.dict(module_outils.TABLE_OUTILS, {"rechercher_jeux": MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})})
 def test_outil_valide_bornes_numeriques_pydantic():
-    # Réf. T10.4 — limite/page hors bornes du modèle Input → erreur_parametres
+    # Ref. T10.4 — limite/page hors bornes du modele Input → erreur_parametres
     reponse = executer_outil("rechercher_jeux", {"mots_cles": ["dette"], "limite": -5}, "id")
     assert reponse["statut"] == "erreur_parametres"
     assert "limite" in reponse["message"]
@@ -239,7 +179,7 @@ def test_outil_valide_bornes_numeriques_pydantic():
 
 @patch.dict(module_outils.TABLE_OUTILS, {"interroger_ressource": MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})})
 def test_outil_valide_sous_modeles_filtre_tri():
-    # Réf. T10.4 — tri avec ordre hors vocabulaire → erreur_parametres avec champ fautif
+    # Ref. T10.4 — tri avec ordre hors vocabulaire → erreur_parametres avec champ fautif
     reponse = executer_outil("interroger_ressource", {"id_ressource": "r1", "tri": {"colonne": "v", "ordre": "ascendant"}}, "id")
     assert reponse["statut"] == "erreur_parametres"
     assert "tri" in reponse["message"]
@@ -248,7 +188,7 @@ def test_outil_valide_sous_modeles_filtre_tri():
 
 @patch.dict(module_outils.TABLE_OUTILS, {"rechercher_jeux": MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})})
 def test_outil_ignore_champs_superflus():
-    # Réf. T10.4 — extra="ignore" : champ inconnu de l'agent ignoré silencieusement
+    # Ref. T10.4 — extra="ignore" : champ inconnu de l'agent ignore silencieusement
     faux = module_outils.TABLE_OUTILS["rechercher_jeux"]
     reponse = executer_outil("rechercher_jeux", {"mots_cles": ["dette"], "champ_inconnu": 1}, "id")
     assert reponse["statut"] == "succes"
@@ -259,7 +199,7 @@ def test_outil_ignore_champs_superflus():
 
 @patch.dict(module_outils.TABLE_OUTILS, {"telecharger_brut": MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})})
 def test_outil_champs_absents_non_transmis():
-    # Réf. T10.4 — seuls les champs fournis par l'agent sont transmis (exclude_unset)
+    # Ref. T10.4 — seuls les champs fournis par l'agent sont transmis (exclude_unset)
     faux = module_outils.TABLE_OUTILS["telecharger_brut"]
     executer_outil("telecharger_brut", {"id_ressource": "r1"}, "id")
     kwargs = faux.call_args.kwargs
@@ -267,19 +207,15 @@ def test_outil_champs_absents_non_transmis():
 
 
 def test_outil_message_erreur_exploitable():
-    # Réf. T10.4 — le message d'erreur cite le champ fautif (auto-correction de l'agent)
+    # Ref. T10.4 — le message d'erreur cite le champ fautif (auto-correction de l'agent)
     reponse = executer_outil("lister_ressources", {}, "id")
     assert reponse["statut"] == "erreur_parametres"
     assert "id_jeu" in reponse["message"]
 
 
-# ---------------------------------------------------------------------
-# T10.7/E3 : dispatch du 5e outil extraire_ressource
-# ---------------------------------------------------------------------
-
 @patch.dict(module_outils.TABLE_OUTILS, {"extraire_ressource": MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"chemin_local": "data/raw/x.csv", "tronque": False}})})
 def test_executer_outil_extraire_ressource():
-    # Réf. T10.7 — le tool_call extraire_ressource est routé vers la fonction cœur
+    # Ref. T10.7 — le tool_call extraire_ressource est route vers la fonction coeur
     faux = module_outils.TABLE_OUTILS["extraire_ressource"]
     reponse = executer_outil("extraire_ressource", {"id_ressource": "r1"}, "id-boucle")
     assert reponse["statut"] == "succes"
@@ -287,7 +223,288 @@ def test_executer_outil_extraire_ressource():
 
 
 def test_executer_outil_extraire_ressource_argument_manquant():
-    # Réf. T10.7 — validation Pydantic standard : id_ressource requis
+    # Ref. T10.7 — validation Pydantic standard : id_ressource requis
     reponse = executer_outil("extraire_ressource", {}, "id")
     assert reponse["statut"] == "erreur_parametres"
     assert "id_ressource" in reponse["message"]
+
+
+# ---------------------------------------------------------------------
+# T11.1 — creer_conversation / tour_conversation / cloturer_conversation
+# ---------------------------------------------------------------------
+
+def test_creer_conversation_journal_contexte(tmp_path):
+    # Ref. T11.1 TU-B13 — contexte : empreinte du prompt (pas le texte), plafond, une fois
+    journal = JournalConversation("id_test", plafond=7, repertoire=tmp_path)
+    conversation = _conversation(plafond=7, journal=journal)
+    assert conversation.plafond == 7
+    assert conversation.conversation_id is None
+    assert conversation.nb_tours == 0
+    assert conversation.nb_invocations == 0
+    journal.fermer("succes")
+    enregistrements = json.loads(journal.chemin.read_text(encoding="utf-8").splitlines()[0])
+    assert enregistrements["event"] == "contexte"
+    assert enregistrements["plafond"] == 7
+    # L'empreinte ne contient pas le texte du prompt
+    assert len(enregistrements["prompt"]) <= 16
+
+
+def test_tour_reponse_directe_sans_outil():
+    # Ref. T11.1 TU-B14 — reponse immediate sans outil (start_stream)
+    agent = _agent()
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-abc"), _evt_message("Bonjour."), _evt_done(),
+    ])
+    conversation = _conversation(agent)
+    reponse = tour_conversation(conversation, "bonjour")
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["synthese"] == "Bonjour."
+    assert reponse["donnees"]["nb_invocations"] == 0
+    assert reponse["donnees"]["numero_tour"] == 1
+    assert reponse["donnees"]["conversation_id"] == "conv-abc"
+    assert conversation.conversation_id == "conv-abc"
+    # start_stream appele avec le message utilisateur, agent_id, store, name, metadata
+    kwargs = agent.client.beta.conversations.start_stream.call_args.kwargs
+    assert kwargs["inputs"] == "bonjour"
+    assert kwargs["agent_id"] == "ag-test"
+    assert kwargs["store"] is True
+    assert "openDataAgent" in kwargs["name"]
+
+
+def test_tour_avec_tool_call_puis_reponse_finale(monkeypatch):
+    # Ref. T11.1 TU-B15 — 1 tool_call execute localement, resultat renvoye par append_stream
+    mock_search = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"jeux": []}})
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", mock_search)
+    agent = _agent()
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-1"),
+        _evt_message("Je lance la recherche."),
+        _evt_call("rechercher_jeux", {"mots_cles": ["dette"]}, "c1"),
+        _evt_done(),
+    ])
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message("Voici les jeux."), _evt_done(),
+    ])
+    conversation = _conversation(agent)
+    reponse = tour_conversation(conversation, "cherche la dette")
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["synthese"] == "Voici les jeux."
+    assert reponse["donnees"]["nb_invocations"] == 1
+    mock_search.assert_called_once_with(mots_cles=["dette"], id_execution="id_test")
+    # Le resultat est renvoye au serveur par une entree function.result
+    kwargs = agent.client.beta.conversations.append_stream.call_args.kwargs
+    assert kwargs["conversation_id"] == "conv-1"
+    entrees = kwargs["inputs"]
+    assert len(entrees) == 1
+    assert entrees[0]["type"] == "function.result"
+    assert entrees[0]["tool_call_id"] == "c1"
+    assert json.loads(entrees[0]["result"])["statut"] == "succes"
+
+
+def test_tour_multi_tours_contexte_serveur_conserve():
+    # Ref. T11.1 TU-B16 — second tour : append_stream avec le nouveau message seul
+    agent = _agent()
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-1"), _evt_message("Tour 1."), _evt_done(),
+    ])
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message("Tour 2."), _evt_done(),
+    ])
+    conversation = _conversation(agent)
+    r1 = tour_conversation(conversation, "premier message")
+    r2 = tour_conversation(conversation, "second message")
+    assert r1["donnees"]["numero_tour"] == 1
+    assert r2["donnees"]["numero_tour"] == 2
+    assert r2["donnees"]["conversation_id"] == "conv-1"
+    # Le second tour n'envoie que le nouveau message (contexte serveur)
+    kwargs = agent.client.beta.conversations.append_stream.call_args.kwargs
+    assert kwargs["inputs"] == "second message"
+    assert conversation.nb_tours == 2
+
+
+def test_tour_plafond_reinitialise_par_tour(monkeypatch):
+    # Ref. T11.1 TU-B17 — le plafond s'applique par tour et est reinitialise a chaque tour
+    mock_search = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"jeux": []}})
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", mock_search)
+    agent = _agent()
+    # Tour 1 : le serveur emet des tool_calls en continu ; le plafond (3) coupe le tour
+    def _stream_infini():
+        yield _evt_started("conv-1")
+        for i in range(100):
+            yield _evt_call("rechercher_jeux", {"mots_cles": [f"m{i}"]}, f"c{i}")
+        yield _evt_done()
+    agent.client.beta.conversations.start_stream.return_value = _stream_infini()
+    agent.client.beta.conversations.append_stream.return_value = _stream_infini()
+    conversation = _conversation(agent, plafond=3)
+    r1 = tour_conversation(conversation, "tour 1")
+    assert r1["statut"] == "succes"
+    assert "plafond" in r1["message"].lower()
+    assert r1["donnees"]["nb_invocations"] == 3
+    # Tour 2 : reponse directe sans outil — le plafond est de nouveau disponible
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message("Tour 2 reussi."), _evt_done(),
+    ])
+    r2 = tour_conversation(conversation, "tour 2")
+    assert r2["statut"] == "succes"
+    assert r2["donnees"]["nb_invocations"] == 0
+    assert r2["donnees"]["synthese"] == "Tour 2 reussi."
+    # Total conversation : 3 invocations (seul le tour 1 en a consomme)
+    assert conversation.nb_invocations == 3
+    assert conversation.nb_tours == 2
+
+
+def test_tour_erreur_outil_renvoyee_agent(monkeypatch):
+    # Ref. T11.1 TU-B18 — statut d'erreur du coeur renvoye tel quel (entree function.result)
+    mock_dl = MagicMock(return_value={"statut": "ressource_introuvable", "message": "inconnu", "donnees": {}})
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "telecharger_brut", mock_dl)
+    agent = _agent()
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-1"),
+        _evt_call("telecharger_brut", {"id_ressource": "r1"}, "c1"),
+        _evt_done(),
+    ])
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message("Ressource introuvable."), _evt_done(),
+    ])
+    conversation = _conversation(agent)
+    reponse = tour_conversation(conversation, "telecharge")
+    assert reponse["statut"] == "succes"
+    entrees = agent.client.beta.conversations.append_stream.call_args.kwargs["inputs"]
+    assert json.loads(entrees[0]["result"])["statut"] == "ressource_introuvable"
+
+
+def test_tour_arguments_non_json_erreur_parametres():
+    # Ref. T11.1 TU-B19 — tool_call illisible → erreur_parametres renvoyee, tour continue
+    agent = _agent()
+    appel = SimpleNamespace(
+        event="function.call.delta",
+        data=SimpleNamespace(
+            type="function.call.delta", id="fc-1", name="rechercher_jeux",
+            tool_call_id="c1", arguments="{pas du json",
+        ),
+    )
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-1"), appel, _evt_done(),
+    ])
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message("Arguments corriges."), _evt_done(),
+    ])
+    conversation = _conversation(agent)
+    reponse = tour_conversation(conversation, "x")
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["nb_invocations"] == 1
+    entrees = agent.client.beta.conversations.append_stream.call_args.kwargs["inputs"]
+    assert json.loads(entrees[0]["result"])["statut"] == "erreur_parametres"
+
+
+def test_tour_erreur_api_echec_propre():
+    # Ref. T11.1 TU-B20 — erreur SDK sur start_stream → echec_technique propre
+    agent = _agent()
+    agent.client.beta.conversations.start_stream.side_effect = RuntimeError("429 rate limit")
+    conversation = _conversation(agent)
+    reponse = tour_conversation(conversation, "x")
+    assert reponse["statut"] == "echec_technique"
+    assert "429" in reponse["message"]
+    assert reponse["donnees"]["nb_invocations"] == 0
+
+
+def test_tour_erreur_stream_evenement_error():
+    # Ref. T11.1 TU-B21 — evenement conversation.response.error → echec_technique
+    agent = _agent()
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-1"), _evt_erreur("quota depasse"), _evt_done(),
+    ])
+    conversation = _conversation(agent)
+    reponse = tour_conversation(conversation, "x")
+    assert reponse["statut"] == "echec_technique"
+    assert "quota depasse" in reponse["message"]
+
+
+def test_tour_plafond_env(monkeypatch):
+    # Ref. T11.1 TU-B22 — PLAFOND_INVOCATIONS dans l'environnement (plafond non explicite)
+    monkeypatch.setenv("PLAFOND_INVOCATIONS", "2")
+    conversation = creer_conversation(_agent(), "id_test")
+    assert conversation.plafond == 2
+    monkeypatch.delenv("PLAFOND_INVOCATIONS")
+    conversation = creer_conversation(_agent(), "id_test")
+    assert conversation.plafond == PLAFOND_DEFAUT
+
+
+def test_cloturer_conversation_supprime_serveur():
+    # Ref. T11.1 — cloturer_conversation : evenement fin + delete cote serveur
+    agent = _agent()
+    conversation = _conversation(agent)
+    conversation.conversation_id = "conv-1"
+    conversation.nb_tours = 2
+    conversation.nb_invocations = 5
+    resultat = cloturer_conversation(conversation, "succes")
+    assert resultat["statut"] == "succes"
+    assert resultat["donnees"]["supprimee"] is True
+    agent.client.beta.conversations.delete.assert_called_once_with(conversation_id="conv-1")
+
+
+def test_cloturer_conversation_sans_id_serveur():
+    # Ref. T11.1 — cloture avant le premier tour : pas de delete, pas d'erreur
+    agent = _agent()
+    conversation = _conversation(agent)
+    resultat = cloturer_conversation(conversation, "succes")
+    assert resultat["statut"] == "succes"
+    assert resultat["donnees"]["supprimee"] is False
+    agent.client.beta.conversations.delete.assert_not_called()
+
+
+def test_cloturer_conversation_deja_absente_idempotent():
+    # Ref. T11.1 — conversation deja supprimee (404) : succes idempotent
+    agent = _agent()
+    agent.client.beta.conversations.delete.side_effect = RuntimeError("404 not found")
+    conversation = _conversation(agent)
+    conversation.conversation_id = "conv-1"
+    resultat = cloturer_conversation(conversation, "succes")
+    assert resultat["statut"] == "succes"
+    assert resultat["donnees"]["supprimee"] is False
+
+
+def test_cloturer_conversation_erreur_suppression_non_bloquante():
+    # Ref. T11.1 — erreur de suppression : echec_technique retourne, pas d'exception
+    agent = _agent()
+    agent.client.beta.conversations.delete.side_effect = RuntimeError("500 serveur")
+    conversation = _conversation(agent)
+    conversation.conversation_id = "conv-1"
+    resultat = cloturer_conversation(conversation, "succes")
+    assert resultat["statut"] == "echec_technique"
+    assert resultat["donnees"]["supprimee"] is False
+
+
+def test_tour_journalise_schema_multi_tours(tmp_path, monkeypatch):
+    # Ref. T11.1 TU-C9 — un tour complet produit debut_tour/fin_tour + invocations
+    mock_search = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"jeux": []}})
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", mock_search)
+    agent = _agent()
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-1"),
+        _evt_message("Je cherche."),
+        _evt_call("rechercher_jeux", {"mots_cles": ["dette"]}, "c1"),
+        _evt_done(),
+    ])
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message("Synthese."), _evt_done(),
+    ])
+    journal = JournalConversation("id_test", modele="m", prompt="empreinte", plafond=10, repertoire=tmp_path)
+    conversation = creer_conversation(agent, "id_test", plafond=10, journal=journal)
+    tour_conversation(conversation, "cherche la dette")
+    cloturer_conversation(conversation, "succes")
+    lignes = [json.loads(l) for l in journal.chemin.read_text(encoding="utf-8").splitlines()]
+    evenements = [l["event"] for l in lignes]
+    assert evenements == [
+        "contexte", "debut_tour", "raisonnement_agent",
+        "outil_invoque", "outil_resultat", "raisonnement_agent", "fin_tour", "fin",
+    ]
+    assert lignes[1]["numero_tour"] == 1
+    assert lignes[1]["contenu"] == "cherche la dette"
+    fin_tour = lignes[-2]
+    assert fin_tour["event"] == "fin_tour"
+    assert fin_tour["numero_tour"] == 1
+    assert fin_tour["nb_invocations"] == 1
+    assert fin_tour["synthese"] == "Synthese."
+    assert lignes[-1]["nb_tours"] == 1
+    assert lignes[-1]["nb_invocations"] == 1

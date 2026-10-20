@@ -281,14 +281,15 @@ def test_empreinte_differencie_prompts():
 # ---------------------------------------------------------------------
 
 def test_prompt_sections_structurantes():
-    # Réf. tests/plan_tests.md : Annexe T5.3.4 — présence des sections A1..A4
-    for marqueur in ("A1 - REFORMULATION", "A2 - SÉLECTION", "A3 - RÉSOLUTION DES INDETERMINATIONS", "A4 - SYNTHÈSE DU REGISTRE"):
+    # Réf. tests/plan_tests.md : Annexe T5.3.4 — présence des sections A1..A4 (+ MULTI-TOURS, T11.1)
+    for marqueur in ("A1 - REFORMULATION", "A2 - SÉLECTION", "A3 - RÉSOLUTION DES INDETERMINATIONS",
+                     "A4 - PROPOSITION ET SYNTHÈSE DU REGISTRE", "MULTI-TOURS"):
         assert marqueur in PROMPT_SYSTEME
 
 
 def test_prompt_consignes_transversales():
     # Réf. tests/plan_tests.md : Annexe T5.3.4 — outils, statuts, identifiants, langue
-    for outil in ("rechercher_jeux", "lister_ressources", "interroger_ressource", "telecharger_brut"):
+    for outil in ("rechercher_jeux", "lister_ressources", "interroger_ressource", "telecharger_brut", "extraire_ressource"):
         assert outil in PROMPT_SYSTEME
     for statut in ("succes", "erreur_parametres", "jeu_introuvable", "ressource_introuvable",
                    "ressource_non_indexee", "licence_refusee", "echec_technique"):
@@ -362,15 +363,28 @@ def test_prompt_consigne_interroger_seulement_si_indexee():
     assert "invocation perdue" in PROMPT_SYSTEME
 
 
-def test_prompt_clarification_integrite_pas_dautorisation():
-    # Clarification (19/10/2026) : le verrou A4 a rendu l'agent sur-prudent
-    # (run 20261019_194547 : arrêt après A2 avec question à l'utilisateur,
-    # aucune acquisition). La consigne précise que l'intégrité du registre
-    # porte sur les déclarations, pas sur l'autorisation d'acquérir.
+def test_prompt_propose_puis_acquiert():
+    # T11.1 (20/10/2026) : en multi-tours, acquisition sur validation explicite
+    # de l'utilisateur. Remplace la clarification du 19/10 (le verrou A4 avait
+    # rendu l'agent sur-prudent en one-shot ; le multi-tours rend la validation
+    # un tour normal).
     from src.agent.agent import PROMPT_SYSTEME
 
-    assert "ne t'impose pas de demander une validation avant d'acquérir" in PROMPT_SYSTEME
-    assert "conduis-la sans attendre une autorisation" in PROMPT_SYSTEME
+    assert "PROPOSE-PUIS-ACQUIERT" in PROMPT_SYSTEME
+    assert "Ne les invoque JAMAIS de toi-même" in PROMPT_SYSTEME
+    assert "validation explicite de l'utilisateur" in PROMPT_SYSTEME
+    assert "FEEDBACK UTILISATEUR" in PROMPT_SYSTEME
+    # La consigne one-shot (acquisition sans attendre) est retirée
+    assert "conduis-la sans attendre une autorisation" not in PROMPT_SYSTEME
+
+
+def test_prompt_multi_tours():
+    # T11.1 : section MULTI-TOURS (plafond par tour, contexte conservé, synthèse finale)
+    from src.agent.agent import PROMPT_SYSTEME
+
+    assert "MULTI-TOURS" in PROMPT_SYSTEME
+    assert "plafond d'invocations est réinitialisé" in PROMPT_SYSTEME
+    assert "mot-clé stop" in PROMPT_SYSTEME
 
 
 def test_prompt_consigne_integrite_registre():

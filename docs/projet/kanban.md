@@ -89,14 +89,15 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 > Issu de la séance du 18/10/2026 (retours d'usage du concepteur sur le flux agentique) : l'arbitrage final de pertinence doit pouvoir se faire *pendant* la conversation, pas seulement après l'acquisition.
 
-- [ ] **T11.1** : Mode conversationnel multi-tours (`chat`) : boucle REPL où l'utilisateur raffine sa demande par une succession de prompts, l'agent conservant le contexte accumulé jusqu'à la fin de conversation (mot-clé de clôture). Décisions de conception à trancher en premier :
-  - **propose-puis-acquiert** (recommandé) : les tours conversationnels explorent (recherche, inventaire, interrogation — pas d'écriture disque) ; `extraire_ressource`/`telecharger_brut` ne s'exécutent qu'après validation explicite de l'utilisateur (évite les fichiers orphelins de tentatives rejetées) ;
-  - plafond d'invocations **par tour** (reinitialisé à chaque prompt utilisateur), pas par conversation ;
-  - étape A0 possible : question de clarification avant recherche si la demande est ambiguë ;
-  - journal multi-tours : une conversation = un `id_execution`, chaque tour horodaté avec son compte d'invocations et sa synthèse.
-  Composants touchés : `src/main.py` (commande chat, REPL + clôture, one-shot conservé en compatibilité), `src/agent/boucle.py` (état de conversation/historique des messages), `src/agent/agent.py` (prompt : A4 devient proposition en attente de validation, intégration du feedback), `src/agent/journal.py` (schéma multi-tours). **Aucune évolution de contrat cœur** : la conversation est une couche au-dessus des outils existants.
+- [ ] **T11.1** *(en cours — décisions actées le 20/10/2026, consignées dans `docs/design/decisions_conception.md`)* : Mode conversationnel multi-tours (`chat`) : boucle REPL où l'utilisateur raffine sa demande par une succession de prompts, l'agent conservant le contexte jusqu'à la fin de conversation (mot-clé de clôture `stop`). Décisions actées :
+  - **contexte côté serveur** : API Conversations (`client.beta.conversations.start_stream`/`append_stream`), l'agent se souvient — seul le nouveau prompt est envoyé ; la boucle tool-calling reste **côté client** (`function.call.delta` → `executer_outil` → entrées `function.result`) ; clôture de l'arbitrage API : `beta.agents` reste retenu (l'option serveur n'existe que dans la famille beta) ;
+  - **propose-puis-acquiert** : les tours explorent (recherche, inventaire, interrogation — pas d'écriture disque) ; `extraire_ressource`/`telecharger_brut` ne s'exécutent qu'après validation explicite de l'utilisateur (évite les fichiers orphelins de tentatives rejetées) ;
+  - plafond d'invocations **par tour** (réinitialisé à chaque prompt utilisateur), pas de plafond global (évolution future consignée : plafond global de sécurité si conversations longues) ;
+  - **pas d'étape A0** pour l'instant (évolution future consignée : question de clarification si demande ambiguë) ;
+  - clôture par mot-clé `stop` (insensible à la casse) ; **plus de mode one-shot** : `chat "prompt"` = premier message, la conversation se poursuit en REPL ; `EOF`/`Interrupt` clôturent proprement ;
+  - journal multi-tours : une conversation = un `id_execution`, événements `debut_tour`/`fin_tour` (chaque tour horodaté avec son compte d'invocations et sa synthèse), `contexte` avec empreinte du prompt, `fin` avec totaux.
+  Composants touchés : `src/main.py` (commande chat, REPL + clôture, conversation supprimée en finally à côté de l'agent), `src/agent/boucle.py` (`ConversationServeur` + `tour_conversation`, suppression de la boucle one-shot), `src/agent/agent.py` (inchangé, l'agent reste éphémère), `config/prompt_systeme.txt` (A4 devient proposition en attente de validation, intégration du feedback, section multi-tours), `src/agent/journal.py` (schéma multi-tours). **Aucune évolution de contrat cœur** : la conversation est une couche au-dessus des outils existants.
   Prérequis : tests d'intégration multi-tours simulés (exploration → correction utilisateur → raffinement → acquisition validée).
-  **Point de design à trancher en tête de chantier (séance du 19/10/2026)** : conservation du contexte — (a) historique côté client, renvoyé à chaque tour (contrôle total, journal naturel, historique croissant) ou (b) conversation côté serveur via l'API `client.beta.agents` (l'agent se souvient, seul le nouveau prompt est envoyé). Arbitrage associé : pertinence de `beta.agents` vs `chat.completions` — en l'état, ni handoff ni contexte serveur ne sont utilisés (agents éphémères, boucle et historique côté client dans `boucle.py`) ; la bascule vers `chat.completions` serait peu coûteuse (un seul fichier de contact, contrats et cœur agnostiques) mais `beta.agents` reste retenu pour la dimension pédagogique (objectif explicite du projet), `MISTRAL_AGENT_ID` (réutilisation d'agent console après vérification d'empreinte) et l'option (b) que seul l'API Agents offre. L'option (b) ferait pencher l'arbitrage API définitivement.
 - [ ] **T11.2** : Outil `rechercher_organisations` + filtre organisation sur `rechercher_jeux` (issu du constat des traces du 18/10/2026 : l'agent a consacré 3 invocations à chercher "Ministère de l'Intérieur" en mots-clés, sans succès — il n'existe aucun moyen direct de cibler un producteur). Chantier :
   - fonction cœur de recherche d'organisations par nom (endpoint `/api/1/organizations/`, déjà sondé — pagination, nom, slug, id, badges) ;
   - filtre optionnel `organisation` (id ou slug) sur `rechercher_jeux` (paramètre supporté par l'API v1) — évolution de contrat (v1.2.0 → v1.3.0) ;
@@ -115,6 +116,8 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 ---
 
 ## 🚧 En cours
+
+- [ ] **T11.1** *(en cours — mode conversationnel multi-tours, décisions actées le 20/10/2026)* : voir section 11 pour le détail complet. **E0..E7 faits (398 tests verts), reste E8 : validation réelle par le concepteur** (checklist dans `docs/tasks/T11.1_chat_multi_tours.md`).
 
 
 
