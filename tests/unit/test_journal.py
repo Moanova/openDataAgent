@@ -40,11 +40,12 @@ def _evt_message(texte, id_msg="msg-1"):
     )
 
 
-def _evt_call(nom, arguments, tool_call_id="call-1"):
+def _evt_call(nom, arguments, tool_call_id="call-1", output_index=0):
     return SimpleNamespace(
         event="function.call.delta",
         data=SimpleNamespace(type="function.call.delta", id=f"fc-{tool_call_id}", name=nom,
-                             tool_call_id=tool_call_id, arguments=json.dumps(arguments)),
+                             tool_call_id=tool_call_id, arguments=json.dumps(arguments),
+                             output_index=output_index),
     )
 
 
@@ -164,7 +165,7 @@ def test_journal_plafond_et_erreur(tmp_path, monkeypatch):
     def _stream_infini():
         yield _evt_started("conv-1")
         for i in range(50):
-            yield _evt_call("rechercher_jeux", {"mots_cles": ["x"]}, f"c{i}")
+            yield _evt_call("rechercher_jeux", {"mots_cles": ["x"]}, f"c{i}", output_index=i)
         yield _evt_done()
     agent.client.beta.conversations.start_stream.return_value = _stream_infini()
     agent.client.beta.conversations.append_stream.return_value = _stream_infini()

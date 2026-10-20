@@ -52,12 +52,13 @@ def _evt_message(texte, id_msg="msg-1"):
     )
 
 
-def _evt_call(nom, arguments, tool_call_id="call-1"):
+def _evt_call(nom, arguments, tool_call_id="call-1", output_index=0):
     return SimpleNamespace(
         event="function.call.delta",
         data=SimpleNamespace(
             type="function.call.delta", id=f"fc-{tool_call_id}", name=nom,
             tool_call_id=tool_call_id, arguments=json.dumps(arguments),
+            output_index=output_index,
         ),
     )
 
@@ -331,7 +332,7 @@ def test_tour_plafond_reinitialise_par_tour(monkeypatch):
     def _stream_infini():
         yield _evt_started("conv-1")
         for i in range(100):
-            yield _evt_call("rechercher_jeux", {"mots_cles": [f"m{i}"]}, f"c{i}")
+            yield _evt_call("rechercher_jeux", {"mots_cles": [f"m{i}"]}, f"c{i}", output_index=i)
         yield _evt_done()
     agent.client.beta.conversations.start_stream.return_value = _stream_infini()
     agent.client.beta.conversations.append_stream.return_value = _stream_infini()
@@ -508,3 +509,90 @@ def test_tour_journalise_schema_multi_tours(tmp_path, monkeypatch):
     assert fin_tour["synthese"] == "Synthese."
     assert lignes[-1]["nb_tours"] == 1
     assert lignes[-1]["nb_invocations"] == 1
+
+
+def _evt_call_fragmente(nom, fragments, tool_call_id, output_index=0, avec_identite_sur_premier=True):
+    """Émet un appel d'outil fragmenté en plusieurs deltas (API Conversations réelle).
+
+    L'identité (name, tool_call_id) n'est portée que par le premier delta ;
+    chaque delta porte un fragment de la chaîne JSON des arguments.
+    """
+    evenements = []
+    for i, fragment in enumerate(fragments):
+        identite = avec_identite_sur_premier and i == 0
+        evenements.append(SimpleNamespace(
+            event="function.call.delta",
+            data=SimpleNamespace(
+                type="function.call.delta",
+                id=f"fc-{tool_call_id}-{i}",
+                name=nom if identite else "",
+                tool_call_id=tool_call_id if identite else "",
+                arguments=fragment,
+                output_index=output_index,
+            ),
+        ))
+    return evenements
+
+
+def test_tour_deltas_fragmentes_reconstitues(monkeypatch):
+    # Ref. T11.1 TU-B23 — un appel fragmente en deltas (même output_index)
+    # est reconstitué : identite sur le 1er delta, arguments concaténés.
+    # Regression du 20/10/2026 (erreur 400 "Duplicate function results").
+    mock_search = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"jeux": []}})
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", mock_search)
+    agent = _agent()
+    arguments_complets = json.dumps({"mots_cles": ["résultats", "élections"], "tri": "pertinence"})
+    # 3 fragments qui, concaténés, reforment le JSON complet
+    f1, f2, f3 = arguments_complets[:10], arguments_complets[10:25], arguments_complets[25:]
+    deltas = _evt_call_fragmente("rechercher_jeux", [f1, f2, f3], "EdhJbxRCA", output_index=0)
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-1"), *deltas, _evt_done(),
+    ])
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message("Jeux trouvés."), _evt_done(),
+    ])
+    conversation = _conversation(agent)
+    reponse = tour_conversation(conversation, "cherche les résultats des élections")
+    assert reponse["statut"] == "succes"
+    # UN SEUL appel exécuté malgré les 3 deltas
+    assert reponse["donnees"]["nb_invocations"] == 1
+    mock_search.assert_called_once_with(mots_cles=["résultats", "élections"], tri="pertinence", id_execution="id_test")
+    # UN SEUL résultat renvoyé, avec le bon tool_call_id
+    entrees = agent.client.beta.conversations.append_stream.call_args.kwargs["inputs"]
+    assert len(entrees) == 1
+    assert entrees[0]["tool_call_id"] == "EdhJbxRCA"
+    assert json.loads(entrees[0]["result"])["statut"] == "succes"
+
+
+def test_tour_deltas_entrelaces_par_output_index(monkeypatch):
+    # Ref. T11.1 TU-B24 — deltas de deux appels entremêlés (output_index
+    # distincts) : chaque appel est reconstitué indépendamment, dans l'ordre.
+    mock_search = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"jeux": []}})
+    mock_list = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {"ressources": []}})
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "rechercher_jeux", mock_search)
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "lister_ressources", mock_list)
+    agent = _agent()
+    args_a = json.dumps({"mots_cles": ["dette"]})
+    args_b = json.dumps({"id_jeu": "jeu-1"})
+    # Entrelacement : A1, B1, A2, B2 (output_index 0 = recherche, 1 = listage)
+    deltas = [
+        *_evt_call_fragmente("rechercher_jeux", [args_a[:8], args_a[8:]], "cA", output_index=0),
+        *_evt_call_fragmente("lister_ressources", [args_b[:5], args_b[5:]], "cB", output_index=1),
+    ]
+    # Ordre réel entremêlé : A1, B1, A2, B2
+    entrelaces = [deltas[0], deltas[2], deltas[1], deltas[3]]
+    agent.client.beta.conversations.start_stream.return_value = iter([
+        _evt_started("conv-1"), *entrelaces, _evt_done(),
+    ])
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message("Deux appels faits."), _evt_done(),
+    ])
+    conversation = _conversation(agent)
+    reponse = tour_conversation(conversation, "cherche puis liste")
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["nb_invocations"] == 2
+    mock_search.assert_called_once_with(mots_cles=["dette"], id_execution="id_test")
+    mock_list.assert_called_once_with(id_jeu="jeu-1", id_execution="id_test")
+    # Deux résultats distincts renvoyés, tool_call_ids différents, ordre des output_index
+    entrees = agent.client.beta.conversations.append_stream.call_args.kwargs["inputs"]
+    assert [e["tool_call_id"] for e in entrees] == ["cA", "cB"]

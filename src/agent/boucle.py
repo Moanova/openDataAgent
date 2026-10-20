@@ -351,14 +351,20 @@ def _amorcer_conversation(conversation: ConversationServeur, stream: Any) -> Any
 def _consommer_stream(stream: Any) -> Tuple[str, List[Dict[str, Any]], Optional[str]]:
     """Consomme un stream d'événements de l'API Conversations.
 
+    Les deltas `function.call.delta` sont regroupés par `output_index`
+    (sémantique du SDK, `client/conversations.py`) : un appel d'outil est
+    émis en plusieurs deltas — l'identité (`tool_call_id`, `name`) est lue
+    sur le premier delta du groupe, les arguments sont la concaténation
+    des fragments.
+
     Returns:
         (texte, tool_calls, erreur) : texte concaténé des deltas
-        `message.output.delta`, tool_calls accumulés des
+        `message.output.delta`, tool_calls reconstitués des
         `function.call.delta` ({tool_call_id, name, arguments}), erreur
         du premier `conversation.response.error` (None sinon).
     """
     texte = ""
-    tool_calls: List[Dict[str, Any]] = []
+    groupes: Dict[Any, List[Any]] = {}
     erreur: Optional[str] = None
     for evenement in stream:
         donnees = _donnees_evenement(evenement)
@@ -368,14 +374,32 @@ def _consommer_stream(stream: Any) -> Tuple[str, List[Dict[str, Any]], Optional[
         if type_evt == "message.output.delta":
             texte += _extraire_texte(_champ(donnees, "content", ""))
         elif type_evt == "function.call.delta":
-            tool_calls.append({
-                "tool_call_id": _champ(donnees, "tool_call_id", ""),
-                "name": _champ(donnees, "name", ""),
-                "arguments": _champ(donnees, "arguments", "{}"),
-            })
+            index = _champ(donnees, "output_index", 0)
+            if index is None:
+                index = 0
+            groupes.setdefault(index, []).append(donnees)
         elif type_evt == "conversation.response.error":
             erreur = _champ(donnees, "message", "erreur inconnue")
+    tool_calls = [
+        _reconstituer_appel(groupe)
+        for _, groupe in sorted(groupes.items(), key=lambda paire: paire[0])
+    ]
     return texte, tool_calls, erreur
+
+
+def _reconstituer_appel(deltas: List[Any]) -> Dict[str, Any]:
+    """Reconstitue un appel d'outil à partir de ses deltas `function.call.delta`.
+
+    L'identité (`tool_call_id`, `name`) est lue sur le premier delta ;
+    les arguments sont la concaténation des fragments (chaîne JSON).
+    """
+    premier = deltas[0]
+    arguments = "".join(_champ(delta, "arguments", "") or "" for delta in deltas)
+    return {
+        "tool_call_id": _champ(premier, "tool_call_id", ""),
+        "name": _champ(premier, "name", ""),
+        "arguments": arguments or "{}",
+    }
 
 
 def _donnees_evenement(evenement: Any) -> Any:

@@ -566,3 +566,28 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun.
+
+
+---
+
+## **Séance du 20/10/2026 (2) — T11.1 E8 : 1er test réel, anomalie deltas fragmentés, correctif E8a**
+
+### **Contexte**
+- Le concepteur lance le 1er test réel de T11.1 : `python -m src.main chat "Peux-tu faire une recherche de jeux de données sur les résultats nationaux des élections présidentielles ?"` (id `20261020_211840`).
+
+### **Anomalie constatée (E8)**
+- L'agent émet **un seul appel** `rechercher_jeux`, mais l'API Conversations l'envoie **fragmenté en 10 deltas** `function.call.delta` (un par morceau de la chaîne JSON des arguments), tous avec le même `tool_call_id` (`EdhJbxRCA`).
+- `_consommer_stream` traitait chaque delta comme un appel complet → 10 exécutions locales (arguments illisibles, `erreur_parametres` × 10) et **10 résultats renvoyés avec le même `tool_call_id`** → l'API rejette l'`append_stream` : **400 « Duplicate function results provided for tool_call_ids »** (code 3001). Tour interrompu au plafond (10/10), clôture propre (conversation supprimée, agent détruit).
+- Cause racine : mauvaise compréhension du streaming Conversations — les deltas sont regroupés par `output_index` (sémantique SDK, `client/conversations.py:311-316` + `reconstitue_entries`), avec l'identité sur le premier delta et les arguments concaténés. Les mocks de test émettaient un delta complet par appel (sans `output_index`), masquant le problème.
+
+### **Correctif E8a**
+1. **`src/agent/boucle.py` — `_consommer_stream` réécrit** : regroupement des `function.call.delta` par `output_index`, puis `_reconstituer_appel` (identité `tool_call_id`/`name` sur le premier delta du groupe, arguments = concaténation des fragments). Ordre des appels = ordre des `output_index`.
+2. **Tests** : helpers `_evt_call`/`evt_call` mis à jour avec `output_index` (test_boucle, test_journal, test_integration) ; TU-B17/TU-C6 (streams infinis) réparés avec des `output_index` distincts ; **TU-B23** (appel fragmenté en 3 deltas → 1 exécution, 1 `function.result` avec le bon `tool_call_id`) et **TU-B24** (deux appels entremélés par `output_index` → reconstitution indépendante, ordre respecté) ajoutés — régressions bloquantes.
+3. **Docs** : `plan_tests.md` (TU-B23/B24), suivi T11.1 (E8a coché, point de vigilance n°2 corrigé).
+
+### **État en fin de séance**
+- **400 tests verts** (398 avant correctif, +2 régressions).
+- T11.1 reste en 🚧 En cours : **E8 se poursuit** — le concepteur relance le test réel pour valider la reconstitution des deltas en conditions réelles.
+
+### **Blocages**
+- Aucun.

@@ -330,7 +330,7 @@ Implémentation : `tests/unit/test_extraction.py` (7 tests TU-47..53), `tests/un
 
 ## Tests T11.1 — Mode conversationnel multi-tours (20/10/2026)
 
-Contexte côté serveur (API Conversations `client.beta.conversations`), boucle tool-calling côté client, plafond par tour, propose-puis-acquiert, clôture par `stop`. La boucle one-shot (`boucle_conversation`) est supprimée ; les tests TU-B4..TU-B10 sont remplacés par TU-B13..TU-B22.
+Contexte côté serveur (API Conversations `client.beta.conversations`), boucle tool-calling côté client, plafond par tour, propose-puis-acquiert, clôture par `stop`. La boucle one-shot (`boucle_conversation`) est supprimée ; les tests TU-B4..TU-B10 sont remplacés par TU-B13..TU-B24.
 
 ### Tests unitaires — boucle multi-tours (`tests/unit/test_boucle.py`)
 
@@ -346,6 +346,8 @@ Contexte côté serveur (API Conversations `client.beta.conversations`), boucle 
 | TU-B20 | Erreur SDK sur `start_stream` | `echec_technique` propre, 0 invocation | Bloquant (CA-2) |
 | TU-B21 | \u00c9v\u00e9nement `conversation.response.error` | `echec_technique` avec le message serveur | Bloquant (CA-2) |
 | TU-B22 | `PLAFOND_INVOCATIONS` dans l'environnement | Plafond r\u00e9solu depuis l'env | Avertissement (CA-11) |
+| TU-B23 | Appel fragmenté en deltas (même `output_index`) | Appel reconstitué (identité 1er delta, arguments concaténés), 1 exécution, 1 `function.result` | Bloquant (régression 20/10) |
+| TU-B24 | Deltas de deux appels entremêlés (`output_index` distincts) | Chaque appel reconstitué indépendamment, ordre des `output_index` | Bloquant (régression 20/10) |
 | TU-C9 | S\u00e9quence d'\u00e9v\u00e9nements multi-tours | `contexte, debut_tour, ..., fin_tour` exacts | Bloquant (CA-2) |
 
 ### Tests unitaires — journal multi-tours (`tests/unit/test_journal.py`)

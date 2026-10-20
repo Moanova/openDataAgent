@@ -527,10 +527,11 @@ def test_t118_scenario_multi_tours_simule(tmp_path, monkeypatch):
                                data=SimpleNamespace(type="message.output.delta", id="m",
                                                      content={"type": "text", "text": texte}, role="assistant"))
 
-    def evt_call(nom, args, cid="c1"):
+    def evt_call(nom, args, cid="c1", output_index=0):
         return SimpleNamespace(event="function.call.delta",
                                data=SimpleNamespace(type="function.call.delta", id=f"fc-{cid}", name=nom,
-                                                     tool_call_id=cid, arguments=json.dumps(args)))
+                                                     tool_call_id=cid, arguments=json.dumps(args),
+                                                     output_index=output_index))
 
     def evt_done():
         return SimpleNamespace(event="conversation.response.done",
