@@ -345,3 +345,13 @@ Les événements `message_utilisateur` et `reponse_finale` de l'ancienne boucle 
 #### Justification
 - La granularité par tour préserve l'audit : chaque tour est horodaté avec son compte d'invocations et sa synthèse.
 - L'empreinte du prompt dans l'en-tête (au lieu du texte complet) garde le journal lisible tout en permettant de vérifier quelle version du prompt a servi.
+
+### 7. Écriture atomique du manifeste : remplacement cross-platform (E8b, 20/10/2026)
+
+#### Décision
+L'écriture atomique du manifeste (`src/core/manifeste.py::_ecrire`) utilise **`os.replace`** (remplacement garanti sur toutes les plateformes) et non `Path.rename`. Sous Windows, `Path.rename` lève `WinError 183` si la cible existe déjà — or un fichier `.part` orphelin (laissé par un plantage précédent) bloquait alors **toutes** les écritures suivantes de la même exécution, produisant un manifeste incomplet.
+
+#### Justification
+- 2nd test réel T11.1 (20/10, id `20261020_213621`) : 3 acquisitions réussies, 3x « Échec d'écriture du manifeste » (WinError 183), manifeste final réduit à la dernière entrée. La boucle agentique n'était pas en cause — l'incident était purement système de fichiers, côté cœur (T10.8).
+- `os.replace` a la sémantique « écraser si existe » sur Windows comme sur POSIX : l'atomicité est préservée (écriture `.part` complète puis remplacement), sans le point de défaillance Windows.
+- Régression couverte par TU-80 (simulation du comportement Windows de `rename`).

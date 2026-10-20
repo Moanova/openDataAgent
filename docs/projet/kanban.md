@@ -117,7 +117,7 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 ## 🚧 En cours
 
-- [ ] **T11.1** *(en cours — mode conversationnel multi-tours, décisions actées le 20/10/2026)* : voir section 11 pour le détail complet. **E0..E7 + E8a faits (400 tests verts), reste E8 : validation réelle par le concepteur** (1er test réel du 20/10 : anomalie deltas fragmentés corrigée en E8a, à re-valider ; checklist dans `docs/tasks/T11.1_chat_multi_tours.md`).
+- [ ] **T11.1** *(en cours — mode conversationnel multi-tours, décisions actées le 20/10/2026)* : voir section 11 pour le détail complet. **E0..E7 + E8a/E8b faits (401 tests verts), reste E8 : validation réelle par le concepteur** (2 tests réels du 20/10 : deltas fragmentés corrigés en E8a, manifeste Windows corrigé en E8b, à re-valider ; checklist dans `docs/tasks/T11.1_chat_multi_tours.md`).
 
 
 

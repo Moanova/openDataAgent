@@ -327,3 +327,35 @@ def test_ti_deux_voies_un_manifeste(mock_indexee, tmp_path, monkeypatch):
     assert "tronque" not in acquisitions[1]
     # fichiers distincts : le CSV extrait et le fichier brut coexistent
     assert acquisitions[0]["fichier"] != acquisitions[1]["fichier"]
+
+
+def test_ecriture_remplace_cible_existante_cross_platform(racine, monkeypatch):
+    # Ref. T11.1 TU-80 — régression Windows (WinError 183) : un `.part`
+    # orphelin (plantage précédent) ne doit pas bloquer les écritures
+    # suivantes. `Path.rename` échoue si la cible existe sous Windows ;
+    # `_ecrire` doit utiliser un remplacement cross-platform (os.replace).
+    chemin = _chemin_manifeste("exec-1", racine)
+    chemin.parent.mkdir(parents=True)
+    chemin.write_text(json.dumps({"acquisitions": [], "id_execution": "exec-1"}), encoding="utf-8")
+    # Simuler un .part orphelin laissé par un plantage
+    part = chemin.with_name(chemin.name + ".part")
+    part.write_text(json.dumps({"acquisitions": [], "orphelin": True}), encoding="utf-8")
+
+    # Simuler le comportement Windows de Path.rename : échec si la cible existe
+    import src.core.manifeste as module_manifeste
+    rename_reel = Path.rename
+    def rename_windows(self, target):
+        if Path(target).exists():
+            raise FileExistsError(183, "Impossible de créer un fichier déjà existant", str(target))
+        return rename_reel(self, target)
+    monkeypatch.setattr(Path, "rename", rename_windows)
+
+    # Trois acquisitions successives comme dans le run réel du 20/10
+    for f in ("f1.csv", "f2.csv", "f3.txt"):
+        enregistrer_acquisition("exec-1", _entree(f), racine=racine)
+
+    # Le manifeste final est complet et le .part orphelin a disparu
+    manifeste = lire_manifeste("exec-1", racine=racine)
+    assert manifeste is not None
+    assert [a["fichier"] for a in manifeste["acquisitions"]] == ["f1.csv", "f2.csv", "f3.txt"]
+    assert not part.exists()

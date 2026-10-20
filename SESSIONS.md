@@ -591,3 +591,29 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ### **Blocages**
 - Aucun.
+
+
+---
+
+## **Séance du 20/10/2026 (3) — T11.1 E8 : 2nd test réel, correctif manifeste Windows (E8b)**
+
+### **Contexte**
+- 2nd test réel de T11.1 (id `20261020_213621`) : conversation complète en 5 tours jusqu'à l'acquisition de 3 ressources (2 extractions 2022 + 1 téléchargement brut 2017, 34,7 Mo). Boucle agentique, propose-puis-acquiert, plafond par tour, clôture `stop` : tout conforme.
+- Seul incident : le manifeste d'acquisition (`manifeste_acquisitions.json`) est incomplet — un `.part` orphelin subsiste et ne référence qu'un seul jeu sur trois.
+
+### **Anomalie constatée (E8)**
+- Log : 3x « Échec d'écriture du manifeste » avec `[WinError 183] Impossible de créer un fichier déjà existant: '...manifeste_acquisitions.json.part' -> '...manifeste_acquisitions.json'`.
+- Cause racine : `_ecrire` (`src/core/manifeste.py`, T10.8) utilisait `Path.rename` pour l'écriture atomique. Sous **Windows**, `rename` refuse d'écraser une cible existante. Or la cible `.part` existait déjà (orphelin d'un plantage précédent) → **toutes** les écritures suivantes de la même exécution ont échoué (le garde-fou « jamais bloquant » a fonctionné : les acquisitions ont réussi, seul le manifeste a été perdu).
+- La boucle agentique n'était pas en cause : incident purement système de fichiers, côté cœur (T10.8).
+
+### **Correctif E8b**
+1. **`src/core/manifeste.py` — `_ecrire`** : renommage par `os.replace` (sémantique « écraser si existe » sur Windows comme POSIX, atomicité préservée) au lieu de `Path.rename`.
+2. **Test TU-80** (`test_manifeste.py`) : régression bloquante — `.part` orphelin + simulation du `rename` Windows (FileExistsError 183) → 3 acquisitions consignées, `.part` disparu.
+3. **Docs** : `plan_tests.md` (TU-80), `decisions_conception.md` (décision 7, section T11.1), suivi T11.1 (E8b coché, point de vigilance n°6), suivi T10.8 (E7), kanban.
+
+### **État en fin de séance**
+- **401 tests verts** (400 avant correctif, +1 régression).
+- T11.1 reste en 🚧 En cours : **E8 se poursuit** — le concepteur relance le test réel pour valider le manifeste complet (3 entrées).
+
+### **Blocages**
+- Aucun.

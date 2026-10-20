@@ -323,6 +323,7 @@ Implémentation : `tests/unit/test_extraction.py` (7 tests TU-47..53), `tests/un
 | TU-77 | `extraire_ressource` succès -> entrée voie extraction (tronque, nb_lignes) ; garde non indexée -> aucune entrée | Entrée exacte / manifeste absent | Bloquant |
 | TU-78 | E0 : `_jeu_courant` porte titre/url du jeu, dénormalisés dans la ressource | titre_jeu, url_jeu présents | Bloquant |
 | TU-79 | `lister_acquisitions` (storage) : liste vide si absent, entrées sinon | Comportement défensif | Non bloquant |
+| TU-80 | Manifeste : remplacement cross-platform (`.part` orphelin + cible existante, simule Windows WinError 183) | 3 acquisitions consignées, `.part` disparu | Bloquant (régression 20/10) |
 | TU-E12 | CLI `acquisitions` : absent -> erreur code 1 ; existant -> affichage lisible (fichier, voie, jeu, licence conditionnelle) | Sorties exactes | Bloquant |
 | TU-E13 | CLI `download` : consigne de la demande dans le manifeste | En-tête `demande` écrit | Bloquant |
 | TI-17 | Flux deux voies (extraction puis téléchargement) dans une même exécution | Un manifeste, 2 entrées ordonnées aux voies distinctes | Bloquant |

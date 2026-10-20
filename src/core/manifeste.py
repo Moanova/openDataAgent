@@ -23,6 +23,7 @@ Invariants :
   d'exception vers l'appelant.
 """
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -60,7 +61,14 @@ def lire_manifeste(
 
 
 def _ecrire(chemin: Path, manifeste: Dict[str, Any]) -> bool:
-    """Écrit le manifeste de façon atomique ; False en cas d'échec."""
+    """Écrit le manifeste de façon atomique ; False en cas d'échec.
+
+    Le renommage est fait par `os.replace` (remplacement garanti sur
+    toutes les plateformes) : `Path.rename` échoue sous Windows
+    (WinError 183) si la cible existe déjà — or un `.part` orphelin
+    laissé par un plantage précédent bloque alors toutes les écritures
+    suivantes de la même exécution.
+    """
     try:
         chemin.parent.mkdir(parents=True, exist_ok=True)
         temporaire = chemin.with_name(chemin.name + ".part")
@@ -68,7 +76,7 @@ def _ecrire(chemin: Path, manifeste: Dict[str, Any]) -> bool:
             json.dumps(manifeste, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
-        temporaire.rename(chemin)
+        os.replace(temporaire, chemin)
         return True
     except OSError as exc:
         logger.warning("Échec d'écriture du manifeste", chemin=str(chemin), erreur=str(exc))
