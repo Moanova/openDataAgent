@@ -438,3 +438,15 @@ Périmètre : `src/agent/circuit.py` + intégration `src/agent/boucle.py` + cham
 | TU-108 | Variables d'environnement (seuil, refroidissement, valeurs invalides → défauts) | 3 / 300 s par défaut | Bloquant |
 | TI-23 | Boucle : 3 échecs `motif=transitoire` même hôte → 4e appel intercepté | outil non exécuté, `nb_invocations=3`, agent reçoit `circuit_ouvert` + `hote` + `proposer_alternative` | Bloquant |
 | TI-24 | Boucle : hôtes indépendants, succès rouvre, échec définitif n'ouvre pas, ressource inconnue = fail-safe | compteurs d'appels et statuts conformes | Bloquant |
+
+## Tests T13.2 — Option --quiet (22/10/2026)
+
+Périmètre : `configure_logging(silencieux=...)` (`src/utils/logging.py`) + option globale `--quiet` au callback Typer (`src/main.py`) + masquage du warning de nettoyage T7.2. Le fichier de logs reste écrit. Suivi : `docs/tasks/T13.2_option_quiet.md`.
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-109 | `silencieux=True` : log structlog info/error | aucune sortie console, fichier de logs écrit | Bloquant |
+| TU-110 | `silencieux=False` (défaut) : comportement inchangé | log structlog présent sur la console | Bloquant |
+| TU-111 | CLI `--quiet search` (cœur simulé) | résultat affiché, `id_execution` affiché, aucun `[info]`/`[error]` console | Bloquant |
+| TU-112 | CLI `search` sans `--quiet` | résultat affiché, comportement inchangé | Bloquant |
+| TU-113 | CLI : flag posé au callback + transmis au wrapper ; en `--quiet` le warning du hook de nettoyage T7.2 est masqué (mais le nettoyage a lieu) | `_SILENCIEUX=True`, wrapper appelé, pas de warning console, exécution supprimée | Bloquant |

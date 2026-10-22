@@ -52,6 +52,13 @@ app = typer.Typer(help="CLI openDataAgent : acquisition de données de data.gouv
 
 AIDE_ID_EXECUTION = "Identifiant d'exécution pour les traces et le chaînage des commandes (généré automatiquement si absent, affiché dans la sortie)."
 
+_SILENCIEUX = False
+
+
+def _configurer_logging(id_execution: str) -> None:
+    """Configure le logging (T13.2 : silencieux si l'option --quiet est passée)."""
+    configure_logging(id_execution=id_execution, silencieux=_SILENCIEUX)
+
 
 def _id_execution_auto() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -131,7 +138,7 @@ def _nettoyage_automatique() -> None:
     # est le warning ci-dessous.
     bilan = nettoyer_anciennes_executions(id_execution_courante=_id_execution_demande())
     donnees = bilan["donnees"]
-    if donnees["supprimes"] or donnees["erreurs"]:
+    if not _SILENCIEUX and (donnees["supprimes"] or donnees["erreurs"]):
         typer.secho(
             f"nettoyage automatique : {bilan['message']}",
             fg=typer.colors.YELLOW,
@@ -140,8 +147,13 @@ def _nettoyage_automatique() -> None:
 
 
 @app.callback()
-def racine(ctx: typer.Context) -> None:
+def racine(
+    ctx: typer.Context,
+    quiet: bool = typer.Option(False, "--quiet", help="Masque les logs applicatifs [info]/[error] dans la console (le fichier de logs reste écrit)."),
+) -> None:
     """CLI openDataAgent : acquisition de données de data.gouv.fr."""
+    global _SILENCIEUX
+    _SILENCIEUX = quiet
     if ctx.invoked_subcommand and ctx.invoked_subcommand != "nettoyer":
         _nettoyage_automatique()
 
@@ -165,7 +177,7 @@ def search(
         raise typer.Exit(code=2)
 
     identifiant = id_execution or _id_execution_auto()
-    configure_logging(id_execution=identifiant)
+    _configurer_logging(identifiant)
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
@@ -199,7 +211,7 @@ def list(
 ) -> None:
     """Liste les ressources d'un jeu de données avec leurs métadonnées."""
     identifiant = id_execution or _id_execution_auto()
-    configure_logging(id_execution=identifiant)
+    _configurer_logging(identifiant)
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
@@ -236,7 +248,7 @@ def download(
 ) -> None:
     """Telecharge une ressource non indexee dans son etat brut."""
     identifiant = id_execution or _id_execution_auto()
-    configure_logging(id_execution=identifiant)
+    _configurer_logging(identifiant)
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
@@ -273,7 +285,7 @@ def extract(
 ) -> None:
     """Extrait une ressource indexée vers un CSV local (pagination conduite par la commande)."""
     identifiant = id_execution or _id_execution_auto()
-    configure_logging(id_execution=identifiant)
+    _configurer_logging(identifiant)
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
@@ -326,7 +338,7 @@ def query(
         typer.secho(f"Valeur --tri-ordre invalide : {tri_ordre}. Valeurs acceptées : {', '.join(valeurs(OrdreTri))}", fg=typer.colors.RED, err=True)
         raise typer.Exit(code=2)
     identifiant = id_execution or _id_execution_auto()
-    configure_logging(id_execution=identifiant)
+    _configurer_logging(identifiant)
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
@@ -412,7 +424,7 @@ def nettoyer(
 ) -> None:
     """Supprime les anciennes exécutions (fichiers, inventaires, conversations, logs)."""
     identifiant = id_execution or _id_execution_auto()
-    configure_logging(id_execution=identifiant)
+    _configurer_logging(identifiant)
     bilan = nettoyer_anciennes_executions(
         age_jours=age_jours,
         id_execution_courante=id_execution,
@@ -445,7 +457,7 @@ def chat(
 ) -> None:
     """Conversation agentique multi-tours (T11.1) : REPL, mot-clé de clôture `stop`."""
     identifiant = id_execution or _id_execution_auto()
-    configure_logging(id_execution=identifiant)
+    _configurer_logging(identifiant)
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)

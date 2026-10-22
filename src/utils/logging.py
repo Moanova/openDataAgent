@@ -29,25 +29,36 @@ _default_context: Dict[str, Any] = {
 _log_file: Optional[TextIO] = None
 
 
-def configure_logging(id_execution: Optional[str] = None) -> None:
+def configure_logging(id_execution: Optional[str] = None, silencieux: bool = False) -> None:
     """
     Configure `structlog` pour produire des logs JSON.
-    
+
     Args:
         id_execution (Optional[str]): Identifiant unique pour tracer une exécution.
             Si non fourni, un horodatage est généré.
+        silencieux (bool): Si True (T13.2, option --quiet), aucun handler console :
+            les logs [info]/[error] ne sortent plus, le fichier de logs reste écrit.
     """
     global _log_file
-    
+
     if id_execution is None:
         id_execution = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
+
     # Mettre à jour le contexte par défaut
     _default_context["id_execution"] = id_execution
-    
+
     # Créer le dossier de logs s'il n'existe pas
     os.makedirs("logs", exist_ok=True)
-    
+
+    # Fermer l'éventuel fichier de logs précédent avant d'en ouvrir un
+    # nouveau : configure_logging est appelé à chaque commande (et plusieurs
+    # fois dans les tests) ; sans fermeture, l'ancien descripteur fuirait et
+    # un fichier fermé laisserait log_to_file écrire dans le vide.
+    if _log_file is not None:
+        try:
+            _log_file.close()
+        except OSError:
+            pass
     # Ouvrir le fichier de logs en mode append
     _log_file = open(f"logs/openDataAgent_{id_execution}.log", "a", encoding="utf-8")
     
@@ -83,12 +94,28 @@ def configure_logging(id_execution: Optional[str] = None) -> None:
         cache_logger_on_first_use=True,
     )
     
-    # Configuration du logger racine pour la console
-    logging.basicConfig(
-        format="%(message)s",
-        stream=sys.stdout,
-        level=logging.INFO,
-    )
+    # Configuration du logger racine pour la console. Les handlers existants
+    # sont retirés d'abord : configure_logging peut être appelé plusieurs fois
+    # dans un même processus (tests), basicConfig seul serait alors sans effet.
+    racine = logging.getLogger()
+    for handler in list(racine.handlers):
+        racine.removeHandler(handler)
+        # Fermer proprement le handler retiré : sous pytest, son flux (capture)
+        # est fermé en fin de test ; un handler orphelin lèverait alors
+        # ValueError("I/O operation on closed file") au Logging error.
+        try:
+            handler.close()
+        except Exception:
+            pass
+    if silencieux:
+        # T13.2 (--quiet) : NullHandler absorbe tout (y compris le lastResort
+        # de Python, qui écrirait sinon les WARNING+ sur stderr).
+        racine.addHandler(logging.NullHandler())
+    else:
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        racine.addHandler(handler)
+        racine.setLevel(logging.INFO)
 
 
 def _injecter_contexte_global(logger, method_name, event_dict):
@@ -135,9 +162,9 @@ def log_to_file(event: str, **kwargs: Any) -> None:
         **kwargs: Champs supplémentaires à logger.
     """
     global _log_file
-    if _log_file is None:
+    if _log_file is None or _log_file.closed:
         return
-    
+
     # Créer le log structuré
     log_entry = {
         "timestamp": datetime.now().isoformat(),
@@ -145,7 +172,12 @@ def log_to_file(event: str, **kwargs: Any) -> None:
         **_default_context,
         **kwargs,
     }
-    
+
     # Écrire dans le fichier
-    _log_file.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
-    _log_file.flush()
+    try:
+        _log_file.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+        _log_file.flush()
+    except (OSError, ValueError):
+        # Fichier fermé en dehors (tests, fin de processus) : le log fichier
+        # ne doit jamais faire échouer l'appelant.
+        pass

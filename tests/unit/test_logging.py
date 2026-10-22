@@ -110,3 +110,36 @@ def test_log_to_file_error_handling(mock_log_file):
         log_to_file("Test error handling")
     except IOError:
         pytest.fail("log_to_file a levé une exception alors qu'il devrait la gérer silencieusement")
+
+# ---------------------------------------------------------------------------
+# T13.2 — Option --quiet (22/10/2026) : TU-109, TU-110
+# ---------------------------------------------------------------------------
+
+def test_quiet_supprime_console_mais_pas_fichier(capsys, cleanup_logs):
+    # TU-109 : silencieux=True -> aucun handler console, le fichier de logs
+    # reste écrit. Vrai log structlog (pas seulement log_to_file).
+    configure_logging(id_execution="test_quiet", silencieux=True)
+    logger = get_logger("openDataAgent.test.quiet")
+    logger.info("evenement console attendu absent")
+    logger.error("erreur console attendue absente")
+    log_to_file("evenement fichier attendu present")
+
+    sortie = capsys.readouterr()
+    assert "evenement console attendu absent" not in sortie.out
+    assert "erreur console attendue absente" not in sortie.err
+    assert "[info" not in sortie.out and "[error" not in sortie.err
+
+    with open("logs/openDataAgent_test_quiet.log", encoding="utf-8") as f:
+        contenu = f.read()
+    assert "evenement fichier attendu present" in contenu
+
+
+def test_non_quiet_affiche_console(capsys, cleanup_logs):
+    # TU-110 : silencieux=False (défaut) -> comportement inchangé, les logs
+    # structlog passent bien sur la console.
+    configure_logging(id_execution="test_non_quiet", silencieux=False)
+    logger = get_logger("openDataAgent.test.nonquiet")
+    logger.info("evenement console attendu present")
+
+    sortie = capsys.readouterr()
+    assert "evenement console attendu present" in sortie.out

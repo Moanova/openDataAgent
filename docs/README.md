@@ -118,6 +118,16 @@ Les cinq premières commandes (`search`, `list`, `query`, `extract`, `download`)
 
 ### ⌨️ Options des commandes
 
+**Option globale** (avant la sous-commande, T13.2) :
+
+| Option | Description | Défaut |
+|---|---|---|
+| `--quiet` | Masque les logs applicatifs `[info]`/`[error]` dans la console. Les résultats et erreurs de la commande restent affichés, et le **fichier de logs reste écrit** (`logs/openDataAgent_<id_execution>.log`). | Désactivé |
+
+```bash
+python -m src.main --quiet search "dette publique"
+```
+
 **`search` — recherche de jeux** :
 | Option | Description | Défaut |
 |---|---|---|

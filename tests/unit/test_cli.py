@@ -830,3 +830,86 @@ def test_ti22b_hook_auto_desactive_par_defaut(tmp_path, monkeypatch):
     assert resultat.exit_code == 0
     # L'exécution courante (vieux, passée en --id-execution) est protégée
     assert (tmp_path / "data" / "raw" / vieux).is_dir()
+
+
+# ---------------------------------------------------------------------------
+# T13.2 — Option --quiet (22/10/2026) : TU-111..TU-113
+# ---------------------------------------------------------------------------
+
+def test_quiet_resultat_visible_logs_masques(monkeypatch, tmp_path):
+    # TU-111 : `--quiet` masque les logs applicatifs [info]/[error] console ;
+    # le résultat utilisateur (sorties typer.echo) reste affiché. Le coeur est
+    # simulé : la CLI se teste sans réseau.
+    import src.main as module_main
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
+        resultat = runner.invoke(app, ["--quiet", "search", "dette"])
+    assert resultat.exit_code == 0
+    assert "statut : succes" in resultat.output
+    assert "Comptes des administrations publiques" in resultat.output
+    assert "id_execution :" in resultat.output
+    # Aucun log applicatif console (structlog colorisé ou non)
+    assert "[info" not in resultat.output
+    assert "[error" not in resultat.output
+    assert "Recherche terminée" not in resultat.output
+
+
+def test_sans_quiet_logs_visibles(monkeypatch, tmp_path):
+    # TU-112 : sans --quiet, le comportement est inchangé — les logs
+    # applicatifs apparaissent bien (le coeur est simulé mais le logging
+    # est réel : un log est émis par le callback/configuration).
+    import src.main as module_main
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
+        resultat = runner.invoke(app, ["search", "dette"])
+    assert resultat.exit_code == 0
+    assert "statut : succes" in resultat.output
+
+
+def test_quiet_desactive_avant_commande(monkeypatch, tmp_path):
+    # TU-113 : le flag --quiet est posé au callback (avant la sous-commande)
+    # et transmis à configure_logging via le wrapper _configurer_logging.
+    import src.main as module_main
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
+    appels = []
+
+    def faux_configurer(id_execution):
+        appels.append(id_execution)
+
+    monkeypatch.setattr(module_main, "_configurer_logging", faux_configurer)
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
+        resultat = runner.invoke(app, ["--quiet", "search", "dette"])
+    assert resultat.exit_code == 0
+    assert module_main._SILENCIEUX is True
+    assert len(appels) == 1
+
+    # Le flag est remis à False pour le test suivant (état module global)
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+
+
+def test_quiet_masque_warning_nettoyage_auto(monkeypatch, tmp_path):
+    # TU-113 (suite) : en --quiet, le warning console du hook de nettoyage
+    # automatique (T7.2) est masqué même si des suppressions ont lieu.
+    from datetime import datetime, timedelta
+    import src.main as module_main
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+    vieux = (datetime.now() - timedelta(days=60)).strftime("%Y%m%d_%H%M%S") + "_t13q"
+    _fabriquer_executions_cli(tmp_path, [vieux])
+    monkeypatch.setenv("NETTOYAGE_AUTO", "1")
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
+        resultat = runner.invoke(app, ["--quiet", "search", "dette"])
+    assert resultat.exit_code == 0
+    assert "nettoyage automatique" not in resultat.output
+    # Mais le nettoyage a bien eu lieu (hook exécuté, exécution supprimée)
+    assert not (tmp_path / "data" / "raw" / vieux).exists()
