@@ -5,6 +5,32 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 22/10/2026 — Clôture T10.8 (validation réelle complète), revue du kanban**
+
+### **Contexte**
+- Reprise du projet. Le concepteur signale que le kanban n'est pas complètement à jour : T10.1 et T10.8 lui semblent pouvoir passer en ✅ Terminé, idem pour « Prompt A1/A2 ».
+
+### **Vérification préalable (état réel vs kanban)**
+- **T10.1** : confirmée **non terminée** — reste en 🚧 En cours. Seul le chantier 1 (persistance voie 1) est livré (via T10.7) ; le chantier 2 (pipeline de normalisation B7 commun aux deux voies) n'existe pas dans le code (aucun commit, aucune référence dans `src/`).
+- **T10.8** : E0..E7 faits (385 tests verts + correctif E8b/TU-80) ; validation réelle partielle (scénario agentique validé via T11.1 E8, restait le scénario manuel).
+- **Prompt A1/A2** : entrée déjà cochée [X] dans la section 11 ; laissée en place par convention du projet (traçabilité locale des entrées cochées, cf. revue kanban du 19/10).
+
+### **Actions réalisées**
+1. **T10.8 clôturée** : le concepteur a effectué les tests en réel restants (scénario manuel `download` + `acquisitions`) — validation réelle complète.
+   - Kanban : entrée déplacée de la section 12 vers ✅ Terminé, avec note de déplacement en tête de section (convention T11.1).
+   - Suivi `docs/tasks/T10.8_manifeste_acquisitions.md` : case « Validation en réel par le concepteur » cochée, statut tâche terminée.
+2. SESSIONS.md : entrée de séance.
+
+### **État en fin de séance**
+- **T10.8 : ✅ Terminée** (E0..E7 + validation réelle agentique et manuelle).
+- Tâches ouvertes restantes : **T10.1** (🚧 en cours — normalisation B7), T10.6 (optionnel), T11.2, T7.1..T7.4 (optionnelles).
+- Prochaine étape naturelle : **T11.2** (outil `rechercher_organisations` + filtre producteur) ou poursuite de **T10.1** (normalisation B7).
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 15/10/2026 — implémentation de la section 10 du kanban (T10.3, T10.5, T10.4, T10.2, T10.7)**
 
 ### **Contexte**
