@@ -112,6 +112,7 @@ Le projet s'utilise via une **CLI** (Command Line Interface) avec Typer. Voici l
 | `download` | Télécharge une ressource non indexée.                | `python -m src.main download <id_ressource>` |
 | `chat`     | Conversation agentique multi-tours (REPL, mot-clé `stop`) : l'agent conduit le flux de bout en bout. | `python -m src.main chat` |
 | `acquisitions` | Affiche le manifeste d'acquisition d'une exécution : relie chaque fichier de `data/raw/<id>/` à son jeu, sa licence et sa mention d'attribution. | `python -m src.main acquisitions 20261019_175304` |
+| `nettoyer` | Supprime les anciennes exécutions (fichiers, inventaires, conversations, logs) selon un seuil d'âge. | `python -m src.main nettoyer --age-jours 30 --simulation` |
 
 Les cinq premières commandes (`search`, `list`, `query`, `extract`, `download`) sont le mode manuel : l'utilisateur joue lui-même les étapes de sélection. La commande `chat` est le mode agentique multi-tours : l'agent Mistral conduit le flux de bout en bout (reformulation, sélection, acquisition sur validation) en s'appuyant sur les mêmes fonctions, et la conversation se poursuit d'un message à l'autre jusqu'au mot-clé `stop`.
 
@@ -245,6 +246,41 @@ Chaque exécution ayant acquis des données écrit un **manifeste d'acquisition*
 Le journal JSONL (`conversations/<id_execution>/conversation.jsonl`) conserve la conversation complète selon un **schéma multi-tours** : un événement `contexte` (modèle, empreinte du prompt système, plafond, date), puis pour chaque tour un `debut_tour` et un `fin_tour` encadrant les raisonnements de l'agent, les invocations d'outils avec arguments et résultats, et les éventuelles erreurs (`plafond_atteint`, `erreur_api`), clos par un événement `fin`. Il sert à l'audit et aux tests agentiques (propriété TA).
 
 **Codes de sortie** : `0` succès ; `1` échec technique (clé absente, API injoignable, erreur en cours de conversation) ; `2` paramètres invalides.
+
+---
+
+## 🔁 Réessai des appels réseau (T7.1)
+
+Les appels HTTP sont repris automatiquement selon leur nature :
+
+- **Statuts transitoires** (429, 502, 503, 504) et **erreurs réseau** (timeout, connexion) : 3 tentatives par défaut, avec un délai croissant (backoff exponentiel, base 1 s, plafond 30 s) et un aléa (jitter) ; l'en-tête `Retry-After` du serveur est respecté.
+- **Statuts définitifs** (400, 401, 403, 410) : jamais retentés.
+- **Téléchargement interrompu** : repris à l'octet atteint (en-tête `Range`) grâce au fichier partiel `.part` ; un échec définitif supprime le `.part` (aucun fichier partiel conservé).
+
+Chaque réponse d'outil expose `donnees.nb_tentatives` (1 = succès au premier essai). Les échecs techniques consignés au registre portent un champ `statut_reprise` : `a_retenter` (transitoire épuisé) ou `definitif`.
+
+---
+
+## 🧹 Nettoyage des anciennes exécutions (T7.2)
+
+Quatre familles de traces s'accumulent par `id_execution` : `data/raw/<id>/` (fichiers acquis + manifeste), `data/executions/<id>/` (inventaire), `conversations/<id>/` (journal) et `logs/openDataAgent_<id>.log`.
+
+```bash
+python -m src.main nettoyer --age-jours 30 --simulation   # voir sans supprimer
+python -m src.main nettoyer --age-jours 30                # supprimer
+```
+
+Règles : l'âge est lu dans le préfixe date de l'`id_execution` ; l'exécution courante (`--id-execution`) est toujours protégée ; les registres globaux et les noms non reconnus sont conservés ; un échec de suppression est signalé, jamais bloquant. Le bilan est normalisé (`supprimes`, `conserves`, `octets_liberes`, `--json` pour la sortie brute).
+
+En complément, un **hook automatique** exécute le nettoyage avant chaque commande si `NETTOYAGE_AUTO=1` dans `.env` (désactivé par défaut). La commande `nettoyer` ne déclenche pas le hook.
+
+---
+
+## ⚡ Circuit breaker agentique (T7.7)
+
+En mode `chat`, après **3 échecs transitoires consécutifs** vers un même hôte (serveur d'origine d'une ressource, API data.gouv.fr ou API tabulaire), la boucle cesse de solliciter cet hôte : l'appel est intercepté **sans consommer le plafond d'invocations** et l'agent reçoit `echec_technique` avec `motif=circuit_ouvert`, `hote` et `suggestion=proposer_alternative`. Le prompt A4 lui demande alors de ne plus relancer cet hôte et de proposer une alternative. Après **300 s** de refroidissement, une tentative est autorisée (état semi-ouvert).
+
+L'état du circuit vit **en mémoire, dans la conversation** : il est détruit à la clôture, aucune temporisation ne court entre deux exécutions. Un refus définitif (403/410) n'ouvre pas le circuit. Paramétrage : `CIRCUIT_BREAKER_SEUIL`, `CIRCUIT_BREAKER_REFROIDISSEMENT`, `CIRCUIT_BREAKER_DESACTIVE=1`.
 
 ---
 

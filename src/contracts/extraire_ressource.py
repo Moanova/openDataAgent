@@ -13,6 +13,8 @@ Miroir du fichier JSON `contrats/extraire_ressource.json`.
 """
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 # ---------------------------------------------------------------------------
@@ -51,4 +53,12 @@ class ExtraireRessourceOutput(BaseModel):
     suggestion: str | None = Field(
         default=None,
         description="Suggestion en cas d'échec (ex : 'basculer sur telecharger_brut').",
+    )
+    nb_tentatives: int = Field(
+        default=1,
+        description="Somme des tentatives des appels HTTP de la pagination (1 si tout réussit au premier essai).",
+    )
+    motif: Optional[str] = Field(
+        default=None,
+        description="Motif de l'échec HTTP (T7.1 : 'transitoire' après épuisement des tentatives, 'acces_refuse', 'ressource_supprimee', 'requete_invalide') ; en mode agentique, 'circuit_ouvert' (T7.7) quand le circuit breaker a intercepté l'appel. None en cas de succès.",
     )

@@ -80,6 +80,17 @@
                 "null"
               ],
               "description": "Suggestion en cas d'échec (ex : 'basculer sur telecharger_brut')."
+            },
+            "nb_tentatives": {
+              "type": "integer",
+              "description": "Nombre de tentatives de l'appel HTTP (1 = succès au premier essai)."
+            },
+            "motif": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Motif de l'échec HTTP (T7.1 : 'transitoire' après épuisement des tentatives, 'acces_refuse', 'ressource_supprimee', 'requete_invalide') ; en mode agentique, 'circuit_ouvert' (T7.7) quand le circuit breaker a intercepté l'appel. None en cas de succès."
             }
           },
           "required": [

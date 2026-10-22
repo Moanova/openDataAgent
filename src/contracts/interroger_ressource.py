@@ -15,7 +15,7 @@ Miroir du fichier JSON `contrats/interroger_ressource.json` et de la documentati
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 from src.core.vocabulaires import OperateurFiltre, OrdreTri
 
@@ -100,4 +100,12 @@ class InterrogerRessourceOutput(BaseModel):
         default=None,
         description="Recommandation pour les volumes élevés "
                     "(ex : 'volume_eleve_telechargement_brut_suggere').",
+    )
+    nb_tentatives: int = Field(
+        default=1,
+        description="Nombre de tentatives de l'appel HTTP (1 = succès au premier essai).",
+    )
+    motif: Optional[str] = Field(
+        default=None,
+        description="Motif de l'échec HTTP (T7.1 : 'transitoire' après épuisement des tentatives, 'acces_refuse', 'ressource_supprimee', 'requete_invalide') ; en mode agentique, 'circuit_ouvert' (T7.7) quand le circuit breaker a intercepté l'appel. None en cas de succès.",
     )

@@ -615,3 +615,128 @@ def test_t118_scenario_multi_tours_simule(tmp_path, monkeypatch):
 
     # La conversation a \u00e9t\u00e9 supprim\u00e9e c\u00f4t\u00e9 serveur
     client.beta.conversations.delete.assert_called_once_with(conversation_id="conv-multi")
+
+
+# ---------------------------------------------------------------------------
+# T7.1 — Réessai intelligent (22/10/2026) : TI-19, TI-20
+# ---------------------------------------------------------------------------
+
+@responses.activate
+def test_ti19_telechargement_503_puis_succes(registre, tmp_path, monkeypatch):
+    # TI-19 : flux telecharger_brut — 1er appel 503 puis succès -> fichier complet,
+    # nb_tentatives=2, registre vide (succès = pas de consignation).
+    import time as _time
+    from unittest.mock import patch as _patch
+
+    monkeypatch.chdir(tmp_path)
+
+    responses.add(responses.GET, ping_tabulaire("res-t19"), json={"links": []}, status=200)
+    _mocker_inventaire_v2("jeu-t19", *_split_v2({
+        "id": "jeu-t19",
+        "title": "Jeu T19",
+        "license": "lov2",
+        "organization": {"name": "Org"},
+        "resources": [
+            {"id": "res-t19", "title": "Fichier", "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 9}
+        ],
+    }))
+    inventaire = lister_ressources("jeu-t19", registre=registre)
+    assert inventaire["statut"] == "succes"
+
+    responses.add(responses.GET, URL_FICHIER, body=b"indisponible", status=503)
+    responses.add(responses.GET, URL_FICHIER, body=b"a,b\n1,2\n", status=200)
+    with _patch.object(_time, "sleep"):
+        telechargement = telecharger_brut("res-t19", id_execution="20261022_100000_t19x", registre=registre)
+
+    assert telechargement["statut"] == "succes"
+    assert telechargement["donnees"]["nb_tentatives"] == 2
+    chemin = Path(telechargement["donnees"]["chemin_local"])
+    assert chemin.read_bytes() == b"a,b\n1,2\n"
+    assert registre.rapport_pour_agent()["sources_inaccessibles"] == []
+
+
+@responses.activate
+def test_ti20_telechargement_503_persistant_a_retenter(registre, tmp_path, monkeypatch):
+    # TI-20 : flux telecharger_brut — 503 x 3 -> echec_technique, registre consigné
+    # a_retenter, nb_tentatives=3.
+    import time as _time
+    from unittest.mock import patch as _patch
+
+    monkeypatch.chdir(tmp_path)
+
+    responses.add(responses.GET, ping_tabulaire("res-t20"), json={"links": []}, status=200)
+    _mocker_inventaire_v2("jeu-t20", *_split_v2({
+        "id": "jeu-t20",
+        "title": "Jeu T20",
+        "license": "lov2",
+        "organization": {"name": "Org"},
+        "resources": [
+            {"id": "res-t20", "title": "Fichier", "url": URL_FICHIER, "format": "csv", "mime": "text/csv", "filesize": 9}
+        ],
+    }))
+    inventaire = lister_ressources("jeu-t20", registre=registre)
+    assert inventaire["statut"] == "succes"
+
+    for _ in range(3):
+        responses.add(responses.GET, URL_FICHIER, body=b"indisponible", status=503)
+    with _patch.object(_time, "sleep"):
+        telechargement = telecharger_brut("res-t20", id_execution="20261022_100000_t20x", registre=registre)
+
+    assert telechargement["statut"] == "echec_technique"
+    assert telechargement["donnees"]["nb_tentatives"] == 3
+    assert len(responses.calls) >= 3  # 3 tentatives effectuees
+
+    entrees = registre.rapport_pour_agent()["sources_inaccessibles"]
+    assert len(entrees) == 1
+    assert entrees[0]["statut_reprise"] == "a_retenter"
+    assert entrees[0]["motif"] == "serveur_origine_bloque"
+
+    # Aucune écriture partielle conservée après épuisement des tentatives transitoires
+    # (le .part est conservé pour une reprise ultérieure — comportement T7.1 E3)
+
+
+# ---------------------------------------------------------------------------
+# T7.2 — Nettoyage des anciennes exécutions (22/10/2026) : TI-21
+# ---------------------------------------------------------------------------
+
+def test_ti21_nettoyage_flux_complet(tmp_path, monkeypatch):
+    # TI-21 : scénario de nettoyage sur arborescence réelle — une exécution
+    # ancienne (toutes traces) est supprimée, une récente et l'exécution
+    # courante sont conservées ; registres globaux intacts.
+    from datetime import datetime as _dt, timedelta as _td
+    from src.core.nettoyage import (
+        RACINES_SOUS_DOSSIERS,
+        RACINE_LOGS,
+        nettoyer_anciennes_executions,
+    )
+
+    monkeypatch.chdir(tmp_path)
+    maintenant = _dt(2026, 10, 22, 12, 0, 0)
+    ids = {
+        "vieux": (maintenant - _td(days=60)).strftime("%Y%m%d_%H%M%S") + "_t21a",
+        "recent": (maintenant - _td(days=2)).strftime("%Y%m%d_%H%M%S") + "_t21b",
+        "courant": (maintenant - _td(days=90)).strftime("%Y%m%d_%H%M%S") + "_t21c",
+    }
+    for id_execution in ids.values():
+        for racine in RACINES_SOUS_DOSSIERS:
+            dossier = tmp_path / racine / id_execution
+            dossier.mkdir(parents=True)
+            (dossier / "fichier.csv").write_text("x", encoding="utf-8")
+        log = tmp_path / RACINE_LOGS / f"openDataAgent_{id_execution}.log"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.write_text("log\n", encoding="utf-8")
+    registre = tmp_path / "data" / "registry.json"
+    registre.write_text("{}", encoding="utf-8")
+
+    bilan = nettoyer_anciennes_executions(
+        age_jours=30, id_execution_courante=ids["courant"], maintenant=maintenant
+    )
+
+    assert bilan["statut"] == "succes"
+    assert bilan["donnees"]["supprimes"] == [ids["vieux"]]
+    assert set(bilan["donnees"]["conserves"]) == {ids["recent"], ids["courant"]}
+    assert not (tmp_path / "data" / "raw" / ids["vieux"]).exists()
+    assert not (tmp_path / RACINE_LOGS / f"openDataAgent_{ids['vieux']}.log").exists()
+    assert (tmp_path / "data" / "raw" / ids["recent"]).is_dir()
+    assert (tmp_path / "data" / "raw" / ids["courant"]).is_dir()
+    assert registre.is_file()

@@ -32,12 +32,16 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.agent.agent import PREFIXE_NOM, PROMPT_SYSTEME, empreinte
+from src.agent.circuit import MOTIF_CIRCUIT_OUVERT, CircuitBreaker, hote_depuis_url
 from src.agent.journal import JournalConversation
 from src.agent.outils import _decoder_arguments, executer_outil
+from src.core.resources import inventaire
+from src.utils.http import URL_BASE_DEFAUT as URL_BASE_API_DEFAUT
+from src.utils.http import URL_BASE_TABULAIRE_DEFAUT
 from src.utils.logging import bind_context, get_logger, log_to_file
 
 PLAFOND_DEFAUT = 10
@@ -59,6 +63,8 @@ class ConversationServeur:
                          `conversation.response.started`).
         nb_tours : nombre de tours utilisateur conduits.
         nb_invocations : nombre total d'invocations d'outils.
+        circuit : circuit breaker par hôte (T7.7) — en mémoire, attaché
+                 à la conversation ; détruit avec elle à la clôture.
     """
 
     agent: Any
@@ -68,6 +74,7 @@ class ConversationServeur:
     conversation_id: Optional[str] = None
     nb_tours: int = 0
     nb_invocations: int = 0
+    circuit: CircuitBreaker = field(default_factory=CircuitBreaker)
 
 
 def creer_conversation(
@@ -100,6 +107,56 @@ def creer_conversation(
     )
     log_to_file("conversation_prete", plafond=plafond, id_execution=id_execution)
     return conversation
+
+
+def _hote_cible(nom: str, arguments: Dict[str, Any]) -> Optional[str]:
+    """Hôte réseau visé par un outil (T7.7), résolu sans appel réseau.
+
+    - telecharger_brut : URL de la ressource lue dans l'inventaire
+      (jamais un argument) — serveur d'origine du fichier.
+    - extraire_ressource / interroger_ressource : API tabulaire
+      (hôte fixe `TABULAR_API_URL`), comme rechercher_jeux /
+      lister_ressources qui visent l'API data.gouv.fr.
+    Retourne None si l'hôte ne peut pas être déterminé (le circuit
+    laisse alors passer : fail-safe).
+    """
+    if nom == "telecharger_brut":
+        id_ressource = arguments.get("id_ressource")
+        if isinstance(id_ressource, str):
+            metadonnees = inventaire().get(id_ressource) or {}
+            return hote_depuis_url(metadonnees.get("url") or "")
+        return None
+    if nom in ("rechercher_jeux", "lister_ressources"):
+        return hote_depuis_url(os.environ.get("DATA_GOUV_API_URL", URL_BASE_API_DEFAUT))
+    if nom in ("extraire_ressource", "interroger_ressource"):
+        return hote_depuis_url(os.environ.get("TABULAR_API_URL", URL_BASE_TABULAIRE_DEFAUT))
+    return None
+
+
+def _intercepter_circuit_ouvert(
+    conversation: ConversationServeur,
+    nom: str,
+    arguments: Dict[str, Any],
+    hote: str,
+) -> Dict[str, Any]:
+    """Résultat structuré renvoyé à l'agent quand le circuit est ouvert.
+
+    L'outil n'est PAS exécuté et ne consomme pas le plafond : le résultat
+    est construit ici et journalisé comme une invocation interceptée.
+    """
+    return {
+        "statut": "echec_technique",
+        "message": (
+            f"Circuit ouvert pour l'hôte '{hote}' : trop d'échecs transitoires "
+            f"consécutifs dans cette conversation. Ne relance pas cet hôte ; "
+            f"propose une alternative ou informe l'utilisateur."
+        ),
+        "donnees": {
+            "motif": MOTIF_CIRCUIT_OUVERT,
+            "hote": hote,
+            "suggestion": "proposer_alternative",
+        },
+    }
 
 
 def tour_conversation(
@@ -185,38 +242,79 @@ def tour_conversation(
             nom = tool_call.get("name", "")
             arguments = tool_call.get("arguments", {})
             id_appel = tool_call.get("tool_call_id", "")
-            invocations += 1
-            journal.enregistrer(
-                "outil_invoque",
-                outil=nom,
-                arguments=_decoder_arguments(arguments) or arguments,
-                tour=invocations,
-                numero_tour=numero_tour,
-            )
-            log_to_file(
-                "tour_outil_invoque",
-                outil=nom,
-                numero_tour=numero_tour,
-                tour=invocations,
-                plafond=plafond,
-                id_execution=identifiant,
-            )
-            resultat = executer_outil(nom, arguments, identifiant)
-            journal.enregistrer(
-                "outil_resultat",
-                outil=nom,
-                statut=resultat["statut"],
-                tour=invocations,
-                numero_tour=numero_tour,
-                message=resultat.get("message", ""),
-            )
-            log_to_file(
-                "tour_outil_resultat",
-                outil=nom,
-                statut=resultat["statut"],
-                numero_tour=numero_tour,
-                id_execution=identifiant,
-            )
+            arguments_dict = _decoder_arguments(arguments) or {}
+            # T7.7 : interception du circuit breaker — avant exécution et
+            # sans consommer le plafond d'invocations.
+            hote = _hote_cible(nom, arguments_dict)
+            if hote is not None and not conversation.circuit.autoriser(hote):
+                resultat = _intercepter_circuit_ouvert(conversation, nom, arguments_dict, hote)
+                journal.enregistrer(
+                    "outil_invoque",
+                    outil=nom,
+                    arguments=arguments_dict,
+                    tour=invocations + 1,
+                    numero_tour=numero_tour,
+                    circuit_ouvert=True,
+                    hote=hote,
+                )
+                log_to_file(
+                    "tour_circuit_ouvert",
+                    outil=nom,
+                    numero_tour=numero_tour,
+                    hote=hote,
+                    id_execution=identifiant,
+                )
+                journal.enregistrer(
+                    "outil_resultat",
+                    outil=nom,
+                    statut=resultat["statut"],
+                    tour=invocations + 1,
+                    numero_tour=numero_tour,
+                    message=resultat.get("message", ""),
+                    motif=MOTIF_CIRCUIT_OUVERT,
+                )
+            else:
+                invocations += 1
+                journal.enregistrer(
+                    "outil_invoque",
+                    outil=nom,
+                    arguments=arguments_dict,
+                    tour=invocations,
+                    numero_tour=numero_tour,
+                )
+                log_to_file(
+                    "tour_outil_invoque",
+                    outil=nom,
+                    numero_tour=numero_tour,
+                    tour=invocations,
+                    plafond=plafond,
+                    id_execution=identifiant,
+                )
+                resultat = executer_outil(nom, arguments, identifiant)
+                # T7.7 : alimentation du circuit selon le motif T7.1.
+                if hote is not None:
+                    motif = resultat.get("donnees", {}).get("motif")
+                    if resultat.get("statut") == "succes":
+                        conversation.circuit.enregistrer_succes(hote)
+                    elif motif == "transitoire":
+                        conversation.circuit.enregistrer_echec_transitoire(hote)
+                    elif motif is not None:
+                        conversation.circuit.enregistrer_echec_definitif(hote)
+                journal.enregistrer(
+                    "outil_resultat",
+                    outil=nom,
+                    statut=resultat["statut"],
+                    tour=invocations,
+                    numero_tour=numero_tour,
+                    message=resultat.get("message", ""),
+                )
+                log_to_file(
+                    "tour_outil_resultat",
+                    outil=nom,
+                    statut=resultat["statut"],
+                    numero_tour=numero_tour,
+                    id_execution=identifiant,
+                )
             entrees_resultats.append({
                 "tool_call_id": id_appel,
                 "result": json.dumps(resultat, ensure_ascii=False),

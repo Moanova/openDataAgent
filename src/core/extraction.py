@@ -128,6 +128,9 @@ def extraire_ressource(
     total_lignes = 0
     page = 1
     tronque = False
+    # T7.1 (E4) : somme des tentatives HTTP sur toutes les pages (1 si tout
+    # réussit au premier essai).
+    nb_tentatives_http = 0
     while True:
         logger.debug("Page d'extraction", id_ressource=id_ressource, page=page)
         resultat = interroger_ressource_api(
@@ -153,8 +156,15 @@ def extraire_ressource(
             return {
                 "statut": resultat.statut,
                 "message": f"Échec de l'extraction de '{id_ressource}' en page {page} : {resultat.erreur or resultat.statut}",
-                "donnees": {"suggestion": "réessayer"},
+                "donnees": {
+                    "suggestion": "réessayer",
+                    # T7.1 (E4) : nombre de tentatives de l'appel HTTP.
+                    "nb_tentatives": resultat.nb_tentatives,
+                    # T7.7 (E3) : motif T7.1 exposé pour le circuit breaker agentique.
+                    "motif": resultat.motif,
+                },
             }
+        nb_tentatives_http += resultat.nb_tentatives
         donnees = resultat.donnees
         meta = donnees.get("meta") or {}
         total_lignes = meta.get("total", 0)
@@ -259,5 +269,7 @@ def extraire_ressource(
             "licence": metadonnees.get("licence") or "",
             "licence_conditionnelle": bool(metadonnees.get("licence_conditionnelle", False)),
             "mention_attribution": resultat_mention["donnees"].get("mention"),
+            # T7.1 (E4) : nombre de tentatives des appels HTTP de la pagination.
+            "nb_tentatives": nb_tentatives_http,
         },
     }

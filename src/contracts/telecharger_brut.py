@@ -15,6 +15,8 @@ Miroir du fichier JSON `contrats/telecharger_brut.json` et de la documentation
 
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -53,4 +55,12 @@ class TelechargerBrutOutput(BaseModel):
     suggestion: str | None = Field(
         default=None,
         description="Suggestion en cas d'échec (ex : 'fichier_heberge_exterieurement').",
+    )
+    nb_tentatives: int = Field(
+        default=1,
+        description="Nombre de tentatives du téléchargement (1 = succès au premier essai).",
+    )
+    motif: Optional[str] = Field(
+        default=None,
+        description="Motif de l'échec HTTP (T7.1 : 'transitoire' après épuisement des tentatives, 'acces_refuse', 'ressource_supprimee', 'requete_invalide') ; en mode agentique, 'circuit_ouvert' (T7.7) quand le circuit breaker a intercepté l'appel. None en cas de succès.",
     )

@@ -37,7 +37,44 @@ URL_BASE_TABULAIRE_DEFAUT = "https://tabular-api.data.gouv.fr/api"
 PAGE_SIZE_INVENTAIRE = 50
 PLAFOND_PAGES_INVENTAIRE = 20
 DELAIS_TENTATIVES = (1, 2)
-STATUTS_TRANSITOIRES = {429, 502, 503}
+STATUTS_TRANSITOIRES = {429, 502, 503, 504}
+STATUTS_DEFINITIFS = {400, 401, 403, 410}
+# T7.1 : motifs explicites pour les échecs définitifs (pas de réessai).
+MOTIFS_STATUT = {400: "requete_invalide", 401: "acces_refuse", 403: "acces_refuse", 410: "ressource_supprimee"}
+# T7.1 (E0) : backoff exponentiel — délai de base 1 s, plafond 30 s, jitter ±25 %.
+DELAI_BASE_RETRY = 1.0
+DELAI_PLAFOND_RETRY = 30.0
+JITTER_RETRY = 0.25
+NB_TENTATIVES_DEFAUT = 3
+
+
+def _delai_retry(tentative: int, retry_after: Optional[float] = None) -> float:
+    """Délai avant la prochaine tentative (T7.1, E1).
+
+    Backoff exponentiel `DELAI_BASE_RETRY * 2**(tentative-1)`, plafonné à
+    `DELAI_PLAFOND_RETRY`, avec un jitter aléatoire de ±`JITTER_RETRY` pour
+    éviter le thundering herd. Un en-tête `Retry-After` du serveur est
+    respecté comme borne supérieure.
+    """
+    import random
+
+    delai = min(DELAI_PLAFOND_RETRY, DELAI_BASE_RETRY * (2 ** (tentative - 1)))
+    jitter = delai * JITTER_RETRY * (2 * random.random() - 1)
+    delai = max(0.0, delai + jitter)
+    if retry_after is not None:
+        delai = max(delai, min(retry_after, DELAI_PLAFOND_RETRY))
+    return delai
+
+
+def _retry_after_depuis_reponse(reponse) -> Optional[float]:
+    """Extrait la valeur `Retry-After` (secondes) d'une réponse, si présente."""
+    valeur = reponse.headers.get("Retry-After")
+    if not valeur:
+        return None
+    try:
+        return float(valeur)
+    except ValueError:
+        return None
 
 
 @dataclass
@@ -48,6 +85,10 @@ class ResultatAppel:
     status_code: Optional[int] = None
     donnees: Dict[str, Any] = field(default_factory=dict)
     erreur: Optional[str] = None
+    # T7.1 (E4) : nombre de tentatives effectuées (1 = succès au premier essai).
+    nb_tentatives: int = 1
+    # T7.1 (E2) : motif explicite pour les échecs définitifs (pas de réessai).
+    motif: Optional[str] = None
 
     @property
     def reussi(self) -> bool:
@@ -94,22 +135,60 @@ def appel_api(
                 suggestion="Réessayer apres 30 secondes",
             )
             if tentative < nb_tentatives:
-                time.sleep(DELAIS_TENTATIVES[min(tentative - 1, len(DELAIS_TENTATIVES) - 1)])
+                # T7.1 (E1) : backoff exponentiel + jitter au lieu du delai fixe.
+                time.sleep(_delai_retry(tentative))
                 continue
-            return ResultatAppel(statut="echec_technique", erreur=str(exc))
+            return ResultatAppel(
+                statut="echec_technique",
+                erreur=str(exc),
+                nb_tentatives=tentative,
+                motif="transitoire",
+            )
 
         if reponse.status_code == 404:
-            return ResultatAppel(statut=statut_404, status_code=404)
+            return ResultatAppel(statut=statut_404, status_code=404, nb_tentatives=tentative)
 
-        if reponse.status_code in STATUTS_TRANSITOIRES and tentative < nb_tentatives:
+        if reponse.status_code in STATUTS_TRANSITOIRES:
+            if tentative < nb_tentatives:
+                log_to_file(
+                    "Statut transitoire, nouvelle tentative",
+                    url=url,
+                    status_code=reponse.status_code,
+                    tentative=tentative,
+                )
+                # T7.1 (E1) : backoff exponentiel + jitter, `Retry-After` respecte.
+                time.sleep(_delai_retry(tentative, _retry_after_depuis_reponse(reponse)))
+                continue
+            # T7.1 (E5) : transitoire épuisé -> échec marqué « transitoire »
+            # (le cœur le consignera « à retenter » dans le registre).
             log_to_file(
-                "Statut transitoire, nouvelle tentative",
+                "Statut transitoire persistant, tentatives epuisees",
                 url=url,
                 status_code=reponse.status_code,
                 tentative=tentative,
             )
-            time.sleep(DELAIS_TENTATIVES[min(tentative - 1, len(DELAIS_TENTATIVES) - 1)])
-            continue
+            return ResultatAppel(
+                statut="echec_technique",
+                status_code=reponse.status_code,
+                nb_tentatives=tentative,
+                motif="transitoire",
+            )
+
+        if reponse.status_code in STATUTS_DEFINITIFS:
+            # T7.1 (E2) : echec definitif — jamais de reassai, motif explicite.
+            motif = MOTIFS_STATUT.get(reponse.status_code, "definitif")
+            log_to_file(
+                "Echec definitif de l'appel HTTP (pas de reassai)",
+                url=url,
+                status_code=reponse.status_code,
+                motif=motif,
+            )
+            return ResultatAppel(
+                statut="echec_technique",
+                status_code=reponse.status_code,
+                nb_tentatives=tentative,
+                motif=motif,
+            )
 
         if reponse.status_code >= 400:
             # Message d'erreur actionnable quand l'API en fournit un
@@ -132,7 +211,12 @@ def appel_api(
                 erreur=detail_erreur,
                 suggestion="Réessayer apres 30 secondes",
             )
-            return ResultatAppel(statut="echec_technique", status_code=reponse.status_code, erreur=detail_erreur)
+            return ResultatAppel(
+                statut="echec_technique",
+                status_code=reponse.status_code,
+                erreur=detail_erreur,
+                nb_tentatives=tentative,
+            )
 
         try:
             donnees = reponse.json()
@@ -141,10 +225,21 @@ def appel_api(
                 statut="echec_technique",
                 status_code=reponse.status_code,
                 erreur=f"Réponse non parsable en JSON : {exc}",
+                nb_tentatives=tentative,
             )
-        return ResultatAppel(statut="succes", status_code=reponse.status_code, donnees=donnees)
+        return ResultatAppel(
+            statut="succes",
+            status_code=reponse.status_code,
+            donnees=donnees,
+            nb_tentatives=tentative,
+        )
 
-    return ResultatAppel(statut="echec_technique", erreur="Tentatives epuisees")
+    return ResultatAppel(
+        statut="echec_technique",
+        erreur="Tentatives epuisees",
+        nb_tentatives=nb_tentatives,
+        motif="transitoire",
+    )
 
 
 def _numero_page_depuis_url(url_next: Optional[str]) -> Optional[int]:
@@ -347,19 +442,27 @@ def telecharger_fichier(
     timeout: float = 30.0,
     nb_tentatives: int = 3,
 ) -> ResultatAppel:
-    """Télécharge un fichier binaire en flux vers `destination`.
+    """Telecharge un fichier binaire en flux vers `destination`.
 
-    Écriture atomique : le flux est écrit dans un fichier temporaire
-    `<destination>.part` et renomme seulement après réussite complète ;
-    aucun fichier partiel ne reste sur disque en cas d'échec (TI-07).
-    Ne lève jamais d'exception : les échecs sont convertis en
+    Ecriture atomique : le flux est ecrit dans un fichier temporaire
+    `<destination>.part` et renomme seulement apres reussite complete.
+    T7.1 (E3) : un `.part` existant est **repris** (en-tete `Range`,
+    reponse 206) ou ecrase (reponse 200) ; une coupure en cours de flux
+    (`ChunkedEncodingError`) est un echec transitoire — le `.part` est
+    conserve pour la reprise. En cas d'echec definitif (4xx), le `.part`
+    est supprime : aucun fichier partiel ne reste sur disque (TI-07).
+    Ne leve jamais d'exception : les echecs sont convertis en
     ResultatAppel de statut `echec_technique`.
     """
     temporaire = destination.with_name(destination.name + ".part")
 
     for tentative in range(1, nb_tentatives + 1):
+        # T7.1 (E3) : reprise a l'octet si un .part existe d'une tentative
+        # ou d'une execution precedente interrompue.
+        octets_deja = temporaire.stat().st_size if temporaire.exists() else 0
+        en_tetes = {"Range": f"bytes={octets_deja}-"} if octets_deja else {}
         try:
-            reponse = _SESSION.get(url, stream=True, timeout=timeout)
+            reponse = _SESSION.get(url, stream=True, timeout=timeout, headers=en_tetes)
         except requests.exceptions.RequestException as exc:
             log_to_file(
                 "Echec du telechargement",
@@ -368,43 +471,118 @@ def telecharger_fichier(
                 erreur=str(exc),
             )
             if tentative < nb_tentatives:
-                time.sleep(DELAIS_TENTATIVES[min(tentative - 1, len(DELAIS_TENTATIVES) - 1)])
+                # T7.1 (E1) : backoff exponentiel + jitter au lieu du delai fixe.
+                time.sleep(_delai_retry(tentative))
                 continue
-            return ResultatAppel(statut="echec_technique", erreur=str(exc))
+            return ResultatAppel(
+                statut="echec_technique",
+                erreur=str(exc),
+                nb_tentatives=tentative,
+                motif="transitoire",
+            )
 
         if reponse.status_code == 404:
             reponse.close()
-            return ResultatAppel(statut="jeu_introuvable", status_code=404)
+            temporaire.unlink(missing_ok=True)
+            return ResultatAppel(statut="jeu_introuvable", status_code=404, nb_tentatives=tentative)
 
-        if reponse.status_code in STATUTS_TRANSITOIRES and tentative < nb_tentatives:
+        if reponse.status_code in STATUTS_TRANSITOIRES:
+            if tentative < nb_tentatives:
+                reponse.close()
+                log_to_file(
+                    "Statut transitoire, nouvelle tentative",
+                    url=url,
+                    status_code=reponse.status_code,
+                    tentative=tentative,
+                )
+                # T7.1 (E1) : backoff exponentiel + jitter, `Retry-After` respecte.
+                time.sleep(_delai_retry(tentative, _retry_after_depuis_reponse(reponse)))
+                continue
+            # T7.1 (E5) : transitoire épuisé -> échec marqué « transitoire »
+            # (le registre le consignera « à retenter »).
             reponse.close()
             log_to_file(
-                "Statut transitoire, nouvelle tentative",
+                "Statut transitoire persistant, tentatives epuisees",
                 url=url,
                 status_code=reponse.status_code,
                 tentative=tentative,
             )
-            time.sleep(DELAIS_TENTATIVES[min(tentative - 1, len(DELAIS_TENTATIVES) - 1)])
-            continue
+            return ResultatAppel(
+                statut="echec_technique",
+                status_code=reponse.status_code,
+                nb_tentatives=tentative,
+                motif="transitoire",
+            )
+
+        if reponse.status_code in STATUTS_DEFINITIFS:
+            # T7.1 (E2/E3) : echec definitif — jamais de reassai, le `.part`
+            # eventuel est supprime (aucune ecriture partielle conservee).
+            reponse.close()
+            temporaire.unlink(missing_ok=True)
+            motif = MOTIFS_STATUT.get(reponse.status_code, "definitif")
+            log_to_file(
+                "Refus definitif du serveur d'origine (pas de reassai)",
+                url=url,
+                status_code=reponse.status_code,
+                motif=motif,
+            )
+            return ResultatAppel(
+                statut="echec_technique",
+                status_code=reponse.status_code,
+                nb_tentatives=tentative,
+                motif=motif,
+            )
 
         if reponse.status_code >= 400:
             reponse.close()
+            temporaire.unlink(missing_ok=True)
             log_to_file(
                 "Refus du serveur d'origine",
                 url=url,
                 status_code=reponse.status_code,
             )
-            return ResultatAppel(statut="echec_technique", status_code=reponse.status_code)
+            return ResultatAppel(
+                statut="echec_technique",
+                status_code=reponse.status_code,
+                nb_tentatives=tentative,
+            )
 
+        # T7.1 (E3) : 206 = reprise acceptee (poursuite en ajout), 200 = le
+        # serveur ignore Range (reprise depuis zero, ecrasement du .part).
+        mode_ouverture = "ab" if reponse.status_code == 206 and octets_deja else "wb"
         try:
             destination.parent.mkdir(parents=True, exist_ok=True)
-            with open(temporaire, "wb") as flux:
+            with open(temporaire, mode_ouverture) as flux:
                 for morceau in reponse.iter_content(chunk_size=8192):
                     flux.write(morceau)
+        except requests.exceptions.RequestException as exc:
+            # T7.1 (E3) : coupure mid-stream -> echec transitoire, le `.part`
+            # est conserve pour la reprise a l'octet a la tentative suivante.
+            log_to_file(
+                "Coupure en cours de telechargement",
+                url=url,
+                tentative=tentative,
+                erreur=str(exc),
+            )
+            if tentative < nb_tentatives:
+                time.sleep(_delai_retry(tentative))
+                continue
+            return ResultatAppel(
+                statut="echec_technique",
+                erreur=str(exc),
+                nb_tentatives=tentative,
+                motif="transitoire",
+            )
         finally:
             reponse.close()
 
-        temporaire.rename(destination)
-        return ResultatAppel(statut="succes", status_code=200, donnees={})
+        os.replace(temporaire, destination)
+        return ResultatAppel(statut="succes", status_code=200, donnees={}, nb_tentatives=tentative)
 
-    return ResultatAppel(statut="echec_technique", erreur="Tentatives epuisees")
+    return ResultatAppel(
+        statut="echec_technique",
+        erreur="Tentatives epuisees",
+        nb_tentatives=nb_tentatives,
+        motif="transitoire",
+    )
+

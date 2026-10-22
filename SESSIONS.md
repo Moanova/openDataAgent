@@ -5,6 +5,117 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 22/10/2026 (9) — Ajout T11.4 (outil `consulter_registre`) et T10.9 (configuration dossiers + packaging), commit + push dev**
+
+### **Contexte**
+- Le concepteur demande (1) une nouvelle tâche pour brancher `rapport_pour_agent()` dans la boucle agentique, (2) une seconde tâche de préfiguration (configuration des dossiers + packaging), puis (3) le commit et le push de tous les travaux en cours vers `dev` pour validation réelle.
+
+### **Analyse préalable (branchement du registre)**
+- Trois options évaluées : A (injection au démarrage du contexte), B (nouvel outil `consulter_registre` invoqué par l'agent), C (injection à la synthèse finale). **Option B retenue** par le concepteur : frontière code/agent respectée, contrat explicite, rapport limitable/filtrable.
+- Apports actés : mémoire cross-session (ne pas retenter une source déjà refusée définitivement), exploitation de `statut_reprise` `a_retenter`/`definitif` (T7.1), synthèse A4 exhaustive (le contrat global prévoit déjà cette lecture « en fin de flux »).
+
+### **Actions réalisées**
+1. **Kanban** : **T11.4** ajoutée en 📌 À faire, section 11 (outil `consulter_registre`, option B, chantier détaillé) ; **T10.9** ajoutée en 📌 À faire, section 10 (préfiguration, périmètre à définir : centralisation des racines `logs/`/`conversations/`/`data/`, chemins configurables, packaging — cf. T10.6).
+2. **Commit + push** de l'ensemble des travaux en cours vers `dev` (T7.1, T7.2, T7.7, kanban, SESSIONS, docs, tests) — le concepteur va effectuer des tests de validation réelle.
+
+### **État en fin de séance**
+- **445 tests verts.**
+- Travaux non commités avant ce push : T7.1 (E0..E7), T7.2 (E0..E7), T7.7 (E0..E7), kanban (T10.8 ✅, Prompt A1/A2 ✅, T13.1 🚫, T13.2/T7.6/T11.2/T11.4/T10.9 📌, T7.1/T7.2/T7.7/T10.1 🚧), SESSIONS.md (séances 22/10 (1) à (9)).
+- **En attente de validation réelle par le concepteur** : T7.1 (503 transitoire, coupure mid-stream, 403 définitif), T7.2 (`nettoyer --simulation` puis réel), T7.7 (conversation avec hôte en panne → interception `circuit_ouvert`).
+
+### **Blocages**
+- Aucun.
+
+---
+
+## **Séance du 22/10/2026 (8) — T7.7 : plan + implémentation du circuit breaker agentique (E0..E7)**
+
+### **Contexte**
+- Le concepteur demande le principe et le plan de **T7.7** (circuit breaker agentique, issu de l'analyse T7.1), puis son implémentation. Décisions actées : seuil **3 échecs transitoires consécutifs** ; refroidissement **300 secondes (5 min)** — validé explicitement (pas 300 ms) ; périmètre **maximaliste** (tous les hôtes : serveurs d'origine + API data.gouv.fr + API tabulaire) ; **option A** — état en mémoire, attaché à la conversation (détruit à la clôture, aucun timer entre deux exécutions ; l'option B, persistance par hôte, écartée). Question du concepteur sur `rapport_pour_agent()` : constat — la méthode est testée et documentée mais **non branchée** dans la boucle agentique (aucun appel en production hors tests) ; les échecs remontent à l'agent via les résultats d'outils et le prompt A4 lui demande de les mémoriser. À voir juste après T7.7 (tâche à part).
+
+### **Actions réalisées (E0..E7)**
+1. **E0 — `src/agent/circuit.py` (nouveau)** : `hote_depuis_url`, `CircuitBreaker` — machine à états par hôte (fermé/ouvert/semi-ouvert), horloge injectable, `autoriser` (semi-ouvert = 1 tentative), `enregistrer_succes` (referme, remet à zéro), `enregistrer_echec_transitoire` (ouvre au seuil), `enregistrer_echec_definitif` (ignoré), `MOTIF_CIRCUIT_OUVERT`. Paramétrage env : `CIRCUIT_BREAKER_SEUIL` (3), `CIRCUIT_BREAKER_REFROIDISSEMENT` (300), `CIRCUIT_BREAKER_DESACTIVE=1`.
+2. **E1 — `src/agent/boucle.py`** : `ConversationServeur.circuit` (champ dataclass) ; `_hote_cible` (résolution sans réseau : `telecharger_brut` via URL ressource/inventaire, `extraire_ressource`/`interroger_ressource` via `TABULAR_API_URL`, `rechercher_jeux`/`lister_ressources` via `DATA_GOUV_API_URL`) ; interception **avant exécution et sans consommer le plafond** (`_intercepter_circuit_ouvert` → `echec_technique` + `motif=circuit_ouvert` + `hote` + `suggestion=proposer_alternative`, journalisé `circuit_ouvert`) ; alimentation post-exécution selon `motif` T7.1 ; fail-safe si hôte indéterminé.
+3. **E2 — prompt A4** (`config/prompt_systeme.txt`) : consigne `circuit_ouvert` — ne pas relancer l'hôte, proposer une alternative ; un refus définitif n'ouvre pas le circuit.
+4. **E3 — contrats** : champ additif `motif` dans `donnees` des 4 contrats (miroirs Pydantic + schémas JSON + `manifeste.json`) : **rechercher_jeux 1.4.0→1.5.0**, telecharger_brut/extraire_ressource/interroger_ressource **1.2.0→1.3.0** ; propagation du `motif` T7.1 dans les retours d'échec des 4 cœurs (`search.py`, `download.py`, `extraction.py`, `query.py`) — sans ce champ, la boucle n'aurait rien à alimenter.
+5. **E4 — TU-101..TU-108** (`tests/unit/test_circuit.py`, 12 tests) : transitions, seuil, remise à zéro, définitif ignoré, refroidissement/semi-ouvert, indépendance des hôtes, désactivation, env.
+6. **E5 — TI-23/TI-24 (+b/c)** (`tests/unit/test_boucle.py`, 4 tests) : 3 échecs transitoires → 4e appel intercepté (outil non exécuté, `nb_invocations=3`, agent reçoit `circuit_ouvert`+`hote`+`proposer_alternative`) ; hôtes indépendants + succès rouvre ; échec définitif n'ouvre pas ; ressource inconnue = fail-safe. **Correctif test** : le helper d'inventaire remplaçait le dict global au lieu de l'enrichir (2e ressource écrasée) — corrigé en copiant.
+7. **E6 — documentation** : `contrat_global.md` (convention 7 + ligne `circuit_ouvert` dans le tableau des statuts), 4 contrats d'architecture (champ `motif` + versions), `README.md` (section ⚡).
+8. **Kanban** : T7.7 déplacée de 📌 À faire (section 8) vers 🚧 En cours.
+9. **E7 — plan de tests et suivis** : section « Tests T7.7 » dans `tests/plan_tests.md` (TU-101..108, TI-23/24, tous Bloquant) ; `docs/tasks/T7.7_circuit_breaker_agentique.md` (E0..E7 cochés, seule la validation réelle en attente) ; test de version contrat mis à jour (1.5.0).
+
+### **État en fin de séance**
+- **445 tests verts** (`python -m pytest tests/unit -q`, 25 s) — 429 avant + 16 nouveaux (TU-101..108 = 12, TI-23/24 = 4).
+- T7.7 en 🚧 En cours : **E0..E7 tous faits**, reste la **validation en réel par le concepteur** (scénario : conversation simulant un hôte en panne → 3 échecs → 4e appel intercepté, l'agent reçoit `circuit_ouvert` et propose une alternative) avant passage en ✅ Terminé.
+- **Non commité** (processus simplifié : push direct sur `dev` sur demande explicite).
+- Tâches en attente de validation réelle : **T7.1**, **T7.2**, **T7.7** (3 scénarios chacun, consignés dans les suivis).
+
+### **Blocages**
+- Aucun.
+
+---
+
+## **Séance du 22/10/2026 (7) — T7.2 : plan + implémentation du nettoyage des anciennes exécutions (E0..E7)**
+
+### **Contexte**
+- Le concepteur demande le plan puis l'implémentation de **T7.2** (nettoyage automatique des anciennes exécutions). Décisions actées : âge défaut 30 jours paramétrable ; exécution courante toujours protégée ; commande CLI `nettoyer` dédiée (pas un outil agent, aucun contrat modifié) ; hook automatique **désactivé par défaut** (`NETTOYAGE_AUTO=1`) ; périmètre étendu aux **4 familles de traces** (`data/raw/<id>/`, `data/executions/<id>/`, `conversations/<id>/`, `logs/openDataAgent_<id>.log` — logs en fichiers plats, traités par pattern de nommage).
+
+### **Actions réalisées (E0..E7)**
+1. **E0/E1 — `src/core/nettoyage.py` (nouveau)** : `_date_depuis_id_execution` (parse préfixe `AAAAMMJJ_HHMMSS`, hash optionnel ; `None` si non reconnu → fail-safe, la trace est conservée), `executions_a_supprimer` (sélection par âge, protection de l'exécution courante, racines inexistantes ignorées), `nettoyer_anciennes_executions` (bilan normalisé `{statut, message, donnees}` : `supprimes`, `conserves`, `octets_liberes`, `erreurs`, `simulation`, `age_jours` ; suppression `shutil.rmtree`/`unlink` ; échec consigné dans `erreurs`, **jamais bloquant** ; traces en `log_to_file` pour garder la sortie `--json` propre).
+2. **E2 — commande CLI `nettoyer` (`src/main.py`)** : `--age-jours` (défaut 30, min 1), `--simulation`, `--json`, `--id-execution` (protection explicite), codes de sortie cohérents avec les autres commandes.
+3. **E3 — hook automatique** : au callback Typer (signature `ctx: typer.Context`), actif uniquement si `NETTOYAGE_AUTO=1`, exclu pour `nettoyer` et quand aucune sous-commande n'est invoquée (`--help`) ; `--id-execution` lu dans `sys.argv` (`_id_execution_demande`) car le callback précède le parsing des options ; bilan avec suppressions signalé en warning.
+4. **E4 — TU-94..TU-100** (`tests/unit/test_nettoyage.py`, 10 tests) : ancienne supprimée sur les 4 racines, récente conservée, courante protégée même ancienne, simulation sans suppression, registres globaux + noms non reconnus conservés, id à date invalide conservé, bilan compteurs/octets exact, `age_jours<1` → `erreur_parametres`, racines inexistantes ignorées.
+5. **E5 — TI-21/TI-22** (`test_integration.py`, `test_cli.py`) : flux complet cœur (vieille supprimée, récente + courante conservées, registres intacts) ; CLI `nettoyer` (simulation → réel → `--json`) + hook auto désactivé par défaut et protection `--id-execution` sous `NETTOYAGE_AUTO=1`.
+6. **E6 — documentation** : `docs/specs/stockage.md` (§5 persistance, §6 « améliorations futures » vidée, nouveau §8 dédié), `docs/README.md` (tableau des commandes + section « 🧹 Nettoyage des anciennes exécutions »).
+7. **Kanban** : T7.2 déplacée de 📌 À faire (section 8) vers 🚧 En cours, avec résumé d'implémentation et « reste : validation en réel par le concepteur ».
+8. **E7 — plan de tests et suivis** : section « Tests T7.2 » dans `tests/plan_tests.md` (TU-94..100, TI-21/22, tous Bloquant) ; `docs/tasks/T7.2_nettoyage_executions.md` (E0..E7 cochés, seule la validation réelle en attente).
+
+### **Incident en cours d'implémentation (corrigé)**
+- Les logs console structlog du module `nettoyage` (`logger.info`/`warning`) polluaient la sortie `--json` de la CLI (JSONDecodeError au parsing). Corrigé : les traces du nettoyage passent désormais par `log_to_file` (fichier de logs uniquement) ; la commande `nettoyer` appelle `configure_logging` pour que ces traces soient effectivement écrites.
+
+### **État en fin de séance**
+- **429 tests verts** (`python -m pytest tests/unit -q`, 26 s) — 416 avant + 13 nouveaux (TU-94..100 = 10, TI-21, TI-22a/b = 2 + 1 garde-fou).
+- T7.2 en 🚧 En cours : **E0..E7 tous faits**, reste la **validation en réel par le concepteur** (scénario : fausse vieille exécution dans les 4 racines → `nettoyer --simulation` puis réel → bilan + protection `--id-execution`) avant passage en ✅ Terminé.
+- **Non commité** (processus simplifié : push direct sur `dev` sur demande explicite).
+
+### **Blocages**
+- Aucun.
+
+---
+
+## **Séance du 22/10/2026 (6) — T7.1 : implémentation du réessai intelligent (E0..E7)**
+
+### **Contexte**
+- Le concepteur demande l'implémentation du plan T7.1 (établi en séance (5)) : réessai intelligent des appels réseau, périmètre **client HTTP uniquement** (`src/utils/http.py`) + propagation additive dans les contrats et le registre. Le circuit breaker agentique reste en **T7.7** (hors périmètre).
+
+### **Actions réalisées (E0..E7)**
+1. **E0/E1/E2 — `src/utils/http.py`** :
+   - Nouvelles constantes : `STATUTS_TRANSITOIRES = {429, 502, 503, 504}` (504 ajouté), `STATUTS_DEFINITIFS = {400, 401, 403, 410}`, `MOTIFS_STATUT` (400 `requete_invalide`, 401/403 `acces_refuse`, 410 `ressource_supprimee`), `DELAI_BASE_RETRY=1.0`, `DELAI_PLAFOND_RETRY=30.0`, `JITTER_RETRY=0.25`, `NB_TENTATIVES_DEFAUT=3`.
+   - `_delai_retry(tentative, retry_after)` : backoff exponentiel `min(30, 1×2^(t-1))` + jitter ±25 % ; `Retry-After` respecté comme plancher (plafonné à 30 s). `_retry_after_depuis_reponse` parse l'en-tête.
+   - `ResultatAppel` : champs additifs `nb_tentatives: int = 1` et `motif: Optional[str] = None`.
+   - `appel_api` : épuisement réseau ou transitoire → `motif="transitoire"` ; 4xx définitifs → retour immédiat avec motif explicite, **aucun retry** ; 404 inchangé (`statut_404` paramétrable) ; autres ≥400 → `echec_technique` + `nb_tentatives` ; succès et erreur JSON portent `nb_tentatives`.
+2. **E3 — `telecharger_fichier`** : reprise à l'octet via `Range: bytes=<taille_part>-` quand un `.part` existe ; 206 → mode append `"ab"`, 200 → écrasement `"wb"` ; coupure mid-stream (`RequestException` dans `iter_content`, ex. `ChunkedEncodingError`) → transitoire, `.part` conservé, retry (**bug latent corrigé**) ; 404/4xx définitifs/autres ≥400 → `.part` supprimé (`unlink(missing_ok=True)`) ; renommage final par `os.replace` (sûr Windows, leçon T11.1 E8b).
+3. **E4 — propagation `nb_tentatives`** : `src/core/search.py`, `src/core/query.py`, `src/core/download.py`, `src/core/extraction.py` (cumul `nb_tentatives_http` sur les pages de pagination, en succès et en échec). Miroirs Pydantic (`telecharger_brut.py`, `extraire_ressource.py`, `interroger_ressource.py`, `rechercher_jeux.py`) : champ additif `nb_tentatives: int = Field(default=1, ...)`. Contrats JSON miroirs + `manifeste.json` : **rechercher_jeux 1.3.0→1.4.0**, telecharger_brut/extraire_ressource/interroger_ressource **1.1.0→1.2.0** (entrées changelog T7.1).
+4. **E5 — registre (`src/utils/registry.py` + `src/core/download.py`)** : constantes `REPRISE_A_RETENTER="a_retenter"`, `REPRISE_DEFINITIF="definitif"` ; `_consigner` accepte `statut_reprise` (champ additif) ; `consigner_echec_technique(..., statut_reprise=...)` ; `rapport_pour_agent()` applique `setdefault("statut_reprise", "definitif")` sur la copie (rétrocompatible, disque jamais réécrit implicitement). `download.py` : `a_retenter` si `motif == "transitoire"`, sinon `definitif`.
+5. **E6 — tests** : TU-81..TU-90 (`test_http.py` : Retry-After respecté, bornes backoff+jitter, 403/410/400 sans retry, reprise Range 206, coupure mid-stream avec `.part` conservé, 200 écrase, 403 supprime `.part`, `nb_tentatives` succès 1ʳᵉ/3ᵉ tentative) ; TU-91..93 (`test_registry.py` : `a_retenter`, `definitif`, rétrocompatibilité + disque inchangé) ; TI-19/TI-20 (`test_integration.py` : 503 puis succès → `nb_tentatives=2`, registre vide ; 503×3 → `echec_technique`, `nb_tentatives=3`, registre `a_retenter`). `test_contracts.py` : test de dépréciation renommé en `1_4_0`. Section « Tests T7.1 » dans `tests/plan_tests.md`.
+6. **E7 — documentation** : `docs/architecture/contrat_global.md` (nouvelle convention 6 « Réessai » + paragraphe `statut_reprise` dans la section Registre), `docs/specs/registre.md` (champ documenté, additif/rétrocompatible), `docs/architecture/telecharger_brut.md` / `extraire_ressource.md` (1.2.0) / `rechercher_jeux.md` (1.4.0) / `interroger_ressource.md` (1.2.0), `docs/README.md` (nouvelle section « 🔁 Réessai des appels réseau (T7.1) »).
+7. **Kanban** : T7.1 déplacée de 📌 À faire (section 8) vers 🚧 En cours, avec résumé d'implémentation, lien vers le plan, mention « reste : validation en réel par le concepteur », et T7.7 hors périmètre.
+8. **Suivi `docs/tasks/T7.1_reessai_intelligent.md`** : E0..E7 cochés ; seule case restante : « Validation en réel par le concepteur ».
+
+### **Incident en cours d'implémentation (corrigé)**
+- Bug introduit puis corrigé : un 503 persistant sur la **dernière** tentative tombait dans le `if status_code >= 400` sans `motif` (retour `echec_technique` muet). Restructuration : `if statut in STATUTS_TRANSITOIRES:` → retry si `tentative < nb_tentatives`, sinon retour immédiat `motif="transitoire"` ; idem dans `appel_api`. Couvert par TU-81/TI-20.
+
+### **État en fin de séance**
+- **416 tests verts** (`python -m pytest tests/unit -q`, 26 s) — 401 en baseline + 15 nouveaux (TU-81..93, TI-19/20).
+- T7.1 en 🚧 En cours : **E0..E7 tous faits**, reste la **validation en réel par le concepteur** (scénarios : 503 transitoire, coupure mid-stream, 403 définitif) avant passage en ✅ Terminé.
+- **Non commité** (processus simplifié : push direct sur `dev` sur demande explicite du concepteur).
+- Résiduel mineur : `DELAIS_TENTATIVES` conservé mais inutilisé ; `NB_TENTATIVES_DEFAUT` défini mais les signatures gardent la valeur littérale `3` (cosmétique, tests verts).
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 22/10/2026 — Clôture T10.8 (validation réelle complète), revue du kanban**
 
 ### **Contexte**
@@ -42,6 +153,90 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
    - **T13.1** : aide `--help` sur chaque commande — Typer fournit `--help` nativement ; tâche formulée comme vérification + enrichissement des textes d'aide des 7 commandes (`search`, `list`, `download`, `extract`, `query`, `acquisitions`, `chat`).
    - **T13.2** : option silencieuse (ex. `--quiet`) au callback Typer, transmise à `configure_logging` (`src/utils/logging.py`) pour conditionner le handler console ; les logs fichier restent écrits.
 2. SESSIONS.md : entrée de séance.
+
+### **Blocages**
+- Aucun.
+
+---
+
+## **Séance du 22/10/2026 (5) — Réflexion nommage fichiers Windows + analyse T7.1, création T7.7 et plan T7.1**
+
+### **Contexte**
+- Deux points de conception abordés : (1) nommage des fichiers téléchargés (problème de chemin trop long sous Windows 11 à la décompression d'un ZIP) ; (2) périmètre de T7.1 (réessai intelligent).
+
+### **Réflexion 1 — Nommage des fichiers : faut-il retirer le préfixe `id_ressource` ?**
+
+Constat du concepteur : après téléchargement d'un ZIP dans `data/raw/<id_execution>/`, la décompression a échoué sous Windows 11 car le chemin complet était trop long. Les fichiers sont nommés `<id_ressource>_<nom>.<ext>` ; les deux informations figurent dans le manifeste T10.8, donc le rapprochement reste possible sans le préfixe.
+
+**Analyse** (code vérifié : `src/utils/storage.py:48` `chemin_destination`, `:64` `resoudre_collision` ; manifeste `download.py:148` / `extraction.py:230`) :
+- Le préfixe `id_ressource` est un UUID complet : **36 caractères + tiret = 37 caractères** par chemin. Sur un chemin projet Windows typique (~44 cars) + `id_execution` (22) + nom nettoyé long (ex. 91 cars), on atteint ~195 cars — proche de la limite MAX_PATH 260 ; avec un nom d'origine encore plus long ou un profil utilisateur profond, ça dépasse. **Retirer le préfixe gagne 37 caractères** et réduit le risque.
+- **Conséquences à anticiper** (listées au concepteur) :
+  1. Collisions plus fréquentes (deux ressources vers des fichiers de même nom) → gérées par `resoudre_collision` (suffixe `_1`, `_2`) et l'anti-doublon du manifeste, mais dossier moins lisible sans le manifeste.
+  2. Le fallback « URL sans nom exploitable » (`storage.py:59-60`, nom = `id_ressource` seul) perd son sens — à conserver explicitement.
+  3. Perte de traçabilité visuelle (justification historique du préfixe, `decisions_conception.md` §4) — compensée par le manifeste T10.8, à acter comme changement de philosophie.
+  4. **Cas (b) non résolu par le seul retrait du préfixe** : si ce sont les chemins **internes au ZIP** qui sont trop longs (le ZIP Cour des comptes contient des CSV à noms très longs), le préfixe s'ajoute au chemin d'extraction mais le retirer ne suffit pas. La vraie protection serait une **troncature du nom de fichier à l'acquisition** (plafond configurable, ex. 120 cars) et/ou l'activation des longs chemins Windows (`LongPathsEnabled` / préfixe `\\?\`).
+  5. Impact contrat : nul (`chemin_local` reste un chemin relatif).
+  6. Fichiers à mettre à jour si changement : `src/utils/storage.py`, tests `test_download.py` (4 tests vérifient le format préfixé), `docs/specs/stockage.md` §2/§3.2/§3.3/§4, `docs/design/decisions_conception.md` §4.
+- **Décision** : réflexion consignée, **pas de tâche créée pour l'instant** (le concepteur souhaitait en rester à la réflexion). Piste retenue si suite : retirer le préfixe + troncature du nom à l'acquisition pour traiter le cas (b).
+
+### **Réflexion 2 — T7.1 réessai intelligent : analyse et périmètre**
+
+**État actuel** (`src/utils/http.py`) : reprise basique synchrone — 3 tentatives, délais fixes `(1, 2)` s (`DELAIS_TENTATIVES`, `http.py:39`), sur 429/502/503 + erreurs réseau (`appel_api` `http.py:96/104`, `telecharger_fichier` `http.py:360`). **Aucun retry** sur les autres statuts ≥ 400 (`http.py:118`).
+
+**Trous constatés** :
+1. Délai fixe — `Retry-After` non respecté, pas de backoff exponentiel ni jitter (thundering herd).
+2. **Coupure mid-stream non rattrapée** : `ChunkedEncodingError` dans `iter_content` n'est pas convertie en `ResultatAppel` — `.part` orphelin, pas de retour structuré propre. **Bug latent.**
+3. Pas de reprise à l'octet (`.part` écrasé, pas de header `Range`) — coûteux sur gros fichiers (ZIP 34,7 Mo).
+4. 4xx définitifs (400, 403, 410) traités comme des `echec_technique` sans distinction — retry inutile, registre les consigne `serveur_origine_bloque` sans nuance.
+5. Registre : tout échec est définitif — un 503 de 2 minutes fige la source pour la session (`download.py:88`, `registry.py:90`).
+
+**Décision de périmètre (actée)** : T7.1 = **client HTTP uniquement**. Le **circuit breaker agentique** (cesser de solliciter un serveur d'origine après N échecs consécutifs, préserver le plafond d'invocations) est une logique de boucle/prompt A4 → **nouvelle tâche T7.7**, à implémenter après T7.1. Le réessai inter-tours piloté par l'utilisateur (prompt A4) reste hors T7.1.
+
+### **Actions réalisées**
+1. **Kanban** : T7.1 précisée (périmètre client HTTP, référence au plan) ; **T7.7 créée** (circuit breaker agentique, section 8).
+2. **Plan T7.1** : `docs/tasks/T7.1_reessai_intelligent.md` (E0..E7, décisions actées, fichiers impactés).
+3. **Plan de tests** : section « Tests T7.1 » ajoutée à `tests/plan_tests.md` (TU-81..TU-93, TI-19/TI-20).
+4. SESSIONS.md : cette entrée.
+
+### **Plan T7.1 (résumé)**
+- **E0** fondations : constantes + helper `_delai_retry` (backoff exponentiel + jitter + `Retry-After`).
+- **E1** backoff/jitter/`Retry-After` dans `appel_api` + `telecharger_fichier` (TU-81, TU-82).
+- **E2** distinction transitoires/définitifs : 400/401/403/410 → retour immédiat `motif=definitif`, pas de retry (TU-83..85).
+- **E3** reprise `Range` sur `.part` + rattrapage coupure mid-stream ; `.part` supprimé en cas d'échec définitif (TU-86..89).
+- **E4** `nb_tentatives` additif dans les contrats : `rechercher_jeux` 1.3.0→1.4.0, `telecharger_brut`/`extraire_ressource`/`interroger_ressource` 1.1.0→1.2.0 (TU-90, TC).
+- **E5** registre : champ additif `statut_reprise` (`a_retenter` | `definitif`), rétrocompatible (TU-91..93).
+- **E6** intégration : TI-19 (503 puis succès), TI-20 (503 × 3 → `a_retenter`).
+- **E7** documentation (contrat_global, registre.md, 4 contrats d'architecture, README, plan_tests, SESSIONS).
+
+### **État en fin de séance**
+- Kanban : T7.1 (plan établi), **T7.7 créée** (circuit breaker, après T7.1), T7.6 (P2, descriptions).
+- Réflexion nommage Windows consignée, sans tâche (décision concepteur : en rester à la réflexion).
+- Non commité (processus simplifié : push direct sur `dev` sur demande explicite).
+
+### **Blocages**
+- Aucun.
+
+---
+
+## **Séance du 22/10/2026 (4) — Sondage « documentation associée aux jeux » + création T7.6 (P2)**
+
+### **Contexte**
+- Point de conception du concepteur : lors de l'acquisition d'un jeu, acquérir aussi la documentation associée quand elle existe (le site affiche « Documentation des fichiers manquante » quand il n'y en a pas — ex. jeu « La situation et les perspectives des finances publiques » de la Cour des comptes).
+- Demande : **sondage rapide** sur la forme que prend cette documentation, pour décider ce qui pourra être fait ou pas. Aucune modification de code demandée.
+
+### **Synthèse du sondage** (API v2 réelle, échantillon 100 jeux / 1 268 ressources, page 2 de la recherche)
+1. **Ressources `type=documentation`** : champ `type` sur chaque ressource (`main` 70 %, `update` 18 % CSV, `documentation` 5 %, `other` 5 %, `api` 2 %, `code` <1 %). **~31 % des jeux** ont au moins une ressource `type=documentation`. Formats constatés : **pdf 57, csv 23, xlsx/xls 11, html/www/url 7 (liens externes), docx/ods/md/xml/json/txt 9**. Le jeu du concepteur (finances publiques) n'en a **aucune** — d'où l'alerte du site.
+2. **Quatre autres sources de documentation** : (a) champ `description` **Markdown de la fiche du jeu** (détail dataset, toujours présent, parfois très complet) ; (b) champ `description` **de chaque ressource** (présent sur ~51 % des ressources) ; (c) **schéma déclaratif** `schema: {name, version}` sur certaines ressources `main` — pointeur résolu via `https://schema.data.gouv.fr/schemas/<org>/<nom>/<version>/schema-*.json` (Table Schema JSON, 106 schémas au catalogue) ; (d) **notice embarquée** dans le fichier — absente dans le cas du concepteur (les « CSV » sont un ZIP sur ccomptes.fr, sans notice en en-tête).
+3. **Fiabilité du flag `quality.resources_documentation`** : indicateur **large**, non fiable comme filtre — 86/100 jeux flagués `True` mais seulement 31 avec une ressource `type=documentation` réelle (faux positifs = docs classées `type=other`, ex. Parcoursup docx « méthodo »). L'API v2 **ignore** les paramètres de filtrage `type=documentation` / `quality.resources_documentation=true` (`total=10000` dans tous les cas) — pas de filtrage côté recherche possible.
+4. **Impact code actuel** : `RessourceResume` (`src/contracts/base.py:95`) ne retient ni le `type` de ressource, ni sa `description`, ni le `schema` ; la classification n'a pas de catégorie « documentation » (un PDF-doc serait classé `fichier_autre_format`, un CSV-doc `fichier_tabulaire` + ping API tabulaire inutile) ; le manifeste T10.8 ne consigne pas la documentation.
+
+### **Décision du concepteur (après sondage)**
+- **Hors périmètre** (complexifierait le projet au-delà de ce qui est souhaité) : ressources `type=documentation`, schémas déclaratifs, liens externes de documentation, notice embarquée.
+- **Retenu** : une tâche optionnelle **T7.6 (P2 — partie 2)** : enrichir l'acquisition avec le contenu du champ `description` **du jeu** (fiche dataset, Markdown) et le champ `description` **de la ressource** acquise (présent sur ~51 % des ressources). Ajoutée à la section 8 (Améliorations futures, optionnel) du kanban, marquée P2.
+
+### **Actions réalisées**
+1. Kanban : T7.6 créée en 📌 À faire, section 8, avec périmètre retenu et hors périmètre consignés.
+2. SESSIONS.md : synthèse du sondage + décision (cette entrée).
 
 ### **Blocages**
 - Aucun.

@@ -160,6 +160,10 @@ def interroger_ressource(
             "message": f"Échec de l'interrogation de '{id_ressource}' : {resultat.erreur or resultat.statut}",
             "donnees": {
                 "suggestion": "basculer sur telecharger_brut" if resultat.statut == "ressource_non_indexee" else "réessayer",
+                # T7.1 (E4) : nombre de tentatives de l'appel HTTP.
+                "nb_tentatives": resultat.nb_tentatives,
+                # T7.7 (E3) : motif T7.1 exposé pour le circuit breaker agentique.
+                "motif": resultat.motif,
             },
         }
 
@@ -179,6 +183,8 @@ def interroger_ressource(
             "lignes": lignes,
             "page": meta.get("page", page),
             "page_suivante": page_suivante,
+            # T7.1 (E4) : nombre de tentatives de l'appel HTTP.
+            "nb_tentatives": resultat.nb_tentatives,
         },
     }
 

@@ -57,11 +57,11 @@ openDataAgent/
   - Exemple : `71ff1335_budget-fr-indicateurs_1.csv`, `71ff1335_budget-fr-indicateurs_2.csv`.
 
 ## 5. Persistance
-- **Registre** : `data/registry.json` est persistant entre les exécutions.
-- **Fichiers téléchargés** : Conservés jusqu'à suppression manuelle ou automatisée (ex : nettoyage des anciennes exécutions).
+- **Registre** : `data/registry.json` est persistant entre les exécutions (idem `data/registre_acceptations.json`, hors périmètre d'une exécution).
+- **Fichiers téléchargés** : Conservés jusqu'à suppression manuelle ou automatisée (nettoyage des anciennes exécutions, §8).
 
 ## 6. Améliorations futures
-- Ajout d'un **mécanisme de nettoyage automatique** pour les anciennes exécutions.
+- *(aucune en attente sur ce document)*
 
 
 ## 7. Manifeste d'acquisition (T10.8, 19/10/2026)
@@ -83,3 +83,26 @@ data/raw/<id_execution>/manifeste_acquisitions.json
 - `lister_fichiers` exclut le manifeste (ce n'est pas une donnée acquise) ; `lister_acquisitions` (storage) et la commande CLI `acquisitions <id_execution>` le lisent.
 
 **Rôle** : source de vérité « acquisition » côté disque — la partie 2 (via T10.1, normalisation B7) consomme ce manifeste pour relier chaque fichier à son jeu, sa licence et sa mention d'attribution, sans recroiser inventaire persistant et journal de conversation.
+
+
+## 8. Nettoyage des anciennes exécutions (T7.2, 22/10/2026)
+
+Quatre familles de traces s'accumulent par `id_execution` :
+
+```
+data/raw/<id_execution>/                    # fichiers acquis + manifeste
+data/executions/<id_execution>/             # inventaire persistant (T10.2)
+conversations/<id_execution>/              # journal de conversation (T11.1)
+logs/openDataAgent_<id_execution>.log       # logs structurés (fichiers plats)
+```
+
+**Commande** : `python -m src.main nettoyer [--age-jours N] [--simulation] [--json] [--id-execution <id>]` — supprime les exécutions dont l'âge dépasse le seuil (défaut 30 jours), sur les quatre racines, et retourne un bilan normalisé `{statut, message, donnees}` (`supprimes`, `conserves`, `octets_liberes`, `erreurs`, `simulation`).
+
+**Règles** :
+- l'âge est lu dans le préfixe date de l'`id_execution` (`AAAAMMJJ_HHMMSS`, hash optionnel) ; un nom non reconnu est **conservé** (fail-safe) ;
+- l'exécution courante (`--id-execution`) est **toujours protégée**, même ancienne ;
+- les registres globaux (`data/registry.json`, `data/registre_acceptations.json`) et tout fichier hors périmètre d'une exécution sont conservés ;
+- un échec de suppression est consigné dans `donnees.erreurs`, **jamais bloquant** (philosophie du manifeste T10.8) ;
+- en `--simulation`, rien n'est supprimé : le bilan indique ce qui le serait.
+
+**Automatique** : un hook au callback Typer exécute le nettoyage avant chaque commande si `NETTOYAGE_AUTO=1` dans l'environnement (désactivé par défaut — pas de suppression de données sans consentement explicite). La commande `nettoyer` elle-même ne déclenche pas le hook.

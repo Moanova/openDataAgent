@@ -16,6 +16,8 @@ Miroir du fichier JSON `contrats/rechercher_jeux.json` et de la documentation
 from __future__ import annotations
 
 
+from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.contracts.base import JeuResume
@@ -85,4 +87,12 @@ class RechercherJeuxOutput(BaseModel):
     page_suivante: int | None = Field(
         default=None,
         description="Numéro de la page suivante si elle existe, null sinon.",
+    )
+    nb_tentatives: int = Field(
+        default=1,
+        description="Nombre de tentatives de l'appel HTTP (1 = succès au premier essai).",
+    )
+    motif: Optional[str] = Field(
+        default=None,
+        description="Motif de l'échec HTTP (T7.1 : 'transitoire' après épuisement des tentatives, 'acces_refuse', 'ressource_supprimee', 'requete_invalide') ; en mode agentique, 'circuit_ouvert' (T7.7) quand le circuit breaker a intercepté l'appel. None en cas de succès.",
     )

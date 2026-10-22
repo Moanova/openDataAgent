@@ -15,7 +15,7 @@ Extraire des données d'une ressource indexée par l'API tabulaire (voie 1). Uti
 
 ## Retour en succès
 
-`donnees.total_lignes` : nombre total de lignes de la ressource. `donnees.colonnes` : schéma détecté. `donnees.lignes` : page courante. `donnees.page` : numéro de la page courante. `donnees.page_suivante` : numéro de la page suivante si elle existe, null sinon — l'agent l'utilise pour paginer (tri et filtre identiques entre les pages d'une même extraction). `donnees.recommandation` : présent uniquement si `total_lignes` dépasse le seuil configurable (5000 par défaut), avec la valeur `volume_eleve_telechargement_brut_suggere` — l'agent peut alors décider de basculer sur `telecharger_brut`.
+`donnees.total_lignes` : nombre total de lignes de la ressource. `donnees.colonnes` : schéma détecté. `donnees.lignes` : page courante. `donnees.page` : numéro de la page courante. `donnees.page_suivante` : numéro de la page suivante si elle existe, null sinon — l'agent l'utilise pour paginer (tri et filtre identiques entre les pages d'une même extraction). `donnees.recommandation` : présent uniquement si `total_lignes` dépasse le seuil configurable (5000 par défaut), avec la valeur `volume_eleve_telechargement_brut_suggere` — l'agent peut alors décider de basculer sur `telecharger_brut`. `donnees.nb_tentatives` : nombre de tentatives de l'appel HTTP (1 = succès au premier essai ; T7.1). `donnees.motif` : motif de l'échec HTTP (`transitoire`, `acces_refuse`, `ressource_supprimee`, `requete_invalide` ; T7.1), ou `circuit_ouvert` en mode agentique quand le circuit breaker a intercepté l'appel (T7.7) — absent (null) en cas de succès. Version 1.3.0 (T7.7 : champ additif `motif` ; la version 1.2.0 ajoutait `nb_tentatives`, T7.1).
 
 ## Comportements d'échec
 

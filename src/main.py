@@ -13,12 +13,14 @@ Couche mince de presentation : traduit une ligne de commande en appel
 de la fonction coeur correspondante et affiche la reponse normalisée
 {statut, message, donnees}. Aucune logique metier ici.
 """
+import json
+import os
+import sys
 from datetime import datetime
 from typing import List, Optional
 
 import typer
 
-import json
 from pathlib import Path
 
 from src.core.search import rechercher_jeux
@@ -36,6 +38,7 @@ from src.agent.boucle import (
 )
 from src.agent.journal import REPERTOIRE_JOURNAUX
 from src.core.manifeste import consigner_demande, lire_manifeste
+from src.core.nettoyage import AGE_DEFAUT_JOURS, nettoyer_anciennes_executions
 from src.core.vocabulaires import (
     APERCU_DEFAUT,
     FenetreMaj,
@@ -99,9 +102,48 @@ def _afficher_recherche(reponse: dict) -> None:
         typer.echo(f"  id={jeu['id']}  maj={jeu['derniere_maj']}  {jeu['url']}")
 
 
+def _id_execution_demande() -> Optional[str]:
+    """Lit `--id-execution` dans les arguments bruts (hook de nettoyage, E3).
+
+    Au callback Typer, les options de la sous-commande ne sont pas encore
+    parsées : on balaie sys.argv. Retourne None si l'option est absente.
+    """
+    args = sys.argv[1:]
+    for indice, arg in enumerate(args):
+        if arg == "--id-execution" and indice + 1 < len(args):
+            return args[indice + 1]
+        if arg.startswith("--id-execution="):
+            return arg.split("=", 1)[1]
+    return None
+
+
+def _nettoyage_automatique() -> None:
+    """Hook de nettoyage des anciennes exécutions (T7.2, E3).
+
+    Actif uniquement si NETTOYAGE_AUTO=1 dans l'environnement ; jamais
+    bloquant : un bilan avec suppressions ou erreurs est signalé en warning.
+    """
+    if os.environ.get("NETTOYAGE_AUTO") != "1":
+        return
+    # Pas de configure_logging ici : le callback précède la commande, le
+    # logging sera configuré par elle. Les traces du nettoyage passent par
+    # log_to_file (actif une fois le logging configuré) ; le bilan visible
+    # est le warning ci-dessous.
+    bilan = nettoyer_anciennes_executions(id_execution_courante=_id_execution_demande())
+    donnees = bilan["donnees"]
+    if donnees["supprimes"] or donnees["erreurs"]:
+        typer.secho(
+            f"nettoyage automatique : {bilan['message']}",
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
+
+
 @app.callback()
-def racine() -> None:
+def racine(ctx: typer.Context) -> None:
     """CLI openDataAgent : acquisition de données de data.gouv.fr."""
+    if ctx.invoked_subcommand and ctx.invoked_subcommand != "nettoyer":
+        _nettoyage_automatique()
 
 
 @app.command()
@@ -359,6 +401,39 @@ def acquisitions(
         if acquisition.get("voie") == "extraction":
             typer.echo(f"      lignes : {acquisition.get('nb_lignes', '?')}"
                        + ("  (tronqué)" if acquisition.get("tronque") else ""))
+
+
+@app.command()
+def nettoyer(
+    age_jours: int = typer.Option(AGE_DEFAUT_JOURS, "--age-jours", min=1, help="Âge minimal d'une exécution pour être supprimée (en jours)."),
+    simulation: bool = typer.Option(False, "--simulation", help="Affiche ce qui serait supprimé, sans rien supprimer."),
+    id_execution: Optional[str] = typer.Option(None, "--id-execution", help="Exécution à protéger du nettoyage (l'exécution courante est toujours protégée)."),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute du bilan normalisé."),
+) -> None:
+    """Supprime les anciennes exécutions (fichiers, inventaires, conversations, logs)."""
+    identifiant = id_execution or _id_execution_auto()
+    configure_logging(id_execution=identifiant)
+    bilan = nettoyer_anciennes_executions(
+        age_jours=age_jours,
+        id_execution_courante=id_execution,
+        simulation=simulation,
+    )
+    if sortie_json:
+        typer.echo(json.dumps(bilan, ensure_ascii=False, indent=2))
+    elif bilan["statut"] == "succes":
+        donnees = bilan["donnees"]
+        typer.echo(f"statut : {bilan['statut']}")
+        typer.echo(f"âge seuil : {donnees['age_jours']} jour(s)  simulation : {donnees['simulation']}")
+        typer.echo(f"supprimé(s) : {len(donnees['supprimes'])}  conservé(s) : {len(donnees['conserves'])}")
+        for id_exec in donnees["supprimes"]:
+            typer.echo(f"- {id_exec}")
+        typer.echo(f"octets libérés : {donnees['octets_liberes']}")
+        for erreur in donnees["erreurs"]:
+            typer.secho(f"erreur : {erreur['chemin']} ({erreur['erreur']})", fg=typer.colors.YELLOW, err=True)
+    else:
+        typer.secho(f"[{bilan['statut']}] {bilan['message']}", fg=typer.colors.RED, err=True)
+    if bilan["statut"] != "succes":
+        raise typer.Exit(code=1)
 
 
 @app.command()

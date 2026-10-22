@@ -751,3 +751,82 @@ def test_download_consigne_la_demande(tmp_path, monkeypatch):
     manifeste = lire_manifeste("exec-d")
     assert manifeste is not None
     assert manifeste["demande"] == "download res-9"
+
+
+# ---------------------------------------------------------------------------
+# T7.2 — Nettoyage des anciennes exécutions (22/10/2026) : TI-22
+# ---------------------------------------------------------------------------
+
+def _fabriquer_executions_cli(tmp_path, ids):
+    from src.core.nettoyage import RACINES_SOUS_DOSSIERS, RACINE_LOGS
+
+    for id_execution in ids:
+        for racine in RACINES_SOUS_DOSSIERS:
+            dossier = tmp_path / racine / id_execution
+            dossier.mkdir(parents=True, exist_ok=True)
+            (dossier / "fichier.csv").write_text("x", encoding="utf-8")
+        log = tmp_path / RACINE_LOGS / f"openDataAgent_{id_execution}.log"
+        log.parent.mkdir(parents=True, exist_ok=True)
+        log.write_text("log\n", encoding="utf-8")
+
+
+def test_ti22_cli_nettoyer_simulation_puis_reel(tmp_path, monkeypatch):
+    # TI-22 : la commande `nettoyer` supprime les exécutions anciennes sur
+    # les quatre racines ; `--simulation` ne supprime rien ; `--json` expose
+    # le bilan normalisé.
+    import os
+    from datetime import datetime, timedelta
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
+    maintenant = datetime(2026, 10, 22, 12, 0, 0)
+    vieux = (maintenant - timedelta(days=60)).strftime("%Y%m%d_%H%M%S") + "_t22a"
+    recent = maintenant.strftime("%Y%m%d_%H%M%S") + "_t22b"
+    _fabriquer_executions_cli(tmp_path, [vieux, recent])
+
+    # Simulation : rien n'est supprimé
+    resultat = runner.invoke(app, ["nettoyer", "--age-jours", "30", "--simulation"])
+    assert resultat.exit_code == 0
+    assert vieux in resultat.output
+    assert (tmp_path / "data" / "raw" / vieux).is_dir()
+
+    # Réel : l'ancienne exécution disparaît des quatre racines
+    resultat = runner.invoke(app, ["nettoyer", "--age-jours", "30"])
+    assert resultat.exit_code == 0
+    assert not (tmp_path / "data" / "raw" / vieux).exists()
+    assert not (tmp_path / "data" / "executions" / vieux).exists()
+    assert not (tmp_path / "conversations" / vieux).exists()
+    assert not (tmp_path / "logs" / f"openDataAgent_{vieux}.log").exists()
+    assert (tmp_path / "data" / "raw" / recent).is_dir()
+
+    # JSON : bilan normalisé sérialisable
+    _fabriquer_executions_cli(tmp_path, [vieux])
+    resultat = runner.invoke(app, ["nettoyer", "--age-jours", "30", "--json"])
+    assert resultat.exit_code == 0
+    bilan = json.loads(resultat.output)
+    assert bilan["statut"] == "succes"
+    assert bilan["donnees"]["supprimes"] == [vieux]
+
+
+def test_ti22b_hook_auto_desactive_par_defaut(tmp_path, monkeypatch):
+    # TI-22 (suite) : sans NETTOYAGE_AUTO=1, aucune commande ne déclenche
+    # de nettoyage ; avec NETTOYAGE_AUTO=1, le hook s'exécute et l'exécution
+    # passée en --id-execution est protégée.
+    from datetime import datetime, timedelta
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
+    vieux = (datetime.now() - timedelta(days=60)).strftime("%Y%m%d_%H%M%S") + "_t22c"
+    _fabriquer_executions_cli(tmp_path, [vieux])
+
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
+        runner.invoke(app, ["search", "dette"])
+    assert (tmp_path / "data" / "raw" / vieux).is_dir()  # hook inactif
+
+    monkeypatch.setenv("NETTOYAGE_AUTO", "1")
+    monkeypatch.setattr("sys.argv", ["prog", "search", "dette", "--id-execution", vieux])
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
+        resultat = runner.invoke(app, ["search", "dette"])
+    assert resultat.exit_code == 0
+    # L'exécution courante (vieux, passée en --id-execution) est protégée
+    assert (tmp_path / "data" / "raw" / vieux).is_dir()

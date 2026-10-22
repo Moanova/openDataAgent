@@ -18,11 +18,14 @@ Format :
       "organisation": "Insee",
       "licence": "notspecified",
       "url": "https://data.gouv.fr/...",
-      "detail": "Licence non ouverte | Statut HTTP 403"
+      "detail": "Licence non ouverte | Statut HTTP 403",
+      "statut_reprise": "a_retenter | definitif"
     }
   ]
 }
 ```
+
+T7.1 : `statut_reprise` est un champ **additif** des entrées techniques — `a_retenter` (échec transitoire épuisé : réseau, 429/502/503/504) ou `definitif` (400/401/403/410). Les entrées sans le champ (y compris les exclusions juridiques) sont lues comme `definitif` ; aucune entrée existante n'est modifiée.
 
 ## 3. Fonctionnement
 - **Écriture** :

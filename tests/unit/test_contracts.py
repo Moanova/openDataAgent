@@ -92,11 +92,13 @@ class TestTU25_ChargementManifeste:
             assert "version" in outil
             assert outil["fichier"] == f"{outil['nom']}.json"
 
-    def test_rechercher_jeux_version_1_3_0_deprecation_fenetre(self):
-        # T11.3 (E4) : le contrat migré en v1.3.0 (dépréciation fenetre_maj, mapping derniere_maj).
+    def test_rechercher_jeux_version_1_5_0_deprecation_fenetre(self):
+        # T11.3 (E4) : le contrat migré en v1.3.0 (dépréciation fenetre_maj, mapping
+        # derniere_maj) ; T7.1 (E4) : v1.4.0 ajoute le champ nb_tentatives ;
+        # T7.7 (E3) : v1.5.0 ajoute le champ motif.
         manifeste = json.loads(MANIFESTE_PATH.read_text(encoding="utf-8"))
         outil = next(o for o in manifeste["outils"] if o["nom"] == "rechercher_jeux")
-        assert outil["version"] == "1.3.0"
+        assert outil["version"] == "1.5.0"
 
     def test_fichiers_contrats_existent(self):
         manifeste = json.loads(MANIFESTE_PATH.read_text(encoding="utf-8"))

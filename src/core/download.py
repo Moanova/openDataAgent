@@ -85,12 +85,18 @@ def telecharger_brut(
 
     if not resultat.reussi:
         # Invariant : le registre est alimenté meme en cas d'échec.
+        # T7.1 (E5) : un échec transitoire épuisé est marqué « à retenter »,
+        # un refus définitif du serveur reste « définitif ».
+        from src.utils.registry import REPRISE_A_RETENTER
+
+        statut_reprise = REPRISE_A_RETENTER if resultat.motif == "transitoire" else "definitif"
         registre.consigner_echec_technique(
             id_jeu=metadonnees.get("id_jeu") or "",
             organisation=metadonnees.get("organisation") or "",
             licence=metadonnees.get("licence") or "",
             url=url,
             detail=f"Statut HTTP {resultat.status_code}" if resultat.status_code else (resultat.erreur or "echec"),
+            statut_reprise=statut_reprise,
         )
         registre.sauvegarder()
         logger.error(
@@ -110,7 +116,12 @@ def telecharger_brut(
         return {
             "statut": "echec_technique",
             "message": f"Le serveur d'origine a refusé l'accès ({resultat.status_code or resultat.erreur}).",
-            "donnees": {"suggestion": "fichier_heberge_exterieurement"},
+            "donnees": {
+                "suggestion": "fichier_heberge_exterieurement",
+                "nb_tentatives": resultat.nb_tentatives,
+                # T7.7 (E3) : motif T7.1 exposé pour le circuit breaker agentique.
+                "motif": resultat.motif,
+            },
         }
 
     logger.info(
@@ -138,6 +149,8 @@ def telecharger_brut(
         "licence": metadonnees.get("licence") or "",
         "licence_conditionnelle": bool(metadonnees.get("licence_conditionnelle", False)),
         "mention_attribution": resultat_mention["donnees"].get("mention"),
+        # T7.1 (E4) : nombre de tentatives du téléchargement (1 = premier essai).
+        "nb_tentatives": resultat.nb_tentatives,
     }
 
     # T10.8 : traçabilité acquisition -> jeu dans le manifeste de l'exécution ;

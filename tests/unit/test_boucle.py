@@ -596,3 +596,127 @@ def test_tour_deltas_entrelaces_par_output_index(monkeypatch):
     # Deux résultats distincts renvoyés, tool_call_ids différents, ordre des output_index
     entrees = agent.client.beta.conversations.append_stream.call_args.kwargs["inputs"]
     assert [e["tool_call_id"] for e in entrees] == ["cA", "cB"]
+
+
+# ---------------------------------------------------------------------------
+# T7.7 — Circuit breaker agentique (22/10/2026) : TI-23, TI-24
+# ---------------------------------------------------------------------------
+
+def _enregistrer_ressource_inventaire(monkeypatch, id_ressource="res-t77", url="https://hote-panne.example/fichier.csv"):
+    """Enregistre une ressource dans l'inventaire (résolution d'hôte T7.7)."""
+    import src.core.resources as module_resources
+    inventaire = dict(module_resources._inventaire)
+    inventaire[id_ressource] = {"id": id_ressource, "url": url}
+    monkeypatch.setattr(module_resources, "_inventaire", inventaire)
+
+
+def _tour_avec_appels(agent, conversation, appels, reponse_finale="Fin."):
+    """Un tour où le serveur émet une liste de tool_calls puis répond."""
+    evenements = [_evt_started("conv-t77")] + [
+        _evt_call(nom, args, f"c{i}", output_index=i) for i, (nom, args) in enumerate(appels)
+    ] + [_evt_done()]
+    agent.client.beta.conversations.append_stream.return_value = iter([
+        _evt_message(reponse_finale), _evt_done(),
+    ])
+    if conversation.nb_tours == 0:
+        agent.client.beta.conversations.start_stream.return_value = iter(evenements)
+        return tour_conversation(conversation, "tour")
+    agent.client.beta.conversations.append_stream.return_value = iter(evenements)
+    return tour_conversation(conversation, "tour suivant")
+
+
+def test_ti23_circuit_ouvert_apres_3_echecs_transitoires(monkeypatch):
+    # TI-23 : 3 échecs transitoires (motif=transitoire) vers un même hôte →
+    # le 4e appel est intercepté (outil non exécuté, plafond non consommé),
+    # l'agent reçoit echec_technique / motif=circuit_ouvert.
+    _enregistrer_ressource_inventaire(monkeypatch)
+    echec = {"statut": "echec_technique", "message": "503", "donnees": {"motif": "transitoire", "nb_tentatives": 3}}
+    mock_dl = MagicMock(return_value=echec)
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "telecharger_brut", mock_dl)
+
+    agent = _agent()
+    conversation = _conversation(agent, plafond=10)
+    appels = [("telecharger_brut", {"id_ressource": "res-t77"})] * 4
+    reponse = _tour_avec_appels(agent, conversation, appels)
+
+    assert reponse["statut"] == "succes"
+    # 3 exécutions réelles + 1 interception = 3 invocations consommées
+    assert mock_dl.call_count == 3
+    assert reponse["donnees"]["nb_invocations"] == 3
+    # Le 4e résultat renvoyé à l'agent est l'interception
+    entrees = agent.client.beta.conversations.append_stream.call_args.kwargs["inputs"]
+    assert len(entrees) == 4
+    dernier = json.loads(entrees[3]["result"])
+    assert dernier["statut"] == "echec_technique"
+    assert dernier["donnees"]["motif"] == "circuit_ouvert"
+    assert dernier["donnees"]["hote"] == "hote-panne.example"
+    assert dernier["donnees"]["suggestion"] == "proposer_alternative"
+
+
+def test_ti24_hotes_independants_et_succes_rouvre(monkeypatch):
+    # TI-24 : un hôte ouvert n'affecte pas les autres ; un succès rouvre.
+    _enregistrer_ressource_inventaire(monkeypatch, "res-a", "https://panne.example/a.csv")
+    _enregistrer_ressource_inventaire(monkeypatch, "res-b", "https://autre.example/b.csv")
+
+    echec = {"statut": "echec_technique", "message": "503", "donnees": {"motif": "transitoire"}}
+    succes = {"statut": "succes", "message": "", "donnees": {"chemin_local": "x"}}
+    mock_dl = MagicMock(side_effect=[echec, echec, echec, succes, succes])
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "telecharger_brut", mock_dl)
+
+    agent = _agent()
+    conversation = _conversation(agent, plafond=10)
+    # Tour 1 : 3 échecs sur panne.example → ouvert ; 4e appel sur panne.example
+    # intercepté ; appel sur autre.example exécuté (succès, circuit b fermé).
+    appels = [
+        ("telecharger_brut", {"id_ressource": "res-a"}),
+        ("telecharger_brut", {"id_ressource": "res-a"}),
+        ("telecharger_brut", {"id_ressource": "res-a"}),
+        ("telecharger_brut", {"id_ressource": "res-a"}),  # intercepté
+        ("telecharger_brut", {"id_ressource": "res-b"}),  # exécuté, succès
+    ]
+    reponse = _tour_avec_appels(agent, conversation, appels)
+    assert mock_dl.call_count == 4  # le 4e (res-a) non exécuté
+    assert reponse["donnees"]["nb_invocations"] == 4
+
+    # Tour 2 : panne.example toujours ouvert (intercepté), autre.example passe
+    appels2 = [
+        ("telecharger_brut", {"id_ressource": "res-a"}),  # intercepté
+        ("telecharger_brut", {"id_ressource": "res-b"}),  # exécuté, succès
+    ]
+    reponse2 = _tour_avec_appels(agent, conversation, appels2)
+    assert mock_dl.call_count == 5  # un seul nouvel appel réel (res-b)
+    entrees = agent.client.beta.conversations.append_stream.call_args.kwargs["inputs"]
+    assert json.loads(entrees[0]["result"])["donnees"]["motif"] == "circuit_ouvert"
+    assert json.loads(entrees[1]["result"])["statut"] == "succes"
+
+
+def test_ti24b_echec_definitif_ne_ouvre_pas(monkeypatch):
+    # TI-24 (suite) : motif définitif (403) → jamais d'ouverture, plafond intact
+    _enregistrer_ressource_inventaire(monkeypatch)
+    refus = {"statut": "echec_technique", "message": "403", "donnees": {"motif": "acces_refuse"}}
+    mock_dl = MagicMock(return_value=refus)
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "telecharger_brut", mock_dl)
+
+    agent = _agent()
+    conversation = _conversation(agent, plafond=10)
+    appels = [("telecharger_brut", {"id_ressource": "res-t77"})] * 5
+    reponse = _tour_avec_appels(agent, conversation, appels)
+    assert mock_dl.call_count == 5  # aucun intercepté
+    assert reponse["donnees"]["nb_invocations"] == 5
+
+
+def test_ti24c_ressource_inconnue_fail_safe(monkeypatch):
+    # TI-24 (suite) : ressource absente de l'inventaire → hôte inconnu →
+    # le circuit laisse passer (fail-safe), l'outil s'exécute et renvoie
+    # ressource_introuvable.
+    mock_dl = MagicMock(return_value={"statut": "ressource_introuvable", "message": "?", "donnees": {}})
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "telecharger_brut", mock_dl)
+    import src.core.resources as module_resources
+    monkeypatch.setattr(module_resources, "_inventaire", {})
+
+    agent = _agent()
+    conversation = _conversation(agent, plafond=10)
+    appels = [("telecharger_brut", {"id_ressource": "fantome"})] * 5
+    reponse = _tour_avec_appels(agent, conversation, appels)
+    assert mock_dl.call_count == 5
+    assert reponse["donnees"]["nb_invocations"] == 5

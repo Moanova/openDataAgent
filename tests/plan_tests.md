@@ -382,3 +382,59 @@ Contexte côté serveur (API Conversations `client.beta.conversations`), boucle 
 | R\u00e9f. | Objectif | R\u00e9sultat attendu | Criticit\u00e9 |
 |---|---|---|---|
 | TI-18 | Sc\u00e9nario complet : exploration \u2192 correction utilisateur \u2192 raffinement \u2192 acquisition valid\u00e9e (SDK Conversations + c\u0153ur simul\u00e9s) | 3 tours, 4 invocations, ordre des appels c\u0153ur exact, un seul `start_stream`, journal multi-tours conforme, conversation supprim\u00e9e | Bloquant (CA-2, CA-3, CA-11) |
+
+
+## Tests T7.1 — Réessai intelligent (22/10/2026)
+
+Périmètre : client HTTP uniquement (`src/utils/http.py`) + registre (`statut_reprise`). Hors périmètre : circuit breaker agentique (T7.7). Plan détaillé : `docs/tasks/T7.1_reessai_intelligent.md`.
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-81 | 429 avec `Retry-After: 5` → délai respecté (mock `time.sleep`) | Délai = 5 s, pas le backoff calculé | Bloquant |
+| TU-82 | Backoff exponentiel 1 s → 2 s → 4 s avec jitter borné | Délais croissants, jitter dans la borne | Bloquant |
+| TU-83 | 403 → 1 seul appel HTTP, `motif=definitif`, pas de retry | `echec_technique`, 1 requête | Bloquant |
+| TU-84 | 410 → idem | `echec_technique`, 1 requête | Bloquant |
+| TU-85 | 400 → idem | `echec_technique`, 1 requête | Bloquant |
+| TU-86 | `.part` existant + réponse 206 → reprise à l'octet (header `Range`) | Contenu final complet, `.part` renommé | Bloquant |
+| TU-87 | Coupure mid-stream (`ChunkedEncodingError` dans `iter_content`) → retry, `.part` conservé | Succès au 2e essai, contenu complet | Bloquant (bug latent) |
+| TU-88 | `.part` existant + réponse 200 (Range ignoré) → écrasement propre | Contenu = réponse 200 seule | Bloquant |
+| TU-89 | Échec définitif (403) avec `.part` présent → `.part` supprimé | Aucun `.part`, aucun fichier final | Bloquant |
+| TU-90 | Succès au 1er essai → `nb_tentatives=1` dans `donnees` ; succès au 3e → `nb_tentatives=3` | Champ exact | Bloquant |
+| TU-91 | Échec transitoire épuisé → registre consigné `statut_reprise=a_retenter` | Champ présent, motif conservé | Bloquant |
+| TU-92 | Échec définitif (403) → registre consigné `statut_reprise=definitif` | Champ présent | Bloquant |
+| TU-93 | Rétrocompatibilité registre : entrée sans `statut_reprise` → lu comme `definitif` | Aucune erreur, défaut appliqué | Bloquant |
+| TI-19 | Flux `telecharger_brut` : 1er appel 503 puis succès | Fichier complet, `nb_tentatives=2`, registre vide | Bloquant |
+| TI-20 | Flux `telecharger_brut` : 503 × 3 | `echec_technique`, registre `a_retenter`, `nb_tentatives=3` | Bloquant |
+
+## Tests T7.2 — Nettoyage des anciennes exécutions (22/10/2026)
+
+Périmètre : `src/core/nettoyage.py` + commande CLI `nettoyer` + hook `NETTOYAGE_AUTO`. Quatre racines : `data/raw/`, `data/executions/`, `conversations/`, `logs/openDataAgent_<id>.log`. Hors périmètre : outil agent, contrats (aucun modifié). Suivi : `docs/tasks/T7.2_nettoyage_executions.md`.
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-94 | Exécution ancienne → supprimée sur les 4 racines | 4 familles supprimées, bilan `supprimes=[id]` | Bloquant |
+| TU-95 | Exécution récente → conservée | Dossiers et log présents | Bloquant |
+| TU-96 | Exécution courante (`id_execution_courante`) → protégée même ancienne | `supprimes=[]`, `conserves=[id]` | Bloquant |
+| TU-97 | `--simulation` → rien supprimé, bilan indique ce qui le serait | `simulation=true`, traces présentes | Bloquant |
+| TU-98 | Registres globaux + noms non reconnus → conservés | `registry.json`, `registre_acceptations.json`, dossier/log inconnus intacts | Bloquant |
+| TU-99 | `id_execution` à date invalide (`20261301_...`) → conservé (fail-safe) | Non sélectionné | Bloquant |
+| TU-100 | Bilan : compteurs + octets libérés exacts | `octets_liberes` = somme des tailles supprimées | Bloquant |
+| TI-21 | Flux complet cœur : vieille supprimée, récente + courante conservées, registres intacts | Bilan conforme, disque conforme | Bloquant |
+| TI-22 | CLI `nettoyer` : `--simulation` puis réel puis `--json` ; hook auto désactivé par défaut, `NETTOYAGE_AUTO=1` protège `--id-execution` | Codes sortie 0, disque conforme, JSON valide | Bloquant |
+
+## Tests T7.7 — Circuit breaker agentique (22/10/2026)
+
+Périmètre : `src/agent/circuit.py` + intégration `src/agent/boucle.py` + champ `motif` dans les 4 contrats. Option A actée : état en mémoire, attaché à la conversation. Paramétrage : `CIRCUIT_BREAKER_SEUIL` (3), `CIRCUIT_BREAKER_REFROIDISSEMENT` (300 s), `CIRCUIT_BREAKER_DESACTIVE=1`. Suivi : `docs/tasks/T7.7_circuit_breaker_agentique.md`.
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-101 | État initial | tout hôte autorisé (y compris hôte None) | Bloquant |
+| TU-102 | 3 échecs transitoires consécutifs → ouvert, 4e appel bloqué | `autoriser` False au seuil, `instantanement_ouvert` True | Bloquant |
+| TU-103 | Succès entre les échecs → compteur remis à zéro | pas d'ouverture avant 3 échecs post-succès | Bloquant |
+| TU-104 | Échec définitif (403/410) → ignoré | jamais d'ouverture | Bloquant |
+| TU-105 | Refroidissement 300 s → semi-ouvert (1 tentative), succès referme / échec rouvre | transitions conformes | Bloquant |
+| TU-106 | Circuits par hôte indépendants | hôte ouvert n'affecte pas les autres | Bloquant |
+| TU-107 | `CIRCUIT_BREAKER_DESACTIVE=1` → aucune interception | tout passe | Bloquant |
+| TU-108 | Variables d'environnement (seuil, refroidissement, valeurs invalides → défauts) | 3 / 300 s par défaut | Bloquant |
+| TI-23 | Boucle : 3 échecs `motif=transitoire` même hôte → 4e appel intercepté | outil non exécuté, `nb_invocations=3`, agent reçoit `circuit_ouvert` + `hote` + `proposer_alternative` | Bloquant |
+| TI-24 | Boucle : hôtes indépendants, succès rouvre, échec définitif n'ouvre pas, ressource inconnue = fail-safe | compteurs d'appels et statuts conformes | Bloquant |

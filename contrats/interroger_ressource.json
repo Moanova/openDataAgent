@@ -132,6 +132,17 @@
                 "null"
               ],
               "description": "Numero de la page suivante si elle existe, null sinon. Paginer en incrementant page, a filtre et tri identiques."
+            },
+            "nb_tentatives": {
+              "type": "integer",
+              "description": "Nombre de tentatives de l'appel HTTP (1 = succès au premier essai)."
+            },
+            "motif": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Motif de l'échec HTTP (T7.1 : 'transitoire' après épuisement des tentatives, 'acces_refuse', 'ressource_supprimee', 'requete_invalide') ; en mode agentique, 'circuit_ouvert' (T7.7) quand le circuit breaker a intercepté l'appel. None en cas de succès."
             }
           },
           "required": [

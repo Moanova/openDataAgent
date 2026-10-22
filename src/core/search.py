@@ -179,6 +179,10 @@ def rechercher_jeux(
                 "message": f"Échec de l'appel à l'API data.gouv.fr : {resultat.erreur or resultat.statut}",
                 "donnees": {
                     "suggestion": "réessayer",
+                    # T7.1 (E4) : nombre de tentatives de l'appel HTTP.
+                    "nb_tentatives": resultat.nb_tentatives,
+                    # T7.7 (E3) : motif T7.1 exposé pour le circuit breaker agentique.
+                    "motif": resultat.motif,
                 },
             }
 
@@ -265,6 +269,8 @@ def rechercher_jeux(
                 "acceptes_licence_conditionnelle": acceptes_conditionnels,
                 "page_courante": page,
                 "page_suivante": data.get("page_suivante"),
+                # T7.1 (E4) : nombre de tentatives de l'appel HTTP.
+                "nb_tentatives": resultat.nb_tentatives,
             },
         }
         

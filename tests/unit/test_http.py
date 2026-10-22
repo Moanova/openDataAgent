@@ -327,3 +327,206 @@ def test_inventaire_v2_ressources_vides_reponse_valide():
 
     assert resultat.reussi
     assert resultat.donnees["resources"] == []
+
+
+# ---------------------------------------------------------------------------
+# T7.1 — Réessai intelligent (22/10/2026) : TU-81..TU-90
+# ---------------------------------------------------------------------------
+
+import time as _time
+from unittest.mock import patch as _patch
+
+from src.utils.http import (
+    DELAI_BASE_RETRY,
+    DELAI_PLAFOND_RETRY,
+    STATUTS_DEFINITIFS,
+    _delai_retry,
+    telecharger_fichier,
+)
+
+
+def test_tu81_retry_after_respecte():
+    # TU-81 : 429 avec Retry-After: 5 -> le delai respecte la borne serveur
+    with open(REPERTOIRE_FIXTURES / "recherche_jeux_reussite.json", encoding="utf-8") as f:
+        payload = json.load(f)
+    with _patch.object(_time, "sleep") as mock_sleep:
+        with responses.mock:
+            responses.add(responses.GET, URL_RECHERCHE, json={}, status=429,
+                          headers={"Retry-After": "5"})
+            responses.add(responses.GET, URL_RECHERCHE, json=payload, status=200)
+            resultat = appel_api("/datasets/search/", params={"q": "dette"})
+        assert resultat.reussi
+        assert resultat.nb_tentatives == 2
+        delai = mock_sleep.call_args[0][0]
+        assert delai >= 5.0  # Retry-After respecte comme borne superieure
+
+
+def test_tu82_backoff_exponentiel_avec_jitter_borne():
+    # TU-82 : delai croissant, borne [0.75x, 1.25x] du backoff pur, plafond
+    for tentative, attendu in [(1, DELAI_BASE_RETRY), (2, 2 * DELAI_BASE_RETRY), (3, 4 * DELAI_BASE_RETRY)]:
+        for _ in range(50):
+            d = _delai_retry(tentative)
+            assert attendu * 0.75 <= d <= min(attendu * 1.25, DELAI_PLAFOND_RETRY * 1.25)
+    # Plafond : jamais au-dela de DELAI_PLAFOND_RETRY * 1.25
+    for _ in range(50):
+        assert _delai_retry(20) <= DELAI_PLAFOND_RETRY * 1.25
+
+
+@pytest.mark.parametrize("statut,motif", [(403, "acces_refuse"), (410, "ressource_supprimee"), (400, "requete_invalide")])
+@responses.activate
+def test_tu83_84_85_statuts_definitifs_sans_retry(statut, motif):
+    # TU-83/84/85 : 403/410/400 -> 1 seul appel, motif explicite, pas de retry
+    responses.add(responses.GET, URL_RECHERCHE, json={"message": "refus"}, status=statut)
+    with _patch.object(_time, "sleep") as mock_sleep:
+        resultat = appel_api("/datasets/search/", nb_tentatives=3)
+    assert resultat.statut == "echec_technique"
+    assert resultat.status_code == statut
+    assert resultat.motif == motif
+    assert resultat.nb_tentatives == 1
+    assert len(responses.calls) == 1
+    mock_sleep.assert_not_called()
+
+
+def _reponse_206_corps(corps: bytes):
+    """Construit un body streaming dont iter_content produit `corps`."""
+    import requests
+
+    class _ReponseFausse:
+        status_code = 206
+        headers = {}
+
+        def iter_content(self, chunk_size=8192):
+            yield corps
+
+        def close(self):
+            pass
+
+    return _ReponseFausse()
+
+
+def test_tu86_reprise_range_sur_part_existant(tmp_path):
+    # TU-86 : .part existant + 206 -> reprise a l'octet (header Range), contenu final complet
+    destination = tmp_path / "fichier.csv"
+    part = tmp_path / "fichier.csv.part"
+    part.write_bytes(b"abcde")  # 5 octets deja telecharges
+    corps_restant = b"fghij"
+
+    with _patch("src.utils.http._SESSION") as mock_session:
+        mock_session.get.return_value = _reponse_206_corps(corps_restant)
+        resultat = telecharger_fichier("https://exemple.fr/fichier.csv", destination)
+
+    assert resultat.reussi
+    assert resultat.nb_tentatives == 1
+    # Header Range envoye avec l'offset du .part
+    _, kwargs = mock_session.get.call_args
+    assert kwargs["headers"]["Range"] == "bytes=5-"
+    # Contenu final = .part + suite
+    assert destination.read_bytes() == b"abcdefghij"
+    assert not part.exists()
+
+
+def test_tu87_coupure_mid_stream_retry_et_part_conserve(tmp_path):
+    # TU-87 : coupure mid-stream (ChunkedEncodingError) -> retry, .part conserve,
+    # succes au 2e essai avec contenu complet
+    import requests
+
+    destination = tmp_path / "fichier.csv"
+
+    class _ReponseCassee:
+        status_code = 200
+        headers = {}
+
+        def iter_content(self, chunk_size=8192):
+            yield b"abcde"
+            raise requests.exceptions.ChunkedEncodingError("connexion coupee")
+
+        def close(self):
+            pass
+
+    class _ReponseOK:
+        status_code = 200
+        headers = {}
+
+        def iter_content(self, chunk_size=8192):
+            yield b"abcde"
+            yield b"fghij"
+
+        def close(self):
+            pass
+
+    with _patch("src.utils.http._SESSION") as mock_session, _patch.object(_time, "sleep"):
+        mock_session.get.side_effect = [_ReponseCassee(), _ReponseOK()]
+        resultat = telecharger_fichier("https://exemple.fr/fichier.csv", destination)
+
+    assert resultat.reussi
+    assert resultat.nb_tentatives == 2
+    assert destination.read_bytes() == b"abcdefghij"
+
+
+def test_tu88_part_existant_reponse_200_ecrasement_propre(tmp_path):
+    # TU-88 : .part existant + 200 (Range ignore) -> ecrasement, contenu = reponse seule
+    destination = tmp_path / "fichier.csv"
+    part = tmp_path / "fichier.csv.part"
+    part.write_bytes(b"ancien contenu long")
+
+    with _patch("src.utils.http._SESSION") as mock_session:
+        reponse = _reponse_206_corps(b"nouveau")
+        reponse.status_code = 200  # serveur ignore Range
+        mock_session.get.return_value = reponse
+        resultat = telecharger_fichier("https://exemple.fr/fichier.csv", destination)
+
+    assert resultat.reussi
+    assert destination.read_bytes() == b"nouveau"
+    assert not part.exists()
+
+
+@responses.activate
+def test_tu89_echec_definitif_supprime_le_part(tmp_path):
+    # TU-89 : 403 avec .part present -> .part supprime, aucun fichier final
+    destination = tmp_path / "fichier.csv"
+    part = tmp_path / "fichier.csv.part"
+    part.write_bytes(b"donnees partielles")
+
+    responses.add(responses.GET, "https://exemple.fr/fichier.csv", body=b"refus", status=403)
+    with _patch.object(_time, "sleep"):
+        resultat = telecharger_fichier("https://exemple.fr/fichier.csv", destination, nb_tentatives=3)
+
+    assert resultat.statut == "echec_technique"
+    assert resultat.motif == "acces_refuse"
+    assert resultat.nb_tentatives == 1
+    assert len(responses.calls) == 1  # pas de retry sur un 403
+    assert not part.exists()
+    assert not destination.exists()
+
+
+def test_tu90_nb_tentatives_succes(tmp_path):
+    # TU-90 : succes au 1er essai -> nb_tentatives=1 ; succes au 3e -> 3
+    destination = tmp_path / "f.csv"
+    with _patch("src.utils.http._SESSION") as mock_session, _patch.object(_time, "sleep"):
+        import requests as _rq
+        mock_session.get.side_effect = [
+            _rq.exceptions.ConnectionError("ko"),
+            _rq.exceptions.ConnectionError("ko"),
+            _reponse_206_corps(b"ok"),
+        ]
+        # 3e reponse : statut 200 via _reponse_206_corps modifie
+        reponse3 = _reponse_206_corps(b"ok")
+        reponse3.status_code = 200
+        mock_session.get.side_effect = [
+            _rq.exceptions.ConnectionError("ko"),
+            _rq.exceptions.ConnectionError("ko"),
+            reponse3,
+        ]
+        resultat = telecharger_fichier("https://exemple.fr/f.csv", destination, nb_tentatives=3)
+    assert resultat.reussi
+    assert resultat.nb_tentatives == 3
+
+    # Succes au 1er essai
+    destination2 = tmp_path / "g.csv"
+    with _patch("src.utils.http._SESSION") as mock_session:
+        reponse = _reponse_206_corps(b"ok")
+        reponse.status_code = 200
+        mock_session.get.return_value = reponse
+        resultat2 = telecharger_fichier("https://exemple.fr/g.csv", destination2)
+    assert resultat2.reussi
+    assert resultat2.nb_tentatives == 1

@@ -32,6 +32,8 @@ Ce document suit l'avancement des tâches pour l'implémentation du projet **ope
 
 #### 3.4. Téléchargement brut (`telecharger_brut`)
 
+> 🔁 T7.1 : réessai intelligent déplacé en 🚧 En cours (implémentation E0..E7, 22/10/2026).
+
 ---
 
 ### 4. Intégration et CLI
@@ -65,10 +67,13 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 ---
 
 ### 8. Améliorations futures (optionnel)
-- [ ] **T7.1** : Ajouter un mécanisme de réessai intelligent pour les échecs techniques.
-- [ ] **T7.2** : Implémenter un nettoyage automatique des anciennes exécutions.
+> 🚧 T7.2 : nettoyage automatique des anciennes exécutions déplacé en 🚧 En cours (implémentation E0..E7, 22/10/2026).
+
+> 🚧 T7.7 : circuit breaker agentique déplacé en 🚧 En cours (implémentation E0..E7, 22/10/2026).
+
 - [ ] **T7.3** : Automatiser les tests agentiques.
 - [ ] **T7.4** : Supporter d'autres sources de données (ex : Eurostat, INSEE).
+- [ ] **T7.6** (optionnel, **P2** — partie 2) : Enrichir l'acquisition avec les descriptions — consigner, lors de l'acquisition d'une ressource, le contenu du champ `description` du jeu (fiche dataset, Markdown) et le champ `description` de la ressource acquise (présent sur ~51 % des ressources ; sondage du 22/10/2026, synthèse dans SESSIONS.md). Hors périmètre retenu : ressources `type=documentation`, schémas déclaratifs, liens externes de documentation, notice embarquée dans les fichiers.
 
 ---
 
@@ -83,6 +88,7 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 > Tâches issues de la relecture guidée du code avec le concepteur (questions/réponses sur Python, Typer, contrats, agent et logique applicative). Aucune modification de code effectuée à cette séance ; ces entrées formalisent les écarts et chantiers détectés.
 
 - [ ] **T10.6** (optionnel, si packaging/portage un jour) : nom de paquet générique `src` (collision/convention), `pyproject.toml` + point d'entrée console, externalisation des chemins relatifs au CWD (`data/`, `conversations/`, registre), `libmagic` sous Windows, chargement du `.env` explicite.
+- [ ] **T10.9** (préfiguration, sans précision pour le moment — prise de date séance 22/10/2026) : organiser la configuration des dossiers de journalisation, de conversations et de stockage des ressources acquises, et le packaging de l'application. Périmètre à définir : centraliser les racines (`logs/`, `conversations/`, `data/raw/`, `data/executions/`) derrière une configuration unique (chemins relatifs au CWD aujourd'hui, en dur dans `src/utils/logging.py`, `src/agent/journal.py`, `src/utils/storage.py`, `src/core/manifeste.py`, `src/main.py`), rendre les chemins configurables (env/fichier de config), et préparer le packaging (`pyproject.toml`, point d'entrée console, nom de paquet — cf. T10.6).
 
 ---
 
@@ -98,6 +104,7 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
   - filtre optionnel `organisation` (id ou slug) sur `rechercher_jeux` (paramètre supporté par l'API v1) — évolution de contrat (v1.2.0 → v1.3.0) ;
   - prompt A1 : consigne d'utiliser le filtre producteur quand la portée demandée implique un producteur identifié ;
   - question associée à instruire : migration de la recherche v1 → v2 (moteur du site, pertinence très supérieure constatée sur le cas « élections présidentielles » ; SESSIONS.md ligne 128 : bascule envisagée puis ajournée, le choix v1 était un arbitrage de cohérence docs/code, pas un choix de pertinence — à réévaluer au vu des constats du 18/10, idéalement via un adaptateur par source en perspective de T7.4).
+- [ ] **T11.4** : Nouvel outil agentique `consulter_registre` — branchement de `rapport_pour_agent()` (RegistreSourcesInaccessibles) dans la boucle agentique, **option B** (outil de lecture invoqué par l'agent quand il en a besoin, pas d'injection dans le contexte). Contexte : le registre (`data/registry.json`) est alimenté par le code et persiste entre les exécutions (T7.2 le conserve), mais l'agent ne le lit jamais aujourd'hui — il ne connaît que les échecs de la conversation en cours (constat séance 22/10/2026, SESSIONS.md). Apports : mémoire cross-session (ne pas retenter une source déjà refusée définitivement), exploitation du champ `statut_reprise` `a_retenter`/`definitif` (T7.1), synthèse finale A4 exhaustive et fidèle (le contrat global prévoit déjà cette lecture « en fin de flux »). Chantier : fonction cœur de lecture (rapport limité/filtrable pour maîtriser la taille — ex. dernières N entrées ou filtre par motif), nouveau contrat JSON + entrée `contrats/manifeste.json` (version 1.0.0), enregistrement dans `TABLE_OUTILS`, consigne prompt A4 (quand consulter : doute sur une source, synthèse finale), tests TU/TI, docs. Frontière code/agent respectée : l'agent décide, le code ne fait que lire.
 
 ---
 
@@ -119,7 +126,9 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 ## 🚧 En cours
 
-
+- [ ] **T7.7** : Circuit breaker agentique par hôte — après 3 échecs transitoires consécutifs (`motif=transitoire`, T7.1) vers un même hôte dans une conversation, cesser de le solliciter : interception **sans consommer le plafond d'invocations**, résultat `echec_technique`/`motif=circuit_ouvert`/`suggestion=proposer_alternative` renvoyé à l'agent, refroidissement 300 s (semi-ouvert), prompt A4 consigné. Périmètre : tous les hôtes (serveurs d'origine + API data.gouv.fr/tabulaire). État **en mémoire, attaché à la conversation** (option A actée 22/10/2026 : détruit à la clôture, aucun timer entre deux exécutions). Paramétrage : `CIRCUIT_BREAKER_SEUIL`, `CIRCUIT_BREAKER_REFROIDISSEMENT`, `CIRCUIT_BREAKER_DESACTIVE=1`. *(En cours depuis le 22/10/2026 — E0..E7 implémentés : `src/agent/circuit.py` (machine à états par hôte, horloge injectable), intégration `src/agent/boucle.py` (`ConversationServeur.circuit`, `_hote_cible` via inventaire/API tabulaire/API plateforme, interception gratuite + alimentation selon `motif`), champ `motif` exposé dans les 4 contrats (rechercher_jeux 1.5.0, telecharger_brut/extraire_ressource/interroger_ressource 1.3.0), prompt A4 ; 445 tests verts (429 avant + TU-101..108, TI-23/24) ; reste : validation en réel par le concepteur (scénario : conversation simulant un hôte en panne → 3 échecs → 4e appel intercepté). Plan : `docs/tasks/T7.7_circuit_breaker_agentique.md`)*
+- [ ] **T7.2** : Nettoyage automatique des anciennes exécutions — périmètre : les 4 familles de traces par `id_execution` (`data/raw/<id>/`, `data/executions/<id>/`, `conversations/<id>/`, `logs/openDataAgent_<id>.log`). *(En cours depuis le 22/10/2026 — E0..E7 implémentés : `src/core/nettoyage.py` (sélection par âge lu dans le préfixe date de l'id, fail-safe sur les noms non reconnus, exécution courante toujours protégée, registres globaux conservés), commande CLI `nettoyer` (`--age-jours` défaut 30, `--simulation`, `--json`, `--id-execution`), hook automatique au callback Typer activé uniquement par `NETTOYAGE_AUTO=1` (désactivé par défaut, `nettoyer` exclu du hook), traces du nettoyage en `log_to_file` (sortie `--json` propre) ; 429 tests verts (416 avant + TU-94..100, TI-21/22) ; reste : validation en réel par le concepteur (scénario : créer une fausse vieille exécution, lancer `nettoyer --simulation` puis réel). Plan : `docs/tasks/T7.2_nettoyage_executions.md`. Hors périmètre : pas d'outil agent, aucun contrat modifié)*
+- [ ] **T7.1** : Mécanisme de réessai intelligent pour les échecs techniques — périmètre : client HTTP uniquement. *(En cours depuis le 22/10/2026 — E0..E7 implémentés : backoff exponentiel + jitter + `Retry-After` (`src/utils/http.py` `_delai_retry`), distinction statuts transitoires (429/502/503/504, retentés) / définitifs (400/401/403/410, jamais retentés, motif explicite), reprise `Range` sur `.part` + rattrapage coupure mid-stream, champ `nb_tentatives` dans les 4 contrats (rechercher_jeux 1.4.0, telecharger_brut/extraire_ressource/interroger_ressource 1.2.0), registre `statut_reprise` `a_retenter`/`definitif` (rétrocompatible) ; 416 tests verts (401 avant + TU-81..93, TI-19/20) ; reste : validation en réel par le concepteur. Plan : `docs/tasks/T7.1_reessai_intelligent.md`. Hors périmètre : circuit breaker agentique (T7.7))*
 - [ ] **T10.1** : Réaliser la mise à disposition des données vers la partie 2 (maillon B7 → P du schéma de conception, `docs/design/conception.mmd`). **Écart le plus structurel** : en l'état, seule la voie 2 (téléchargement brut) matérialise les données sur disque ; la voie 1 (extraction via API tabulaire) ne persiste rien (exploration conversationnelle uniquement) et aucune normalisation commune B7 n'existe dans le code. Chantiers : persistance des extractions tabulaires (ex. export paginé vers `data/raw/`) et pipeline de normalisation commun aux deux voies. Évolution de contrat probable (v1.2.0, ex. option `destination` sur `interroger_ressource` ou nouvel outil). *(En cours — périmètre précisé : cette entrée porte le chantier 2, pipeline de normalisation commun B7 aux deux voies ; le chantier 1, persistance des extractions de la voie 1, est séparé dans T10.7 ci-dessous ; séquence : T10.7 puis T10.1)*
 
 ---
