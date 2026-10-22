@@ -108,6 +108,13 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 ---
 
+### 13. Confort d'utilisation de la CLI (séance du 22/10/2026)
+
+- [ ] **T13.1** : Aide `--help` sur chaque commande — Typer/Click fournit déjà `--help` nativement ; vérifier la complétude des textes d'aide sur les 7 commandes (`search`, `list`, `download`, `extract`, `query`, `acquisitions`, `chat`) et les enrichir (exemples d'utilisation, options obligatoires/facultatives).
+- [ ] **T13.2** : Option silencieuse (ex. `--quiet`) — ne pas afficher les messages de log (`[info]`, `[error]`, …) dans la console ; les logs restent écrits dans le fichier `logs/openDataAgent_<id_execution>.log`. Implémentation : option du callback Typer, transmise à `configure_logging` (`src/utils/logging.py`) qui conditionne le handler console.
+
+---
+
 ## 🚧 En cours
 
 

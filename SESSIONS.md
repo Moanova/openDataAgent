@@ -32,6 +32,22 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 22/10/2026 (2) — Ajout de deux tâches CLI au kanban (T13.1, T13.2)**
+
+### **Contexte**
+- Le concepteur demande l'ajout de deux tâches simples au kanban : aide `--help` sur chaque commande, et option silencieuse (masquer les `[info]`/`[error]` console).
+
+### **Actions réalisées**
+1. Nouvelle section 13 « Confort d'utilisation de la CLI » créée dans 📌 À faire du kanban :
+   - **T13.1** : aide `--help` sur chaque commande — Typer fournit `--help` nativement ; tâche formulée comme vérification + enrichissement des textes d'aide des 7 commandes (`search`, `list`, `download`, `extract`, `query`, `acquisitions`, `chat`).
+   - **T13.2** : option silencieuse (ex. `--quiet`) au callback Typer, transmise à `configure_logging` (`src/utils/logging.py`) pour conditionner le handler console ; les logs fichier restent écrits.
+2. SESSIONS.md : entrée de séance.
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 15/10/2026 — implémentation de la section 10 du kanban (T10.3, T10.5, T10.4, T10.2, T10.7)**
 
 ### **Contexte**
