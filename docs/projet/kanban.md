@@ -90,13 +90,13 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 > Issu de la séance du 18/10/2026 (retours d'usage du concepteur sur le flux agentique) : l'arbitrage final de pertinence doit pouvoir se faire *pendant* la conversation, pas seulement après l'acquisition.
 
 > ✅ T11.1 terminée le 20/10/2026 (validation réelle par le concepteur) — déplacée en colonne ✅ Terminé.
+> ✅ Prompt A1/A2 (préalable, séance du 18/10/2026) — déplacée en colonne ✅ Terminé le 22/10/2026 (revue du kanban).
 
 - [ ] **T11.2** : Outil `rechercher_organisations` + filtre organisation sur `rechercher_jeux` (issu du constat des traces du 18/10/2026 : l'agent a consacré 3 invocations à chercher "Ministère de l'Intérieur" en mots-clés, sans succès — il n'existe aucun moyen direct de cibler un producteur). Chantier :
   - fonction cœur de recherche d'organisations par nom (endpoint `/api/1/organizations/`, déjà sondé — pagination, nom, slug, id, badges) ;
   - filtre optionnel `organisation` (id ou slug) sur `rechercher_jeux` (paramètre supporté par l'API v1) — évolution de contrat (v1.2.0 → v1.3.0) ;
   - prompt A1 : consigne d'utiliser le filtre producteur quand la portée demandée implique un producteur identifié ;
   - question associée à instruire : migration de la recherche v1 → v2 (moteur du site, pertinence très supérieure constatée sur le cas « élections présidentielles » ; SESSIONS.md ligne 128 : bascule envisagée puis ajournée, le choix v1 était un arbitrage de cohérence docs/code, pas un choix de pertinence — à réévaluer au vu des constats du 18/10, idéalement via un adaptateur par source en perspective de T7.4).
-- [X] **Prompt A1/A2 (préalable, séance du 18/10/2026)** : règle générique sur les qualificatifs de portée (géographique, temporelle, juridique) — ils expriment un critère de sélection, pas de recherche ; vérification à l'étape A2 de la cohérence portée demandée / organisation productrice (une mairie ne produit pas de données nationales). Cas de test : « résultats nationaux des élections présidentielles » doit retenir un producteur national, pas une commune.
 
 ---
 
@@ -127,6 +127,7 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
   - normalisation : mapping `derniere_maj` (v1 `last_modified` → v2 `last_update`) dans la couche HTTP/core ; filtre de licence et badges attendus sans changement (même modèle `organization`) — à vérifier en priorité (chantier B T7.5) ;
   - docs d'architecture mises à jour ; aucune évolution des sorties normalisées attendue (l'isolant statut/message/donnees absorbe le changement) ;
   - validation en réel : TB-01 rejoué + cas étalon « élections présidentielles » (le jeu du Ministère de l'Intérieur doit apparaître en page 1). *(Terminé le 19/10/2026 — E1..E8 : bascule pleine v2, fenetre_maj déprécié (contrat v1.3.0), inventaire en sous-ressource reconstituée, mapping derniere_maj ← last_update ; 361 puis 366 tests verts ; validation en réel par le concepteur : cas étalon satisfait — jeux du Ministère de l'Intérieur en page 1, les 2 tours 2022 acquis ; correctifs post-validation : .env v1, verrou A4 anti-hallucination, consigne A3 ressource non indexée, prompt externalisé dans config/prompt_systeme.txt)*
+- [X] **Prompt A1/A2 (préalable, séance du 18/10/2026)** : règle générique sur les qualificatifs de portée (géographique, temporelle, juridique) — ils expriment un critère de sélection, pas de recherche ; vérification à l'étape A2 de la cohérence portée demandée / organisation productrice (une mairie ne produit pas de données nationales). Cas de test : « résultats nationaux des élections présidentielles » doit retenir un producteur national, pas une commune. *(Terminé le 18/10/2026 — consigne dans `config/prompt_systeme.txt`, commit `ea89453` ; déplacé en ✅ Terminé le 22/10/2026 lors de la revue du kanban)*
 - [X] **T7.5** : Registre descriptif des licences et génération de mention d'attribution (`src/core/licences_descriptif.py`) :
   - registre des propriétés par licence (attribution obligatoire, partage à l'identique, usage commercial), miroir de la politique documentée dans `docs/README.md` (section Politique de licence) ;
   - `mention_attribution()` : génération de la mention prête à afficher à partir des métadonnées de l'inventaire (organisation, licence, date de mise à jour) ;

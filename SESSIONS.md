@@ -13,13 +13,14 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 ### **Vérification préalable (état réel vs kanban)**
 - **T10.1** : confirmée **non terminée** — reste en 🚧 En cours. Seul le chantier 1 (persistance voie 1) est livré (via T10.7) ; le chantier 2 (pipeline de normalisation B7 commun aux deux voies) n'existe pas dans le code (aucun commit, aucune référence dans `src/`).
 - **T10.8** : E0..E7 faits (385 tests verts + correctif E8b/TU-80) ; validation réelle partielle (scénario agentique validé via T11.1 E8, restait le scénario manuel).
-- **Prompt A1/A2** : entrée déjà cochée [X] dans la section 11 ; laissée en place par convention du projet (traçabilité locale des entrées cochées, cf. revue kanban du 19/10).
+- **Prompt A1/A2** : entrée cochée [X] depuis le 18/10 (commit `ea89453`) mais restée en section 11 — oubli lors de la clôture. La phrase de la séance du 19/10 (« convention du projet ») était une constatation, pas une règle (démentie le 20/10 par le déplacement de T11.1).
 
 ### **Actions réalisées**
 1. **T10.8 clôturée** : le concepteur a effectué les tests en réel restants (scénario manuel `download` + `acquisitions`) — validation réelle complète.
    - Kanban : entrée déplacée de la section 12 vers ✅ Terminé, avec note de déplacement en tête de section (convention T11.1).
    - Suivi `docs/tasks/T10.8_manifeste_acquisitions.md` : case « Validation en réel par le concepteur » cochée, statut tâche terminée.
-2. SESSIONS.md : entrée de séance.
+2. **Prompt A1/A2 déplacée en ✅ Terminé** (correction d'un oubli — entrée cochée depuis le 18/10 mais restée en section 11).
+3. SESSIONS.md : entrée de séance.
 
 ### **État en fin de séance**
 - **T10.8 : ✅ Terminée** (E0..E7 + validation réelle agentique et manuelle).
