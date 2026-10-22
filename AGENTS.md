@@ -6,7 +6,7 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
 ---
 
 ## **1. Reprise de contexte à chaque séance**
-### **Étapes automatiques (sans demande utilisateur)**
+### **Étapes automatiques (sans initiative de l'agent)**
 À chaque début de séance, l'agent **recharge automatiquement** les fichiers clés suivants pour reprendre le contexte :
 1. **`docs/design/conception.md`** pour reprendre connaissance du schéma de conception du projet.
 2. **`docs/specs/architecture.md`** pour reprende connaissance de l'architecture technique du projet.
@@ -18,7 +18,7 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
 8. **`docs/projet/kanban.md`** : pour reprendre connaissance du tableau des tâches.
 
 
-### **Étapes à suivre (sur demande uniquement)**
+### **Étapes à suivre (sur initiative de l'utilisateur)**
 1. **Vérifier les derniers commits** (si modifications hors session).
    - Exemple de demande :
      ```markdown
@@ -34,8 +34,8 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
 
 ## **2. Workflow par tâche**
 
-### **Étape 1 : Choix de la tâche (Kanban)**
-- **Action** : Identifier **uniquement la tâche explicitement demandée par l'utilisateur** dans `kanban.md` et la déplacer dans le bon paragraphe ("À faire", "En cours", "Terminé").
+### **Étape 1 : Choix de la tâche (sur initiative de l'utilisateur)**
+- **Action** : Identifier **la tâche explicitement demandée par l'utilisateur** dans `kanban.md` et la déplacer dans le bon paragraphe ("À faire", "En cours", "En revue", "Terminé").
   - *L'agent ne choisit **jamais** automatiquement une tâche prioritaire, mais peut proposer une évaluation des priorités si l'utilisateur le demande.*
 - **Vérification** : S'assurer que ses dépendances sont terminées (ex : T1.3 avant T2.1) et vérifier s'il y a des dépendances éventuelles avec d'autres tâches.
 - **Exemple de demande** :
@@ -49,7 +49,7 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
 
 ---
 
-### **Étape 2 : Planification (sur demande)**
+### **Étape 2 : Planification (sur initiative de l'utilisateur)**
 - **Actions** :
   1. Lire les spécifications associées à la tâche dans les sources suivantes :
      - `docs/architecture/<nom_contrat>.md` (ex : `rechercher_jeux.md`).
@@ -67,7 +67,7 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
 
 ---
 
-### **Étape 3 : Implémentation (sur demande)**
+### **Étape 3 : Implémentation (sur initiative de l'utilisateur)**
 - **Actions** :
   1. Coder la fonctionnalité en respectant les **invariants** du projet.
   2. Coder les **tests associés** (unitaires et/ou d'intégration).
@@ -78,7 +78,7 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
 
 ---
 
-### **Étape 4 : Tests et itérations (sur demande)**
+### **Étape 4 : Tests et itérations (sur initiative de l'agent à la suite de l'étape 3)**
 - **Actions** :
   1. Lancer les tests avec `pytest`.
      - Exemple de commande :
@@ -90,27 +90,32 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
      - **2ème tentative** : vérifier les hypothèses et corriger.
      - **3ème tentative** : **Arrêter** et documenter le blocage.
 - **Règle d'arrêt** : Si un test échoue à la troisième tentative, créer une entrée dans [`BLOCKERS.md`](BLOCKERS.md) et passer à une autre tâche.
-- **Exemple de demande** :
-  ```markdown
-  Peux-tu lancer les tests pour la tâche T2.1 et corriger les erreurs si nécessaire ?
-  ```
 
 ---
 
-### **Étape 5 : Validation (sur demande)**
+### **Étape 5 : Validation agent (sur initiative de l'agent à la suite de l'étape 4)**
 - **Actions** :
   1. Valider que tous les tests passent et que les critères d'acceptation sont respectés.
-  2. Mettre à jour `docs/projet/kanban.md` (déplacer la tâche en **✅ Terminé**).
+  2. Mettre à jour `docs/projet/kanban.md` (déplacer la tâche en **En revue**).
+  3. Commiter les changements avec un message explicite.
+
+---
+
+### **Étape 6 : Validation utilisateur (sur initiative de l'utilisateur)**
+- **Actions** :
+  1. Valider que tous les tests passent et que les critères d'acceptation sont respectés.
+  2. Mettre à jour `docs/projet/kanban.md` (déplacer la tâche en **En revue**).
   3. Commiter les changements avec un message explicite.
 - **Exemple de demande** :
   ```markdown
-  Peux-tu valider la tâche T2.1 et la déplacer en ✅ Terminé dans le kanban ?
+  Peux-tu valider la tâche T2.1 et la déplacer en Terminé dans le kanban ?
+  Peux-tu faire un commit et pousser les changements sur le repository ?
   ```
 
 ---
 
 ## **3. Règles supplémentaires**
-### **A. Documentation systématique (sur demande)**
+### **A. Documentation systématique (sur initiative de l'agent et éventuelle initiative complémentaire de l'utilisateur)**
 - Pour chaque tâche, créer un **fichier de suivi** dans `docs/tasks/` (ex : `T2.1_schémas_pydantic.md`).
   ```markdown
   # Tâche T2.1 : Schémas Pydantic
@@ -133,7 +138,7 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
 
 ---
 
-### **B. Gestion des blocages (sur demande)**
+### **B. Gestion des blocages (sur initiative de l'agent à l'issue de l'étape 4)**
 - Si une tâche est bloquée :
   1. Créer une entrée dans [`BLOCKERS.md`](BLOCKERS.md) :
      ```markdown
@@ -149,6 +154,11 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
   ```markdown
   Peux-tu documenter ce blocage dans `BLOCKERS.md` et passer à une autre tâche ?
   ```
+
+---
+
+### **C. Gestion des changements (sur initiative de l'utilisateur à l'issue de l'étape 5 ou durant l'étape 6)**
+- Ne jamais faire un commit, ni pousser un changement dans le repository sans demande explicite de l'utilisateur.
 
 ---
 
@@ -177,7 +187,7 @@ Les actions suivantes peuvent être demandées en séance **sans être référen
 | Fichier                  | Rôle                                                                                            |
 |--------------------------|-------------------------------------------------------------------------------------------------|
 | `SESSIONS.md`            | Journal des **actions, décisions et blocages** par séance. Utilisé pour la reprise de contexte. |
-| `docs/projet/kanban.md`          | Suivi des tâches (À faire → En cours → Terminé).                                                |
+| `docs/projet/kanban.md`  | Suivi des tâches (À faire → En cours → En revue → Terminé).                                     |
 | `tests/plan_tests.md`    | Plan de tests (TU, TI, TB) et couverture des critères d'acceptabilité.                          |
 | `docs/tasks/`            | Suivi détaillé par tâche (optionnel).                                                           |
 | `BLOCKERS.md`            | Liste des **blocages non résolus** (documentés après 4 échecs de test).                         |
