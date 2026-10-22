@@ -48,6 +48,26 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 22/10/2026 (3) — Annulation T13.1, processus simplifié (pas de PR, push direct sur dev sur demande)**
+
+### **Contexte**
+- Le concepteur a testé : Typer/Click fournit déjà `--help` nativement sur chaque commande, et c'est suffisant. T13.1 devient inutile.
+- **Nouveau processus acté** : plus de commits/pousseurs intermédiaires sans demande explicite ; à l'avenir, les changements sont poussés directement sur `dev` uniquement sur demande du concepteur ; plus de PR (processus simplifié).
+
+### **Actions réalisées**
+1. **T13.1 annulée** : nouvelle section 🚫 Annulé créée dans le kanban (5ᵉ colonne, ajoutée à l'en-tête) ; T13.1 déplacée de la section 13 vers 🚫 Annulé (entrée barrée, motif consigné : `--help` natif Typer suffisant, testé par le concepteur). T13.2 (option `--quiet`) conservée en 📌 À faire, section 13.
+2. **Fusion PR #2** (`vibe/t10-8-cloture-kanban-f0e4aa` → `dev`) : la fusion via CLI/API est **impossible** (`gh pr merge` et `PUT /pulls/2/merge` refusés — « Merging pull requests via CLI is not allowed », le token n'a pas les droits de mutation sur les PR). Seule PR ouverte créée par l'agent ; la PR #1 (du concepteur) était déjà fusionnée le 13/10. **Fallback acté avec le concepteur** (qui a demandé de fusionner) : merge local sur `dev` + push direct, la PR #2 devra être fermée manuellement depuis l'interface GitHub.
+3. SESSIONS.md : entrée de séance.
+
+### **État en fin de séance**
+- Kanban à jour : T10.8 ✅, Prompt A1/A2 ✅, T13.1 🚫 Annulé, T13.2 📌 À faire.
+- **Contenu de la séance poussé directement sur `dev`** (merge de `vibe/t10-8-cloture-kanban-f0e4aa`, 4 commits) ; PR #2 restée ouverte faute de droits de fermeture — à fermer manuellement.
+
+### **Blocages**
+- Fusion/fermeture de PR impossible via CLI (permissions insuffisantes sur le dépôt) — contourné par push direct sur `dev`.
+
+---
+
 ## **Séance du 15/10/2026 — implémentation de la section 10 du kanban (T10.3, T10.5, T10.4, T10.2, T10.7)**
 
 ### **Contexte**

@@ -5,6 +5,7 @@ Ce document suit l'avancement des tâches pour l'implémentation du projet **ope
 - **🚧 En cours** : Tâches en cours d'implémentation.
 - **🔍 En revue** : Tâches prêtes pour une revue ou des tests.
 - **✅ Terminé** : Tâches validées.
+- **🚫 Annulé** : Tâches abandonnées (remplacées par une solution existante ou rendues inutiles).
 
 ---
 
@@ -110,7 +111,8 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 
 ### 13. Confort d'utilisation de la CLI (séance du 22/10/2026)
 
-- [ ] **T13.1** : Aide `--help` sur chaque commande — Typer/Click fournit déjà `--help` nativement ; vérifier la complétude des textes d'aide sur les 7 commandes (`search`, `list`, `download`, `extract`, `query`, `acquisitions`, `chat`) et les enrichir (exemples d'utilisation, options obligatoires/facultatives).
+> 🚫 T13.1 annulée le 22/10/2026 (Typer fournit déjà `--help` nativement, suffisant tel quel) — déplacée en colonne 🚫 Annulé.
+
 - [ ] **T13.2** : Option silencieuse (ex. `--quiet`) — ne pas afficher les messages de log (`[info]`, `[error]`, …) dans la console ; les logs restent écrits dans le fichier `logs/openDataAgent_<id_execution>.log`. Implémentation : option du callback Typer, transmise à `configure_logging` (`src/utils/logging.py`) qui conditionne le handler console.
 
 ---
@@ -216,3 +218,9 @@ C'est la raison d'être du projet : l'agent Mistral porte les étapes A1 à A4 d
 - [X] **T1.3** : Initialiser le logging avec `structlog` (`src/utils/logging.py`). *(Terminé le 10/10/2026)*
 - [X] **T2.1** : Créer les schémas Pydantic pour les contrats (`src/contracts/`). *(Terminé le 12/10/2026)*
 - [X] **T2.2** : Valider les schémas avec `jsonschema` pour les réponses de l'API data.gouv.fr. *(Terminé le 12/10/2026 — tests TB/TA non passés dans la sandbox, à exécuter en local)*
+
+---
+
+## 🚫 Annulé
+
+- [ ] ~~**T13.1** : Aide `--help` sur chaque commande~~ *(Annulée le 22/10/2026 — Typer/Click fournit déjà `--help` nativement sur chaque commande, suffisant tel quel ; testé et validé par le concepteur. T13.2 conservée.)*
