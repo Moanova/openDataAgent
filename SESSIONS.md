@@ -5,6 +5,27 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 23/10/2026 (17) — T10.1 : correctif journalisation copie conforme (TU-134)**
+
+### **Contexte**
+- Observation du concepteur en test rapide : la copie sans retraitement d'un CSV conforme (action `conforme`) n'était pas journalisée, contrairement aux autres actions (feuilles exportées, avertissements).
+
+### **Actions réalisées**
+1. **Correctif** (`src/core/normalisation.py`, `_traiter_fichier`) : ajout de `logger.info` + `log_to_file` (événement « CSV conforme copie tel quel », champs `source`/`fichier`) sur la branche `conforme`.
+2. **Test TU-134** (`tests/unit/test_normalisation.py`) : vérifie le log console (handler sur le logger racine — caplog ne capture pas les enregistrements rendus par ConsoleRenderer sur un logger sans handler propre) et le log fichier (JSON, événement + champ `source`).
+3. **Docs** : `plan_tests.md` (TU-134), suivi T10.1 (E5).
+
+### **Vérifications**
+- **491 tests verts** (490 avant + 1).
+
+### **État en fin de séance**
+- T10.1 toujours en 🔍 En revue (validation en réel en cours par le concepteur).
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 23/10/2026 (16) — T10.1 : normalisation B7 (commande CLI `normaliser`, E1..E6)**
 
 ### **Contexte**

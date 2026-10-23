@@ -462,3 +462,67 @@ def test_ti27_cli_normaliser_cycle_complet(tmp_path, monkeypatch):
     resultat = runner.invoke(app, ["--silencieux", "normaliser", "20200101_000000_xxxxxx"])
     assert resultat.exit_code == 1
     assert "erreur_parametres" in resultat.output
+
+
+# ---------------------------------------------------------------------------
+# TU-134 — Journalisation de la copie sans retraitement (CSV conforme)
+# ---------------------------------------------------------------------------
+
+def test_tu134_copie_conforme_journalisee(tmp_path, monkeypatch):
+    # TU-134 : la copie sans retraitement d'un CSV conforme est journalisée
+    # (console via logger.info + fichier via log_to_file), comme les autres
+    # actions de la normalisation.
+    import json as json_module
+    import logging
+
+    from src.utils.logging import configure_logging
+
+    monkeypatch.chdir(tmp_path)
+    configure_logging(id_execution="test_tu134")
+    dossier = tmp_path / "data" / "raw" / EXEC_ID
+    dossier.mkdir(parents=True)
+    (dossier / "71ff1335_donnees.csv").write_bytes("nom,age\nalice,30\n".encode("utf-8"))
+
+    # Capture console : structlog propage vers le logger racine (caplog ne
+    # capture pas les enregistrements rendus par ConsoleRenderer sur un
+    # logger sans handler propre).
+    enregistres = []
+
+    class _Capture(logging.Handler):
+        def emit(self, record):
+            enregistres.append(record)
+
+    racine = logging.getLogger()
+    capteur = _Capture()
+    racine.addHandler(capteur)
+    try:
+        bilan = normaliser_execution(
+            EXEC_ID,
+            racine_brut=tmp_path / "data" / "raw",
+            racine_traite=tmp_path / "data" / "processed",
+        )
+    finally:
+        racine.removeHandler(capteur)
+    assert bilan["statut"] == "succes"
+    assert _bilan(bilan, "conforme", "71ff1335_donnees.csv")["action"] == "conforme"
+
+    # Log console (message rendu par structlog)
+    assert any(
+        "CSV conforme copie tel quel" in r.getMessage()
+        and "71ff1335_donnees.csv" in r.getMessage()
+        for r in enregistres
+    )
+
+    # Log fichier (log_to_file -> JSON)
+    log_fichier = tmp_path / "logs" / "openDataAgent_test_tu134.log"
+    assert log_fichier.is_file()
+    lignes = [
+        json_module.loads(l)
+        for l in log_fichier.read_text(encoding="utf-8").splitlines()
+        if l.strip()
+    ]
+    assert any(
+        e.get("event") == "CSV conforme copie tel quel"
+        and e.get("source") == "71ff1335_donnees.csv"
+        for e in lignes
+    )

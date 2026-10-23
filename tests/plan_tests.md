@@ -495,3 +495,4 @@ Périmètre : `src/core/normalisation.py` (cœur), `src/main.py` (commande `norm
 | TU-132 | Bilan normalisé et cas limites | exécution inconnue → `erreur_parametres` ; dossier sans fichier → `succes` vide (TU-132b) | Bloquant |
 | TU-133 | `normaliser_toutes_executions` | agrégation multi-exécutions, exclusion de l'exécution courante | Bloquant |
 | TI-27 | Commande CLI `normaliser` | cycle complet : `--simulation` (rien écrit) → réel → re-lancement (`--json`, tout `ignore`) → sans argument → id inconnu (exit 1) | Bloquant |
+| TU-134 | Journalisation de la copie sans retraitement | CSV conforme copié tel quel : log console (`logger.info`) + log fichier (`log_to_file`, événement JSON `CSV conforme copie tel quel`) | Bloquant |

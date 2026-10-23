@@ -293,6 +293,16 @@ def _traiter_fichier(
             return {"fichier": source.name, "action": "ignore", "detail": "deja produit"}
         if _est_csv_conforme(source):
             shutil.copyfile(source, destination)
+            logger.info(
+                "CSV conforme copie tel quel",
+                source=source.name,
+                fichier=destination.name,
+            )
+            log_to_file(
+                "CSV conforme copie tel quel",
+                source=source.name,
+                fichier=destination.name,
+            )
             return {"fichier": destination.name, "action": "conforme", "detail": "CSV deja conforme"}
         resultat = _normaliser_csv(source, destination)
         return {
