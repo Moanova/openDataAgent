@@ -5,6 +5,27 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 23/10/2026 (22) — Clôture de séance : documentation des branches, commit final v1, fusion dev → main**
+
+### **Contexte**
+- Le concepteur valide la fin de la v1 et demande la clôture de séance : mise à jour du README (état des branches) et de SESSIONS.md, commit + push sur `dev`, puis mise à jour de `main` avec le contenu de `dev`.
+
+### **Actions réalisées**
+1. **README** (`docs/README.md`) : nouvelle section « Branches et versions » — `main` = version 1 du projet (état de `dev` au 23/10/2026), `dev` = développement courant (v2), `main` mise à jour depuis `dev` à chaque jalon validé.
+2. **SESSIONS.md** : présente entrée de clôture.
+3. **Commit + push** sur `dev` (dernier commit de la séance).
+4. **Mise à jour de `main`** : fast-forward `dev` → `main` (vérifié : `main` était ancêtre de `dev`), push sur `origin/main`.
+
+### **État en fin de séance**
+- `main` et `dev` pointent sur le même commit — **version 1 complète** (52 tâches terminées, 0 en revue, 0 en cours).
+- **507 tests verts.**
+- Prochaine étape : **version 2** (tâches optionnelles/P2 du kanban : T7.3, T7.4, T7.6, T10.6, T10.9, T11.2).
+
+### **Blocages**
+- Aucun. Séance close.
+
+---
+
 ## **Séance du 23/10/2026 (21) — Clôture : T13.4 terminée (validée en réel), commit + push groupés, fin de la v1**
 
 ### **Contexte**

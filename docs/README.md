@@ -353,6 +353,13 @@ Le **prompt système** de l'agent est externalisé dans [`config/prompt_systeme.
 
 ---
 
+## 🌿 Branches et versions
+
+- **`main`** : branche stable. Elle contient l'état de la branche `dev` tel qu'à la clôture de la **version 1** du projet (23/10/2026) : CLI complète, agent Mistral multi-tours, normalisation B7 (`data/processed/`), réalignement linguistique complet (commandes, options et modules internes en français). C'est la version de référence.
+- **`dev`** : branche de développement. Tout le travail courant (évolutions de la **version 2**) y est fait ; `main` est mise à jour depuis `dev` à chaque jalon validé (fast-forward).
+
+---
+
 ## 📋 Suivi des tâches
 Le suivi des tâches est disponible dans [`docs/projet/kanban.md`](projet/kanban.md).
 
