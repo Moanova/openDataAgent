@@ -15,14 +15,12 @@ Ce document suit l'avancement des tâches pour l'implémentation du projet **ope
 # Tableau du kanban
 
 ## À faire
-> Toutes les tâches restantes sont optionnelles ou en prévision de la partie 2 (P2).
-
-T7.3
-T7.4
-T7.6
-T10.6
-T10.9
-T11.2
+T7.3 (optionnel)
+T7.4 (à traiter dans la version 2 du projet)
+T7.6 (optionnel ou à traiter dans la version 2 du projet)
+T10.6 (optionnel)
+T10.9 (optionnel ou à traiter dans la version 2 du projet)
+T11.2 (optionnel ou à traiter dans la version 2 du projet)
 
 
 ## En cours
@@ -249,7 +247,7 @@ Nettoyage automatique des anciennes exécutions — périmètre : les 4 familles
 Automatiser les tests agentiques.
 
 
-## T7.4 — Améliorations futures (optionnel)
+## T7.4 — Améliorations futures (à traiter dans la version 2 du projet)
 Supporter d'autres sources de données (ex : Eurostat, INSEE).
 
 
@@ -266,7 +264,7 @@ Registre descriptif des licences et génération de mention d'attribution (`src/
 *Contexte : cette tâche prépare la partie 2 du projet (exploitation et visualisation des données) : l'usage légitime des données acquises dépend des obligations propres à chaque licence (attribution, partage à l'identique). La politique d'acquisition (`src/core/licence.py`) est terminée et ne dépend pas de ces travaux.*
 
 
-## T7.6 *(optionnel, P2 — partie 2)*
+## T7.6 *(optionnel ou à traiter dans la version 2 du projet)*
 Enrichir l'acquisition avec les descriptions — consigner, lors de l'acquisition d'une ressource, le contenu du champ `description` du jeu (fiche dataset, Markdown) et le champ `description` de la ressource acquise (présent sur ~51 % des ressources ; sondage du 22/10/2026, synthèse dans SESSIONS.md). Hors périmètre retenu : ressources `type=documentation`, schémas déclaratifs, liens externes de documentation, notice embarquée dans les fichiers.
 
 
@@ -310,7 +308,7 @@ Manifeste d'acquisition par exécution — écriture au cœur, à chaque acquisi
 *Contexte : issu du constat de la validation T11.3 : en mode agentique, rien ne relie simplement un fichier de `data/raw/<id_execution>/` au jeu de données correspondant (l'inventaire persistant T10.2 n'est écrit que par les commandes CLI ; en mode `chat`, l'inventaire vit en mémoire et disparaît). Préparation directe de T10.1 (normalisation B7 : la partie 2 doit consommer fichier + jeu + licence + mention d'attribution).*
 
 
-## T10.9 *(optionnel, préfiguration — prévision partie 2 ; sans précision pour le moment, prise de date séance 22/10/2026)*
+## T10.9 *(optionnel ou à traiter dans la version 2 du projet, préfiguration — prévision partie 2 ; sans précision pour le moment, prise de date séance 22/10/2026)*
 Organiser la configuration des dossiers de journalisation, de conversations et de stockage des ressources acquises, et le packaging de l'application. Périmètre à définir : centraliser les racines (`logs/`, `conversations/`, `data/raw/`, `data/executions/`) derrière une configuration unique (chemins relatifs au CWD aujourd'hui, en dur dans `src/utils/logging.py`, `src/agent/journal.py`, `src/utils/storage.py`, `src/core/manifeste.py`, `src/main.py`), rendre les chemins configurables (env/fichier de config), et préparer le packaging (`pyproject.toml`, point d'entrée console, nom de paquet — cf. T10.6).
 
 
@@ -320,7 +318,7 @@ Mode conversationnel multi-tours (`chat`) — REPL, contexte côté serveur (API
 *Contexte : issu de la séance du 18/10/2026 (retours d'usage du concepteur sur le flux agentique) — l'arbitrage final de pertinence doit pouvoir se faire pendant la conversation, pas seulement après l'acquisition.*
 
 
-## T11.2 — Recherche par producteur *(optionnel)*
+## T11.2 — Recherche par producteur *(optionnel ou à traiter dans la version 2 du projet)*
 Outil `rechercher_organisations` + filtre organisation sur `rechercher_jeux` (issu du constat des traces du 18/10/2026 : l'agent a consacré 3 invocations à chercher « Ministère de l'Intérieur » en mots-clés, sans succès — il n'existe aucun moyen direct de cibler un producteur). Chantier :
 - fonction cœur de recherche d'organisations par nom (endpoint `/api/1/organizations/`, déjà sondé — pagination, nom, slug, id, badges) ;
 - filtre optionnel `organisation` (id ou slug) sur `rechercher_jeux` (paramètre supporté par l'API v1) — évolution de contrat (v1.2.0 → v1.3.0) ;
