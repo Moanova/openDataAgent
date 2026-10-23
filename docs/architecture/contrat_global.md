@@ -21,8 +21,8 @@ Ce document spécifie les conventions transversales applicables à l'ensemble de
 ## Rôles et frontières
 
 - L'agent décide : reformulation du thème, sélection des jeux, classification des ressources ambiguës, synthèse du registre.
-- Le code exécute : tous les appels HTTP, le filtre de licence, la normalisation, la persistance. L'agent n'accède jamais directement au réseau ; il ne dispose que des quatre outils décrits dans ce répertoire.
-- Le registre des sources inaccessibles est en écriture interne uniquement : aucune fonction exposée ne permet de le modifier ou de le vider. L'agent n'y accède qu'en lecture, en fin de flux, pour l'étape de synthèse.
+- Le code exécute : tous les appels HTTP, le filtre de licence, la normalisation, la persistance. L'agent n'accède jamais directement au réseau ; il ne dispose que des six outils décrits dans ce répertoire.
+- Le registre des sources inaccessibles est en écriture interne uniquement : aucune fonction exposée ne permet de le modifier ou de le vider. L'agent n'y accède qu'en lecture, via l'outil `consulter_registre` (T11.4) — invoquable à tout moment (doute sur une source, synthèse finale), pas seulement en fin de flux.
 
 ## Format de réponse normalisé
 
@@ -77,5 +77,7 @@ Deux familles d'entrées :
 - Échecs techniques (motifs `serveur_origine_bloque`, `statut_http_*`), écrits par `telecharger_brut`.
 
 Chaque entrée comporte : horodatage, motif, identifiant et organisation du jeu, licence, URL, détail. Le registre est persistant entre les exécutions. Une entrée technique peut être re-testée lors d'une exécution ultérieure ; une entrée juridique est définitive tant que la licence du jeu ne change pas.
+
+T11.4 : l'outil `consulter_registre` (contrat v1.0.0, `src/core/registre.py`) expose le registre en lecture seule à l'agent, avec une limite `derniere_n` (défaut 20) et un filtre `motif` pour maîtriser la taille du rapport ; `total` indique la taille réelle du registre hors limite et hors filtre.
 
 T7.1 : les entrées techniques portent un champ additif `statut_reprise` — `a_retenter` (échec transitoire épuisé : réseau, 429/502/503/504 après les tentatives) ou `definitif` (refus définitif du serveur : 400/401/403/410). Les entrées antérieures au champ (et les exclusions juridiques) sont lues avec la valeur par défaut `definitif` — aucune entrée n'est modifiée sur disque.

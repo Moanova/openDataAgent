@@ -116,6 +116,7 @@ _REGISTRE_MODELES: dict[str, tuple[str, str, str]] = {
     "interroger_ressource": ("interroger_ressource", "InterrogerRessourceInput", "InterrogerRessourceOutput"),
     "telecharger_brut": ("telecharger_brut", "TelechargerBrutInput", "TelechargerBrutOutput"),
     "extraire_ressource": ("extraire_ressource", "ExtraireRessourceInput", "ExtraireRessourceOutput"),
+    "consulter_registre": ("consulter_registre", "ConsulterRegistreInput", "ConsulterRegistreOutput"),
 }
 
 

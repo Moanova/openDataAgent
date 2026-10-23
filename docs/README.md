@@ -166,7 +166,7 @@ python -m src.main --quiet search "dette publique"
 | `--plafond-lignes` | Nombre maximum de lignes extraites ; au-delà, succès partiel avec troncature signalée. | `PLAFOND_EXTRACTION` (10000) |
 | `--id-execution`, `--json` | Comme ci-dessus. | — |
 
-La pagination est conduite par la commande : le CSV complet (en-tête + toutes les lignes, ou jusqu'au plafond) est écrit dans `data/raw/<id_execution>/`. En mode `chat`, l'agent dispose du même pouvoir via le 5ᵉ outil `extraire_ressource` — la frontière est : `query` explore sans écrire, `extract` acquiert sur disque.
+La pagination est conduite par la commande : le CSV complet (en-tête + toutes les lignes, ou jusqu'au plafond) est écrit dans `data/raw/<id_execution>/`. En mode `chat`, l'agent dispose du même pouvoir via le 5ᵉ outil `extraire_ressource` — la frontière est : `query` explore sans écrire, `extract` acquiert sur disque. L'agent dispose en outre d'un 6ᵉ outil, `consulter_registre`, en lecture seule : il consulte le registre persistant des sources inaccessibles (toutes exécutions confondues, avec `statut_reprise` `a_retenter`/`definitif`) quand il doute d'une source et pour sa synthèse finale — mémoire cross-session, sans jamais modifier le registre.
 
 **`download` — téléchargement brut (voie 2)** :
 | Option | Description | Défaut |

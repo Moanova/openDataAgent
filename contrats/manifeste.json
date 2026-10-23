@@ -1,5 +1,5 @@
 {
-  "manifeste_version": "1.1",
+  "manifeste_version": "1.2",
   "compatibilite_api_mistral": "function-calling-v1",
   "outils": [
     {
@@ -31,6 +31,12 @@
       "fichier": "extraire_ressource.json",
       "version": "1.3.0",
       "changelog": "T7.7 (circuit breaker agentique) : champ additif motif dans donnees (motif T7.1 de l'échec HTTP, ou 'circuit_ouvert' sur interception)."
+    },
+    {
+      "nom": "consulter_registre",
+      "fichier": "consulter_registre.json",
+      "version": "1.0.0",
+      "changelog": "T11.4 : version initiale du contrat. Lecture seule du registre persistant des sources inaccessibles (limite derniere_n, filtre motif)."
     }
   ]
 }

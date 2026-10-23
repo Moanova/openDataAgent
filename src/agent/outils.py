@@ -26,6 +26,7 @@ from typing import Any, Dict
 
 from pydantic import BaseModel, ValidationError
 
+from src.contracts.consulter_registre import ConsulterRegistreInput
 from src.contracts.extraire_ressource import ExtraireRessourceInput
 from src.contracts.interroger_ressource import InterrogerRessourceInput
 from src.contracts.lister_ressources import ListerRessourcesInput
@@ -34,6 +35,7 @@ from src.contracts.telecharger_brut import TelechargerBrutInput
 from src.core.download import telecharger_brut
 from src.core.extraction import extraire_ressource
 from src.core.query import interroger_ressource
+from src.core.registre import consulter_registre
 from src.core.resources import lister_ressources
 from src.core.search import rechercher_jeux
 
@@ -43,6 +45,7 @@ TABLE_OUTILS: Dict[str, Any] = {
     "interroger_ressource": interroger_ressource,
     "telecharger_brut": telecharger_brut,
     "extraire_ressource": extraire_ressource,
+    "consulter_registre": consulter_registre,
 }
 
 MODELES_INPUT: Dict[str, type[BaseModel]] = {
@@ -51,6 +54,7 @@ MODELES_INPUT: Dict[str, type[BaseModel]] = {
     "interroger_ressource": InterrogerRessourceInput,
     "telecharger_brut": TelechargerBrutInput,
     "extraire_ressource": ExtraireRessourceInput,
+    "consulter_registre": ConsulterRegistreInput,
 }
 
 

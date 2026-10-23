@@ -92,9 +92,9 @@ def _conversation(agent=None, plafond=10, journal=None):
 # ---------------------------------------------------------------------
 
 def test_executer_outil_route_chaque_outil(monkeypatch):
-    # Ref. tests/plan_tests.md : TU-B1 — dispatch vers les 5 fonctions coeur
+    # Ref. tests/plan_tests.md : TU-B1 — dispatch vers les 6 fonctions coeur
     outils = {}
-    for nom in ("rechercher_jeux", "lister_ressources", "interroger_ressource", "telecharger_brut", "extraire_ressource"):
+    for nom in ("rechercher_jeux", "lister_ressources", "interroger_ressource", "telecharger_brut", "extraire_ressource", "consulter_registre"):
         faux = MagicMock(return_value={"statut": "succes", "message": "", "donnees": {}})
         monkeypatch.setitem(module_outils.TABLE_OUTILS, nom, faux)
         outils[nom] = faux
@@ -113,6 +113,9 @@ def test_executer_outil_route_chaque_outil(monkeypatch):
 
     executer_outil("extraire_ressource", {"id_ressource": "r1"}, "id")
     outils["extraire_ressource"].assert_called_once_with(id_ressource="r1", id_execution="id")
+
+    executer_outil("consulter_registre", {}, "id")
+    outils["consulter_registre"].assert_called_once_with(id_execution="id")
 
 
 def test_executer_outil_inconnu():
@@ -720,3 +723,34 @@ def test_ti24c_ressource_inconnue_fail_safe(monkeypatch):
     reponse = _tour_avec_appels(agent, conversation, appels)
     assert mock_dl.call_count == 5
     assert reponse["donnees"]["nb_invocations"] == 5
+
+
+# ---------------------------------------------------------------------------
+# T11.4 — Outil agentique `consulter_registre` (22/10/2026) : TI-25
+# ---------------------------------------------------------------------------
+
+def test_ti25_consulter_registre_dans_la_boucle(monkeypatch):
+    # TI-25 : la boucle execute consulter_registre comme un outil normal :
+    # l'agent recoit le rapport normalise, l'invocation consomme le plafond.
+    faux = MagicMock(return_value={
+        "statut": "succes", "message": "",
+        "donnees": {"sources_inaccessibles": [{"id_jeu": "jeu-x"}], "total": 1, "nb_retournees": 1},
+    })
+    monkeypatch.setitem(module_outils.TABLE_OUTILS, "consulter_registre", faux)
+
+    agent = _agent()
+    conversation = _conversation(agent, plafond=10)
+    appels = [
+        ("rechercher_jeux", {"mots_cles": ["dette"]}),
+        ("consulter_registre", {"derniere_n": 5}),
+    ]
+    reponse = _tour_avec_appels(agent, conversation, appels)
+
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["nb_invocations"] == 2
+    faux.assert_called_once_with(derniere_n=5, id_execution="id_test")
+    entrees = agent.client.beta.conversations.append_stream.call_args.kwargs["inputs"]
+    assert len(entrees) == 2
+    rapport = json.loads(entrees[1]["result"])
+    assert rapport["statut"] == "succes"
+    assert rapport["donnees"]["total"] == 1

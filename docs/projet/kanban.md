@@ -15,22 +15,22 @@ Ce document suit l'avancement des tâches pour l'implémentation du projet **ope
 # Tableau du kanban
 
 ## À faire
+> Toutes les tâches restantes sont optionnelles ou en prévision de la partie 2 (P2).
+
 T7.3
 T7.4
 T7.6
 T10.6
 T10.9
 T11.2
-T11.4
 
 
 ## En cours
 T10.1
-T13.2
 
 
 ## En revue
--
+T11.4
 
 
 ## Terminé
@@ -81,6 +81,7 @@ T10.7
 T10.8
 T11.1
 T11.3
+T13.2
 
 
 ## Annulé
@@ -309,7 +310,7 @@ Manifeste d'acquisition par exécution — écriture au cœur, à chaque acquisi
 *Contexte : issu du constat de la validation T11.3 : en mode agentique, rien ne relie simplement un fichier de `data/raw/<id_execution>/` au jeu de données correspondant (l'inventaire persistant T10.2 n'est écrit que par les commandes CLI ; en mode `chat`, l'inventaire vit en mémoire et disparaît). Préparation directe de T10.1 (normalisation B7 : la partie 2 doit consommer fichier + jeu + licence + mention d'attribution).*
 
 
-## T10.9 *(préfiguration, sans précision pour le moment — prise de date séance 22/10/2026)*
+## T10.9 *(optionnel, préfiguration — prévision partie 2 ; sans précision pour le moment, prise de date séance 22/10/2026)*
 Organiser la configuration des dossiers de journalisation, de conversations et de stockage des ressources acquises, et le packaging de l'application. Périmètre à définir : centraliser les racines (`logs/`, `conversations/`, `data/raw/`, `data/executions/`) derrière une configuration unique (chemins relatifs au CWD aujourd'hui, en dur dans `src/utils/logging.py`, `src/agent/journal.py`, `src/utils/storage.py`, `src/core/manifeste.py`, `src/main.py`), rendre les chemins configurables (env/fichier de config), et préparer le packaging (`pyproject.toml`, point d'entrée console, nom de paquet — cf. T10.6).
 
 
@@ -319,7 +320,7 @@ Mode conversationnel multi-tours (`chat`) — REPL, contexte côté serveur (API
 *Contexte : issu de la séance du 18/10/2026 (retours d'usage du concepteur sur le flux agentique) — l'arbitrage final de pertinence doit pouvoir se faire pendant la conversation, pas seulement après l'acquisition.*
 
 
-## T11.2 — Recherche par producteur
+## T11.2 — Recherche par producteur *(optionnel)*
 Outil `rechercher_organisations` + filtre organisation sur `rechercher_jeux` (issu du constat des traces du 18/10/2026 : l'agent a consacré 3 invocations à chercher « Ministère de l'Intérieur » en mots-clés, sans succès — il n'existe aucun moyen direct de cibler un producteur). Chantier :
 - fonction cœur de recherche d'organisations par nom (endpoint `/api/1/organizations/`, déjà sondé — pagination, nom, slug, id, badges) ;
 - filtre optionnel `organisation` (id ou slug) sur `rechercher_jeux` (paramètre supporté par l'API v1) — évolution de contrat (v1.2.0 → v1.3.0) ;
@@ -341,7 +342,7 @@ Migration de l'API data.gouv.fr v1 → v2 pour la recherche et l'inventaire (dé
 
 
 ## T11.4 — Outil agentique `consulter_registre`
-Nouvel outil agentique `consulter_registre` — branchement de `rapport_pour_agent()` (RegistreSourcesInaccessibles) dans la boucle agentique, **option B** (outil de lecture invoqué par l'agent quand il en a besoin, pas d'injection dans le contexte). Contexte : le registre (`data/registry.json`) est alimenté par le code et persiste entre les exécutions (T7.2 le conserve), mais l'agent ne le lit jamais aujourd'hui — il ne connaît que les échecs de la conversation en cours (constat séance 22/10/2026, SESSIONS.md). Apports : mémoire cross-session (ne pas retenter une source déjà refusée définitivement), exploitation du champ `statut_reprise` `a_retenter`/`definitif` (T7.1), synthèse finale A4 exhaustive et fidèle (le contrat global prévoit déjà cette lecture « en fin de flux »). Chantier : fonction cœur de lecture (rapport limité/filtrable pour maîtriser la taille — ex. dernières N entrées ou filtre par motif), nouveau contrat JSON + entrée `contrats/manifeste.json` (version 1.0.0), enregistrement dans `TABLE_OUTILS`, consigne prompt A4 (quand consulter : doute sur une source, synthèse finale), tests TU/TI, docs. Frontière code/agent respectée : l'agent décide, le code ne fait que lire.
+Nouvel outil agentique `consulter_registre` — branchement de `rapport_pour_agent()` (RegistreSourcesInaccessibles) dans la boucle agentique, **option B** (outil de lecture invoqué par l'agent quand il en a besoin, pas d'injection dans le contexte). Contexte : le registre (`data/registry.json`) est alimenté par le code et persiste entre les exécutions (T7.2 le conserve), mais l'agent ne le lit jamais aujourd'hui — il ne connaît que les échecs de la conversation en cours (constat séance 22/10/2026, SESSIONS.md). Apports : mémoire cross-session (ne pas retenter une source déjà refusée définitivement), exploitation du champ `statut_reprise` `a_retenter`/`definitif` (T7.1), synthèse finale A4 exhaustive et fidèle (le contrat global prévoit déjà cette lecture « en fin de flux »). Chantier : fonction cœur de lecture (rapport limité/filtrable pour maîtriser la taille — ex. dernières N entrées ou filtre par motif), nouveau contrat JSON + entrée `contrats/manifeste.json` (version 1.0.0), enregistrement dans `TABLE_OUTILS`, consigne prompt A4 (quand consulter : doute sur une source, synthèse finale), tests TU/TI, docs. Frontière code/agent respectée : l'agent décide, le code ne fait que lire. *(En cours depuis le 22/10/2026 — choisie par le concepteur comme prochaine tâche, avant la reprise de T10.1. E0..E7 implémentés : contrat v1.0.0 + manifeste 1.2, fonction cœur `src/core/registre.py`, dispatch agent, consigne prompt A4, TU-114..119 + TI-25/26 ; 466 tests verts (451 avant + 15) ; En revue depuis le 22/10/2026 — validation en réel par le concepteur en cours)*
 
 
 ## T13.1 — Confort d'utilisation de la CLI (séance du 22/10/2026)
@@ -349,7 +350,7 @@ Nouvel outil agentique `consulter_registre` — branchement de `rapport_pour_age
 
 
 ## T13.2 — Confort d'utilisation de la CLI (séance du 22/10/2026)
-Option silencieuse `--quiet` — masque les logs applicatifs `[info]`/`[error]` console ; les résultats/erreurs de commande restent affichés et le **fichier de logs reste écrit**. *(En cours depuis le 22/10/2026 — implémentée : `configure_logging(silencieux=...)` avec `NullHandler` sur le logger racine (`src/utils/logging.py`), option globale `--quiet` au callback Typer transmise via le wrapper `_configurer_logging` (7 commandes), warning du hook de nettoyage T7.2 masqué en quiet, correctifs de robustesse (fermeture du fichier de logs précédent, `log_to_file` défensif) ; 451 tests verts (445 avant + TU-109..113) ; reste : validation en réel par le concepteur (`--quiet search ...` : console épurée, résultat visible, log fichier écrit). Suivi : `docs/tasks/T13.2_option_quiet.md`)*
+Option silencieuse `--quiet` — masque les logs applicatifs `[info]`/`[error]` console ; les résultats/erreurs de commande restent affichés et le **fichier de logs reste écrit**. *(Terminé le 22/10/2026 — validation réelle par le concepteur : `--quiet search ...` console épurée, résultat visible, log fichier écrit ; implémentée : `configure_logging(silencieux=...)` avec `NullHandler` sur le logger racine (`src/utils/logging.py`), option globale `--quiet` au callback Typer transmise via le wrapper `_configurer_logging` (7 commandes), warning du hook de nettoyage T7.2 masqué en quiet, correctifs de robustesse (fermeture du fichier de logs précédent, `log_to_file` défensif) ; 451 tests verts (445 avant + TU-109..113). Suivi : `docs/tasks/T13.2_option_quiet.md`)*
 
 
 ## Commande `search` — Intégration et CLI

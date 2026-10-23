@@ -47,6 +47,11 @@ from src.contracts.extraire_ressource import (
     ExtraireRessourceInput,
     ExtraireRessourceOutput,
 )
+from src.contracts.consulter_registre import (
+    ConsulterRegistreInput,
+    ConsulterRegistreOutput,
+    MotifRegistre,
+)
 from src.contracts.validation_api import (
     ResultatValidation,
     SCHEMAS_CONNUS,
@@ -82,6 +87,10 @@ __all__ = [
     "TelechargerBrutOutput",
     "ExtraireRessourceInput",
     "ExtraireRessourceOutput",
+    # consulter_registre
+    "ConsulterRegistreInput",
+    "ConsulterRegistreOutput",
+    "MotifRegistre",
     # validation des reponses API (T2.2)
     "ResultatValidation",
     "SCHEMAS_CONNUS",

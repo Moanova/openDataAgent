@@ -5,6 +5,62 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 22/10/2026 (13) — T11.4 : implémentation de l'outil `consulter_registre` (E0..E7)**
+
+### **Contexte**
+- Le concepteur choisit **T11.4** comme prochaine tâche (avant la reprise de T10.1) et valide la localisation de la fonction cœur dans `src/core/` (comme les 5 autres outils), pas dans `src/utils/registry.py`.
+
+### **Actions réalisées (E0..E7)**
+1. **E0 — Contrat** (`contrats/consulter_registre.json`, v1.0.0) : entrée `derniere_n` (défaut 20, min 1) + `motif` (enum `licence_incompatible` | `serveur_origine_bloque`) ; sortie `sources_inaccessibles`/`total`/`nb_retournees`.
+2. **E1 — Pydantic** (`src/contracts/consulter_registre.py`) : `ConsulterRegistreInput`/`ConsulterRegistreOutput`/`MotifRegistre`, exports `__init__.py`, entrée `_REGISTRE_MODELES` (`base.py`).
+3. **E2 — Cœur** (`src/core/registre.py`, nouveau) : `consulter_registre()` — lecture seule via `rapport_pour_agent()`, limite + filtre, registre injectable (défaut instance globale `data/registry.json`), registre absent → `succes` vide, `derniere_n < 1` ou motif inconnu → `erreur_parametres` ; dispatch `TABLE_OUTILS`/`MODELES_INPUT` (`src/agent/outils.py`).
+4. **E3 — Manifeste** (`contrats/manifeste.json` 1.1 → 1.2) : entrée `consulter_registre` 1.0.0 ; chargement automatique par `charger_outils()`, **aucune modification de `src/agent/agent.py`**.
+5. **E4 — Prompt A4** (`config/prompt_systeme.txt`) : « six outils » + consigne REGISTRE DES SOURCES INACCESSIBLES (quand consulter, `statut_reprise`, ne jamais retenter `definitif`).
+6. **E5 — TU-114..TU-119** (`tests/unit/test_consulter_registre.py`, 9 tests) + mise à jour des tests existants référençant 5 outils (`test_contracts.py` OUTILS_ATTENDUS + TC-02/TC-03, `test_agent.py` manifeste/garde-fou/prompt, `test_boucle.py` TU-B1).
+7. **E6 — TI-25** (`test_boucle.py` : invocation dans la boucle, rapport normalisé, plafond consommé) + **TI-26** (`test_integration.py` : mémoire cross-session, registre non réécrit).
+8. **E7 — Documentation** : section « Tests T11.4 » (`tests/plan_tests.md`), suivi `docs/tasks/T11.4_consulter_registre.md`, `contrat_global.md` (six outils + lecture via `consulter_registre` à tout moment), `docs/README.md` (6ᵉ outil), kanban.
+
+### **Décisions**
+- **Option B** (outil de lecture invoqué par l'agent) actée ; frontière code/agent respectée.
+- **Fonction cœur dans `src/core/`** (décision concepteur du 22/10).
+- **`derniere_n` toujours borné** (entier ≥ 1, défaut 20) : pas de `null` pour désactiver la limite — simplification actée en cours d'implémentation.
+- **Lecture seule** : le registre n'est ni modifié ni sauvegardé par l'outil.
+- **Pas de commande CLI** équivalente (outil destiné à l'agent).
+
+### **Vérifications**
+- **466 tests verts** (`python -m pytest tests/unit -q`, 27 s) — 451 avant + 15 nouveaux (TU-114..119 = 9, TI-25, TI-26, + mises à jour des tests existants).
+- Cohérence contrat : `valider_coherence_contrat("consulter_registre")` sans divergence (TC-02 paramétré sur les 6 outils).
+
+### **État en fin de séance**
+- T11.4 déplacée en 🔍 **En revue** à la demande du concepteur : **E0..E7 tous faits**, reste la **validation en réel par le concepteur** (scénario agentique : l'agent invoque `consulter_registre` pour vérifier une source écartée dans une conversation antérieure, puis en synthèse finale).
+- **Commité et poussé** sur `dev` (branche locale recréée à jour avec `origin/dev` — la session était sur un HEAD détaché).
+
+### **Blocages**
+- Aucun.
+
+---
+
+## **Séance du 22/10/2026 (12) — Clôture T13.2 (validation réelle), marquage des tâches optionnelles/P2, T11.4 en cours**
+
+### **Contexte**
+- Le concepteur a testé et validé **T13.2** (`--quiet`) en réel et demande son passage en ✅ Terminé. Il reporte la reprise de **T10.1** et choisit **T11.4** comme prochaine tâche. **T11.2, T7.3, T7.6, T10.6 et T10.9** sont marquées optionnelles / prévision partie 2.
+
+### **Actions réalisées**
+1. **Kanban** : T13.2 déplacée de 🚧 En cours vers ✅ Terminé (validation réelle notée dans la description) ; T11.4 déplacée en 🚧 En cours ; section À faire réduite aux 6 tâches optionnelles/P2 (T7.3, T7.4, T7.6, T10.6, T10.9, T11.2) avec une note de regroupement ; marqueurs « optionnel / prévision partie 2 » ajoutés aux titres T10.9 et T11.2.
+2. **Suivi T13.2** (`docs/tasks/T13.2_option_quiet.md`) : case « Validation en réel par le concepteur » cochée, statut Terminé.
+3. **Rappel T11.4** fourni au concepteur (outil `consulter_registre`, option B : outil de lecture invoqué par l'agent).
+
+### **État en fin de séance**
+- **451 tests verts** (inchangé — modifications documentaires uniquement).
+- **🚧 En cours** : T10.1 (normalisation B7, en attente de reprise), T11.4 (`consulter_registre`).
+- **📋 À faire** : T7.3, T7.4, T7.6, T10.6, T10.9, T11.2 (toutes optionnelles / prévision P2).
+- **Non commité** (aucune demande de commit).
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 22/10/2026 (11) — Clôture T7.1, T7.2, T7.7 (validation réelle) + commit/push ; T13.2 et correctif prompt en attente de push**
 
 ### **Contexte**

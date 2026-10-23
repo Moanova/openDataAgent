@@ -1,0 +1,73 @@
+{
+  "type": "function",
+  "function": {
+    "name": "consulter_registre",
+    "description": "Lit le registre persistant des sources inaccessibles (data/registry.json, toutes executions confondues) : exclusions de licence (motif licence_incompatible) et echecs techniques (motif serveur_origine_bloque) avec leur statut_reprise (a_retenter ou definitif). Lecture seule : le registre n'est jamais modifie. Utilise cet outil quand tu doutes d'une source (verifier si elle a deja ete refusee avant de la retenter : ne retente jamais une entree definitif) et pour la synthese finale du registre (etape A4).",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "derniere_n": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 20,
+          "description": "Nombre maximum d'entrees retournees (les plus recentes). Par defaut 20. Le champ total indique la taille reelle du registre hors limite."
+        },
+        "motif": {
+          "type": "string",
+          "enum": [
+            "licence_incompatible",
+            "serveur_origine_bloque"
+          ],
+          "description": "Filtre optionnel : ne retourner que les entrees de ce motif."
+        }
+      }
+    },
+    "returns": {
+      "type": "object",
+      "properties": {
+        "statut": {
+          "type": "string",
+          "enum": [
+            "succes",
+            "erreur_parametres"
+          ],
+          "description": "Code de statut de l'operation."
+        },
+        "message": {
+          "type": "string",
+          "description": "Message d'erreur en cas d'echec, vide sinon."
+        },
+        "donnees": {
+          "type": "object",
+          "properties": {
+            "sources_inaccessibles": {
+              "type": "array",
+              "description": "Entrees du registre (les plus recentes d'abord si derniere_n est precise), chacune avec timestamp, motif, id_jeu, organisation, licence, url, detail et statut_reprise.",
+              "items": {
+                "type": "object"
+              }
+            },
+            "total": {
+              "type": "integer",
+              "description": "Nombre total d'entrees dans le registre, hors limite et hors filtre."
+            },
+            "nb_retournees": {
+              "type": "integer",
+              "description": "Nombre d'entrees effectivement retournees."
+            }
+          },
+          "required": [
+            "sources_inaccessibles",
+            "total",
+            "nb_retournees"
+          ]
+        }
+      },
+      "required": [
+        "statut",
+        "message",
+        "donnees"
+      ]
+    }
+  }
+}

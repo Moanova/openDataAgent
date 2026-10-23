@@ -45,6 +45,9 @@ from src.contracts import (
     TelechargerBrutOutput,
     TriColonne,
     TriRecherche,
+    ConsulterRegistreInput,
+    ConsulterRegistreOutput,
+    MotifRegistre,
     valider_coherence_contrat,
 )
 
@@ -52,7 +55,7 @@ from src.contracts import (
 CONTRATS_DIR = Path("contrats")
 MANIFESTE_PATH = CONTRATS_DIR / "manifeste.json"
 
-OUTILS_ATTENDUS = {"rechercher_jeux", "lister_ressources", "interroger_ressource", "telecharger_brut", "extraire_ressource"}
+OUTILS_ATTENDUS = {"rechercher_jeux", "lister_ressources", "interroger_ressource", "telecharger_brut", "extraire_ressource", "consulter_registre"}
 
 
 # ---------------------------------------------------------------------------
@@ -74,12 +77,12 @@ def contrats_temp():
 # ===========================================================================
 
 class TestTU25_ChargementManifeste:
-    """TU-25 : Le manifeste reel contient les quatre outils avec des declarations conformes."""
+    """TU-25 : Le manifeste reel contient les six outils avec des declarations conformes."""
 
     def test_manifeste_existe(self):
         assert MANIFESTE_PATH.exists(), "Le fichier manifeste.json doit exister."
 
-    def test_quatre_outils_declares(self):
+    def test_six_outils_declares(self):
         manifeste = json.loads(MANIFESTE_PATH.read_text(encoding="utf-8"))
         noms = {o["nom"] for o in manifeste["outils"]}
         assert noms == OUTILS_ATTENDUS
@@ -206,6 +209,7 @@ class TestTC02_ArgumentsExistants:
         ("interroger_ressource", InterrogerRessourceInput),
         ("telecharger_brut", TelechargerBrutInput),
         ("extraire_ressource", ExtraireRessourceInput),
+        ("consulter_registre", ConsulterRegistreInput),
     ])
     def test_champs_json_presents_dans_pydantic(self, nom_outil, modele_input):
         contrat = json.loads((CONTRATS_DIR / f"{nom_outil}.json").read_text(encoding="utf-8"))
@@ -223,6 +227,7 @@ class TestTC02_ArgumentsExistants:
         ("interroger_ressource", InterrogerRessourceOutput),
         ("telecharger_brut", TelechargerBrutOutput),
         ("extraire_ressource", ExtraireRessourceOutput),
+        ("consulter_registre", ConsulterRegistreOutput),
     ])
     def test_champs_sortie_json_presents_dans_pydantic(self, nom_outil, modele_output):
         contrat = json.loads((CONTRATS_DIR / f"{nom_outil}.json").read_text(encoding="utf-8"))
@@ -249,6 +254,7 @@ class TestTC03_ChampsObligatoires:
         ("interroger_ressource", InterrogerRessourceInput),
         ("telecharger_brut", TelechargerBrutInput),
         ("extraire_ressource", ExtraireRessourceInput),
+        ("consulter_registre", ConsulterRegistreInput),
     ])
     def test_champs_obligatoires_requis(self, nom_outil, modele_input):
         contrat = json.loads((CONTRATS_DIR / f"{nom_outil}.json").read_text(encoding="utf-8"))

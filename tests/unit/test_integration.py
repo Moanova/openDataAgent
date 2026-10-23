@@ -740,3 +740,42 @@ def test_ti21_nettoyage_flux_complet(tmp_path, monkeypatch):
     assert (tmp_path / "data" / "raw" / ids["recent"]).is_dir()
     assert (tmp_path / "data" / "raw" / ids["courant"]).is_dir()
     assert registre.is_file()
+
+
+# ---------------------------------------------------------------------
+# T11.4 : memoire cross-session via consulter_registre
+# ---------------------------------------------------------------------
+
+@responses.activate
+def test_ti26_consulter_registre_memoire_cross_session(tmp_path, monkeypatch):
+    # Ref. tests/plan_tests.md : TI-26 (T11.4) — une entree consignee par une
+    # execution est visible via consulter_registre dans une execution suivante
+    # (memoire cross-session), sans aucune re-ecriture du registre.
+    from src.core.registre import consulter_registre
+
+    monkeypatch.chdir(tmp_path)
+    chemin_registre = tmp_path / "registry.json"
+
+    # --- Execution 1 : exclusion de licence consignee et sauvegardee
+    registre_1 = RegistreSourcesInaccessibles(chemin=chemin_registre)
+    responses.add(responses.GET, URL_RECHERCHE, json={
+        "data": [_jeu("jeu-ferme", "Jeu Ferme", "other-closed", "Ministere X")],
+        "total": 1, "page": 1, "next_page": None, "previous_page": None,
+    }, status=200)
+    recherche = rechercher_jeux(["budget"], registre=registre_1)
+    assert recherche["statut"] == "succes"
+    assert recherche["donnees"]["exclus_licence"] == 1
+
+    # --- Execution 2 : nouvelle instance sur le meme chemin, lecture seule
+    registre_2 = RegistreSourcesInaccessibles(chemin=chemin_registre)
+    reponse = consulter_registre(registre=registre_2)
+    assert reponse["statut"] == "succes"
+    assert reponse["donnees"]["total"] == 1
+    entree = reponse["donnees"]["sources_inaccessibles"][0]
+    assert entree["id_jeu"] == "jeu-ferme"
+    assert entree["motif"] == "licence_incompatible"
+    assert entree["statut_reprise"] == "definitif"
+
+    # Lecture seule : le fichier registre n'a pas ete re-ecrit ni altere
+    contenu = json.loads(chemin_registre.read_text(encoding="utf-8"))
+    assert len(contenu["sources_inaccessibles"]) == 1

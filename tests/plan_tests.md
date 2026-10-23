@@ -450,3 +450,18 @@ Périmètre : `configure_logging(silencieux=...)` (`src/utils/logging.py`) + opt
 | TU-111 | CLI `--quiet search` (cœur simulé) | résultat affiché, `id_execution` affiché, aucun `[info]`/`[error]` console | Bloquant |
 | TU-112 | CLI `search` sans `--quiet` | résultat affiché, comportement inchangé | Bloquant |
 | TU-113 | CLI : flag posé au callback + transmis au wrapper ; en `--quiet` le warning du hook de nettoyage T7.2 est masqué (mais le nettoyage a lieu) | `_SILENCIEUX=True`, wrapper appelé, pas de warning console, exécution supprimée | Bloquant |
+
+## Tests T11.4 — Outil agentique `consulter_registre` (22/10/2026)
+
+Périmètre : `src/core/registre.py` (fonction cœur, lecture seule), contrat v1.0.0 (`contrats/consulter_registre.json`, manifeste 1.2), schéma Pydantic (`src/contracts/consulter_registre.py`), dispatch `src/agent/outils.py`, consigne prompt A4 (`config/prompt_systeme.txt`). Suivi : `docs/tasks/T11.4_consulter_registre.md`.
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-114 | Registre absent/illisible | `succes`, liste vide, `total=0`, `nb_retournees=0` | Bloquant |
+| TU-115 | Limite `derniere_n` | N entrées les plus récentes, ordre chronologique conservé, `total` = taille réelle hors limite | Bloquant |
+| TU-116 | Filtre `motif` | seules les entrées du motif, `total` hors filtre | Bloquant |
+| TU-117 | Filtre + limite combinés | les N plus récentes parmi le motif filtré | Bloquant |
+| TU-118 | `statut_reprise` exposé | `a_retenter`/`definitif` ; entrée sans champ (exclusion licence) → `definitif` | Bloquant |
+| TU-119 | Dispatch agent (`executer_outil`) | validation Pydantic (champs inconnus ignorés), `id_execution` injecté, registre inchangé (lecture seule) | Bloquant |
+| TI-25 | Boucle : l'agent invoque `consulter_registre` | rapport normalisé renvoyé, invocation consomme le plafond | Bloquant |
+| TI-26 | Mémoire cross-session | entrée consignée par une exécution visible via `consulter_registre` dans l'exécution suivante, registre non réécrit | Bloquant |
