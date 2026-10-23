@@ -21,6 +21,7 @@ T7.6 (optionnel ou à traiter dans la version 2 du projet)
 T10.6 (optionnel)
 T10.9 (optionnel ou à traiter dans la version 2 du projet)
 T11.2 (optionnel ou à traiter dans la version 2 du projet)
+T13.4
 
 
 ## En cours
@@ -29,7 +30,6 @@ T10.1
 
 ## En revue
 T11.4
-T13.3
 
 
 ## Terminé
@@ -81,6 +81,7 @@ T10.8
 T11.1
 T11.3
 T13.2
+T13.3
 
 
 ## Annulé
@@ -360,7 +361,30 @@ Francisation des commandes et options de la CLI, avec conservation des alias ang
 - **Manifeste** : champ `generé_le`→`genere_le` (convention contrat_global : minuscules sans accent).
 - Alias = commandes Typer à part entière (même signature, délégation vers la commande française) : l'alias accepte les mêmes arguments et options.
 - Périmètre : `src/main.py`, `src/core/manifeste.py`, tests (`test_cli.py`, `test_manifeste.py`), docs (`docs/README.md`, `docs/specs/stockage.md`, `contrat_global.md` convention 5, suivis T13.2/T10.8).
-*(En cours depuis le 22/10/2026 — implémentée : E1..E4 + TU-120..123 ; 470 tests verts (466 avant + 4) ; En revue depuis le 22/10/2026 — validation en réel par le concepteur en cours : `rechercher`/`search`, `--silencieux`/`--quiet`, alias `ask`/`chat`)*
+*(En cours depuis le 22/10/2026 — implémentée : E1..E4 + TU-120..123 ; 470 tests verts (466 avant + 4) ; En revue du 22/10 au 23/10/2026 — **validée en réel par le concepteur**, passée en Terminé le 23/10/2026)*
+
+
+## T13.4 — Réalignement linguistique des modules internes (séance du 23/10/2026)
+Francisation des derniers modules nommés en anglais dans `src/core/` et `src/utils/`, dans la continuité de T13.3 (convention contrat_global : code en français). Aucun impact fonctionnel ni sur les contrats exposés (noms d'outils agent, statuts, champs JSON, CLI inchangés).
+
+- **Renommage des modules** (tableau de correspondance) :
+  - `src/core/search.py` → `src/core/recherche.py`
+  - `src/core/download.py` → `src/core/telechargement.py`
+  - `src/core/query.py` → `src/core/interrogation.py`
+  - `src/utils/logging.py` → `src/utils/journalisation.py` *(prioritaire : même nom que le module stdlib `logging`, risque de shadowing latent)*
+  - `src/utils/registry.py` → `src/utils/registre_sources.py` *(évite le doublon avec `src/core/registre.py` de T11.4)*
+  - `src/utils/storage.py` → `src/utils/stockage.py`
+- **Renommage des fichiers de tests associés** (correspondance 1:1) : `test_search.py`→`test_recherche.py`, `test_download.py`→`test_telechargement.py`, `test_query.py`→`test_interrogation.py`, `test_logging.py`→`test_journalisation.py`, `test_registry.py`→`test_registre_sources.py`.
+- **Renommage du fichier de données** (décision concepteur du 23/10/2026 : en dev, pas de perte) : `data/registry.json` → `data/registre_sources.json`.
+- **Points de vigilance** :
+  - ~113 références d'imports à mettre à jour dans `src/` et `tests/` (recherches `core.search`, `core.download`, `core.query`, `utils.logging`, `utils.registry`, `utils.storage`) ;
+  - chemin par défaut du registre : `src/utils/registry.py` (`Path("data/registry.json")`) et mentions dans `src/core/registre.py`, `src/core/search.py`, `src/core/download.py`, `src/core/resources.py`, `src/core/nettoyage.py` (docstring) ;
+  - nettoyage : TU-98 teste la conservation de `data/registry.json` — le nouveau nom `registre_sources.json` doit rester exclu du périmètre de suppression (vérifier la liste des noms reconnus dans `src/core/nettoyage.py` et mettre à jour le test) ;
+  - noms de loggers (`get_logger("openDataAgent.utils.registry")` etc.) à réaligner ;
+  - mentions de `data/registry.json` dans le contrat `contrats/consulter_registre.json` (description), `config/prompt_systeme.txt` (consigne A4), `docs/specs/registre.md`, `docs/specs/stockage.md`, `docs/README.md`, `docs/design/decisions_conception.md`, `tests/plan_tests.md` (TU-98) ;
+  - tests utilisant des chemins temporaires `tmp_path / "registry.json"` à renommer pour cohérence (non bloquant mais recommandé).
+- **Hors périmètre** : noms d'outils agent (`rechercher_jeux`, `consulter_registre`, …), statuts et motifs, champs des contrats JSON, `data/registre_acceptations.json` (déjà en français), arborescence `data/` au-delà du registre, variables d'environnement.
+- **Validation** : suite complète `pytest tests/unit` verte après renommage (470 tests avant la tâche).
 
 
 ## Commande `search` — Intégration et CLI

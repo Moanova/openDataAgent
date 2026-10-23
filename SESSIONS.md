@@ -5,6 +5,29 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 23/10/2026 (15) — Clôture : T13.3 terminée (validée en réel), ajout de T13.4**
+
+### **Contexte**
+- Le concepteur a validé la tâche **T13.3** en réel (commandes françaises + alias anglais, `--silencieux`/`--quiet`, alias `ask`/`chat`).
+- Il demande un complément de l'audit linguistique : francisation des modules internes encore nommés en anglais (`src/core/` et `src/utils/`), et accepte le renommage de `data/registry.json` (en dev, pas de perte).
+
+### **Actions réalisées**
+1. **T13.3 passée en ✅ Terminé** : retirée de la section En revue, ajoutée à Terminé dans le kanban ; note de suivi mise à jour (« validée en réel par le concepteur, passée en Terminé le 23/10/2026 ») ; fiche `docs/tasks/T13.3_realignement_linguistique.md` : validation cochée.
+2. **T13.4 ajoutée au kanban** (à faire + description détaillée) : francisation des 6 modules internes (`search.py`→`recherche.py`, `download.py`→`telechargement.py`, `query.py`→`interrogation.py`, `logging.py`→`journalisation.py`, `registry.py`→`registre_sources.py`, `storage.py`→`stockage.py`), renommage des 5 tests associés, renommage de `data/registry.json`→`data/registre_sources.json`, points de vigilance documentés (~113 imports, chemin par défaut, loggers, contrat `consulter_registre.json`, prompt A4, docs, TU-98).
+3. **Vérification préalable** : `src/core/nettoyage.py` ne supprime que les répertoires au pattern d'id d'exécution ; les fichiers plats (registres) sont conservés par défaut (fail-safe) → le renommage de `data/registry.json` est sans impact sur le nettoyage.
+
+### **État en fin de séance**
+- **T13.3 : ✅ Terminé** (validée en réel par le concepteur).
+- **T13.4 : à faire** (non commencée).
+- T11.4 toujours en 🔍 En revue (validation en réel en attente — erreur 429 Mistral transitoire du 23/10, à réessayer).
+- T10.1 toujours en 🚧 En cours.
+- **470 tests verts** (inchangé — cette séance ne touche que des documents).
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 22/10/2026 (14) — T13.3 : audit + réalignement linguistique de la CLI**
 
 ### **Contexte**
