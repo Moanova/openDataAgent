@@ -97,14 +97,13 @@ Il est automatiquement chargé à chaque séance, mais **aucune action structura
 - **Actions** :
   1. Valider que tous les tests passent et que les critères d'acceptation sont respectés.
   2. Mettre à jour `docs/projet/kanban.md` (déplacer la tâche en **En revue**).
-  3. Commiter les changements avec un message explicite.
 
 ---
 
 ### **Étape 6 : Validation utilisateur (sur initiative de l'utilisateur)**
 - **Actions** :
   1. Valider que tous les tests passent et que les critères d'acceptation sont respectés.
-  2. Mettre à jour `docs/projet/kanban.md` (déplacer la tâche en **En revue**).
+  2. Mettre à jour `docs/projet/kanban.md` (déplacer la tâche en **Terminé**).
   3. Commiter les changements avec un message explicite.
 - **Exemple de demande** :
   ```markdown
@@ -190,4 +189,4 @@ Les actions suivantes peuvent être demandées en séance **sans être référen
 | `docs/projet/kanban.md`  | Suivi des tâches (À faire → En cours → En revue → Terminé).                                     |
 | `tests/plan_tests.md`    | Plan de tests (TU, TI, TB) et couverture des critères d'acceptabilité.                          |
 | `docs/tasks/`            | Suivi détaillé par tâche (optionnel).                                                           |
-| `BLOCKERS.md`            | Liste des **blocages non résolus** (documentés après 4 échecs de test).                         |
+| `BLOCKERS.md`            | Liste des **blocages non résolus** (documentés après 3 échecs de test).                         |
