@@ -5,6 +5,30 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 23/10/2026 (18) — Clôture : T11.4 terminée (exposition agent-only vérifiée)**
+
+### **Contexte**
+- Le concepteur demande confirmation que `consulter_registre` n'est invoqué que par l'agent, puis fait passer **T11.4** en Terminé (la validation en réel agentique reste reportée — erreur 429 Mistral transitoire).
+
+### **Vérification effectuée**
+- `consulter_registre` est enregistré **uniquement** dans `TABLE_OUTILS` / `MODELES_INPUT` (`src/agent/outils.py`), appelée **uniquement** par `executer_outil` depuis la boucle agentique (`src/agent/boucle.py:293`).
+- **Aucune commande CLI** ne l'expose (`src/main.py` : 9 commandes + 7 alias, aucune liée au registre) ; `--help` ne la mentionne pas.
+- Le cœur (`src/core/registre.py`) est une fonction Python classique, non branchée ailleurs que dans le dispatch agent.
+
+### **Actions réalisées**
+1. **T11.4 passée en ✅ Terminé** : retirée de En revue, ajoutée à Terminé (entre T11.3 et T13.2) ; note de clôture dans la description (exposition agent-only vérifiée, validation en réel reportée).
+2. **Fiche de suivi T11.4** : validation cochée avec la mention du report (429 Mistral).
+
+### **État en fin de séance**
+- **T11.4 : ✅ Terminé** (48 tâches terminées au total).
+- T10.1 toujours en 🔍 En revue (validation en réel en cours par le concepteur).
+- **491 tests verts** (inchangé — cette séance ne touche que des documents).
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 23/10/2026 (17) — T10.1 : correctif journalisation copie conforme (TU-134)**
 
 ### **Contexte**

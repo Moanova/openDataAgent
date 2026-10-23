@@ -28,7 +28,6 @@ T13.4
 
 
 ## En revue
-T11.4
 T10.1
 
 
@@ -80,6 +79,7 @@ T10.7
 T10.8
 T11.1
 T11.3
+T11.4
 T13.2
 T13.3
 
@@ -342,7 +342,7 @@ Migration de l'API data.gouv.fr v1 → v2 pour la recherche et l'inventaire (dé
 
 
 ## T11.4 — Outil agentique `consulter_registre`
-Nouvel outil agentique `consulter_registre` — branchement de `rapport_pour_agent()` (RegistreSourcesInaccessibles) dans la boucle agentique, **option B** (outil de lecture invoqué par l'agent quand il en a besoin, pas d'injection dans le contexte). Contexte : le registre (`data/registry.json`) est alimenté par le code et persiste entre les exécutions (T7.2 le conserve), mais l'agent ne le lit jamais aujourd'hui — il ne connaît que les échecs de la conversation en cours (constat séance 22/10/2026, SESSIONS.md). Apports : mémoire cross-session (ne pas retenter une source déjà refusée définitivement), exploitation du champ `statut_reprise` `a_retenter`/`definitif` (T7.1), synthèse finale A4 exhaustive et fidèle (le contrat global prévoit déjà cette lecture « en fin de flux »). Chantier : fonction cœur de lecture (rapport limité/filtrable pour maîtriser la taille — ex. dernières N entrées ou filtre par motif), nouveau contrat JSON + entrée `contrats/manifeste.json` (version 1.0.0), enregistrement dans `TABLE_OUTILS`, consigne prompt A4 (quand consulter : doute sur une source, synthèse finale), tests TU/TI, docs. Frontière code/agent respectée : l'agent décide, le code ne fait que lire. *(En cours depuis le 22/10/2026 — choisie par le concepteur comme prochaine tâche, avant la reprise de T10.1. E0..E7 implémentés : contrat v1.0.0 + manifeste 1.2, fonction cœur `src/core/registre.py`, dispatch agent, consigne prompt A4, TU-114..119 + TI-25/26 ; 466 tests verts (451 avant + 15) ; En revue depuis le 22/10/2026 — validation en réel par le concepteur en cours)*
+Nouvel outil agentique `consulter_registre` — branchement de `rapport_pour_agent()` (RegistreSourcesInaccessibles) dans la boucle agentique, **option B** (outil de lecture invoqué par l'agent quand il en a besoin, pas d'injection dans le contexte). Contexte : le registre (`data/registry.json`) est alimenté par le code et persiste entre les exécutions (T7.2 le conserve), mais l'agent ne le lit jamais aujourd'hui — il ne connaît que les échecs de la conversation en cours (constat séance 22/10/2026, SESSIONS.md). Apports : mémoire cross-session (ne pas retenter une source déjà refusée définitivement), exploitation du champ `statut_reprise` `a_retenter`/`definitif` (T7.1), synthèse finale A4 exhaustive et fidèle (le contrat global prévoit déjà cette lecture « en fin de flux »). Chantier : fonction cœur de lecture (rapport limité/filtrable pour maîtriser la taille — ex. dernières N entrées ou filtre par motif), nouveau contrat JSON + entrée `contrats/manifeste.json` (version 1.0.0), enregistrement dans `TABLE_OUTILS`, consigne prompt A4 (quand consulter : doute sur une source, synthèse finale), tests TU/TI, docs. Frontière code/agent respectée : l'agent décide, le code ne fait que lire. *(En cours depuis le 22/10/2026 — choisie par le concepteur comme prochaine tâche, avant la reprise de T10.1. E0..E7 implémentés : contrat v1.0.0 + manifeste 1.2, fonction cœur `src/core/registre.py`, dispatch agent, consigne prompt A4, TU-114..119 + TI-25/26 ; 466 tests verts (451 avant + 15) ; En revue du 22/10 au 23/10/2026 — **passée en Terminé le 23/10/2026** : exposition vérifiée agent-only (aucune commande CLI, appel unique via `TABLE_OUTILS` dans la boucle agentique) ; validation en réel reportée (erreur 429 Mistral transitoire))*
 
 
 ## T13.1 — Confort d'utilisation de la CLI (séance du 22/10/2026)
