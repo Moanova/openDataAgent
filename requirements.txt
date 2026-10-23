@@ -6,6 +6,11 @@ python-magic>=0.4.27
 python-dotenv>=1.0.0
 structlog>=23.1.0
 typer>=0.9.0
+# Normalisation B7 (T10.1) : lecture tableurs + detection encodage CSV
+openpyxl>=3.1.0
+xlrd>=2.0.0
+odfpy>=1.4.0
+charset-normalizer>=3.3.0
 mistralai>=3.2.0  # API beta agents (client.beta.agents) requise
 
 # Testing dependencies
@@ -13,3 +18,4 @@ pytest>=7.4.0
 pytest-mock>=3.11.1
 responses>=0.23.0
 freezegun>=1.4.0
+xlwt>=1.2.0  # fixtures .xls (écriture) pour les tests de normalisation T10.1

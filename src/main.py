@@ -45,6 +45,7 @@ from src.agent.boucle import (
 from src.agent.journal import REPERTOIRE_JOURNAUX
 from src.core.manifeste import consigner_demande, lire_manifeste
 from src.core.nettoyage import AGE_DEFAUT_JOURS, nettoyer_anciennes_executions
+from src.core.normalisation import normaliser_execution, normaliser_toutes_executions
 from src.core.vocabulaires import (
     APERCU_DEFAUT,
     FenetreMaj,
@@ -448,6 +449,52 @@ def nettoyer(
         typer.echo(f"octets libérés : {donnees['octets_liberes']}")
         for erreur in donnees["erreurs"]:
             typer.secho(f"erreur : {erreur['chemin']} ({erreur['erreur']})", fg=typer.colors.YELLOW, err=True)
+    else:
+        typer.secho(f"[{bilan['statut']}] {bilan['message']}", fg=typer.colors.RED, err=True)
+    if bilan["statut"] != "succes":
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def normaliser(
+    id_execution: Optional[str] = typer.Argument(None, help="Identifiant de l'exécution à normaliser (toutes les exécutions si absent)."),
+    simulation: bool = typer.Option(False, "--simulation", help="Affiche ce qui serait produit, sans rien écrire."),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute du bilan normalisé."),
+) -> None:
+    """Normalise les fichiers acquis vers data/processed/ (T10.1, maillon B7).
+
+    CSV non conformes (encodage, séparateur) : ré-écrits en UTF-8 virgule.
+    Tableurs (xlsx, xls, ods) : un CSV par feuille. Autres fichiers : copiés
+    tels quels. Sans argument, normalise toutes les exécutions de data/raw/.
+    """
+    identifiant = id_execution or _id_execution_auto()
+    _configurer_logging(identifiant)
+    if id_execution:
+        bilan = normaliser_execution(id_execution, simulation=simulation)
+    else:
+        bilan = normaliser_toutes_executions(simulation=simulation, id_execution_courante=identifiant)
+    if sortie_json:
+        typer.echo(json.dumps(bilan, ensure_ascii=False, indent=2, default=str))
+    elif bilan["statut"] == "succes":
+        donnees = bilan["donnees"]
+        typer.echo(f"statut : {bilan['statut']}")
+        typer.echo(f"simulation : {donnees['simulation']}")
+        if "fichiers" in donnees:
+            typer.echo(f"fichier(s) traité(s) : {len(donnees['fichiers'])}")
+            for fichier in donnees["fichiers"]:
+                typer.echo(f"- {fichier['fichier']} : {fichier['action']}")
+                if fichier["action"] == "convertis":
+                    for produit in fichier["detail"]:
+                        typer.echo(f"    -> {produit['fichier']} ({produit['lignes']} ligne(s))")
+                elif fichier["action"] == "copie_avertissement":
+                    typer.secho(f"    avertissement : {fichier['detail']}", fg=typer.colors.YELLOW, err=True)
+        else:
+            typer.echo(f"exécution(s) normalisée(s) : {len(donnees['executions'])}")
+            for id_exec in donnees["executions"]:
+                typer.echo(f"- {id_exec}")
+            typer.echo(f"fichier(s) traité(s) : {donnees['nb_fichiers']}")
+            for avertissement in donnees["avertissements"]:
+                typer.secho(f"avertissement : {avertissement['fichier']} ({avertissement['detail']})", fg=typer.colors.YELLOW, err=True)
     else:
         typer.secho(f"[{bilan['statut']}] {bilan['message']}", fg=typer.colors.RED, err=True)
     if bilan["statut"] != "succes":

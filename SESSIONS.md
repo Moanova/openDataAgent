@@ -5,6 +5,39 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 23/10/2026 (16) — T10.1 : normalisation B7 (commande CLI `normaliser`, E1..E6)**
+
+### **Contexte**
+- Reprise de **T10.1** (dernier écart structurel avant fusion vers `main` / v2). Le concepteur acte le périmètre : CSV non conformes ré-écrits, tableurs xlsx/xls/ods → un CSV par feuille, autres fichiers copiés tels quels ; voie 1 (CSV pivot) non retraitée ; dépôt des versions finales dans `data/processed/<id_execution>/` ; **CLI uniquement** (pas d'outil agentique) ; métadonnées de schéma reportées en v2.
+
+### **Décisions actées**
+- « odt » interprété comme « ods » (tableur ODF à feuilles).
+- Re-lançable **sans doublon** (fichier déjà produit = ignoré, jamais écrasé ni dupliqué) — itération en cours d'implémentation après constat de doublons par suffixe.
+- Bibliothèques de lecture optionnelles au runtime (fail-safe : copie tel quel + avertissement).
+
+### **Actions réalisées (E1..E6)**
+1. **E1 — Cœur** (`src/core/normalisation.py`, nouveau) : `normaliser_execution()` + `normaliser_toutes_executions()` ; détection conformité CSV (UTF-8/virgule/sans BOM), détection encodage (utf-8-sig → utf-8 → charset-normalizer → cp1252), ré-écriture CSV, lecture tableurs (openpyxl/xlrd/odfpy, import lazy), conversion par feuille (`<fichier>__<feuille>.csv`), copie tels quels, `_destination_libre` (ignore si déjà produit). Bilan normalisé ; `--simulation` via dossier temporaire jetable ; jamais bloquant.
+2. **E2 — CLI** (`src/main.py`) : commande `normaliser [id_execution] [--simulation] [--json]`.
+3. **E3 — Nettoyage** (`src/core/nettoyage.py`) : `data/processed/` = 5ᵉ racine (`RACINES_SOUS_DOSSIERS`).
+4. **E4 — Dépendances** (`requirements.txt`) : `openpyxl`, `xlrd`, `odfpy`, `charset-normalizer` (cœur) ; `xlwt` (tests).
+5. **E5 — Tests** (`tests/unit/test_normalisation.py`, 20 tests) : TU-124..133 + TI-27 ; section « Tests T10.1 » dans `plan_tests.md`. **Incident corrigé** : TI-27 échouait quand des tests précédents avaient activé les logs console (le callback Typer réinitialise `_SILENCIEUX` — un monkeypatch est sans effet) ; corrigé en passant `--silencieux` en argument CLI dans le test.
+6. **E6 — Documentation** : `stockage.md` (§7.5 Normalisation B7, §8 nettoyage 4→5 racines), `README.md` (commande + section T10.1), `decisions_conception.md` (décision 8), suivi `docs/tasks/T10.1_normalisation_b7.md`, kanban.
+
+### **Vérifications**
+- **490 tests verts** (`python -m pytest tests/unit -q`, 28 s) — 470 avant + 20 nouveaux.
+- Test CLI end-to-end en subprocess : `--help`, `--simulation` (rien écrit), réel, `--json` (2ᵉ passage = tout `ignore`), id inconnu (exit 1).
+
+### **État en fin de séance**
+- T10.1 déplacée en 🔍 **En revue** — **E1..E6 faits**, reste la **validation en réel par le concepteur** (scénario : acquérir un CSV latin-1 + un xlsx en mode manuel, lancer `normaliser --simulation` puis réel, vérifier `data/processed/<id>/`).
+- T11.4 toujours en 🔍 En revue (validation en réel en attente — 429 Mistral transitoire).
+- **Aucune tâche en cours** : le kanban n'a plus qu'à faire les tâches optionnelles (T7.3, T7.4, T7.6, T10.6, T10.9, T11.2, T13.4).
+- Prochaine étape : validation en réel de T10.1 et T11.4, puis éventuellement T13.4, puis **fusion vers `main` / passage v2**.
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 23/10/2026 (15) — Clôture : T13.3 terminée (validée en réel), ajout de T13.4**
 
 ### **Contexte**

@@ -25,11 +25,11 @@ T13.4
 
 
 ## En cours
-T10.1
 
 
 ## En revue
 T11.4
+T10.1
 
 
 ## Terminé
@@ -275,7 +275,7 @@ Circuit breaker agentique par hôte — après 3 échecs transitoires consécuti
 
 
 ## T10.1 — Mise à disposition des données vers la partie 2
-Réaliser la mise à disposition des données vers la partie 2 (maillon B7 → P du schéma de conception, `docs/design/conception.mmd`). **Écart le plus structurel** : en l'état, seule la voie 2 (téléchargement brut) matérialise les données sur disque ; la voie 1 (extraction via API tabulaire) ne persiste rien (exploration conversationnelle uniquement) et aucune normalisation commune B7 n'existe dans le code. Chantiers : persistance des extractions tabulaires (ex. export paginé vers `data/raw/`) et pipeline de normalisation commun aux deux voies. Évolution de contrat probable (v1.2.0, ex. option `destination` sur `interroger_ressource` ou nouvel outil). *(En cours — périmètre précisé : cette entrée porte le chantier 2, pipeline de normalisation commun B7 aux deux voies ; le chantier 1, persistance des extractions de la voie 1, est séparé dans T10.7 ; séquence : T10.7 puis T10.1)*
+Réaliser la mise à disposition des données vers la partie 2 (maillon B7 → P du schéma de conception, `docs/design/conception.mmd`). **Écart le plus structurel** : en l'état, seule la voie 2 (téléchargement brut) matérialise les données sur disque ; la voie 1 (extraction via API tabulaire) ne persiste rien (exploration conversationnelle uniquement) et aucune normalisation commune B7 n'existe dans le code. Chantiers : persistance des extractions tabulaires (ex. export paginé vers `data/raw/`) et pipeline de normalisation commun aux deux voies. Évolution de contrat probable (v1.2.0, ex. option `destination` sur `interroger_ressource` ou nouvel outil). *(En cours depuis le 14/10/2026 — périmètre précisé : cette entrée porte le chantier 2, pipeline de normalisation commun B7 aux deux voies ; le chantier 1, persistance des extractions de la voie 1, est séparé dans T10.7 ; séquence : T10.7 puis T10.1. E1..E6 implémentés le 23/10/2026 : cœur `src/core/normalisation.py`, commande CLI `normaliser`, 5ᵉ racine de nettoyage `data/processed/`, TU-124..133 + TI-27 ; 490 tests verts (470 avant + 20) ; **En revue depuis le 23/10/2026 — validation en réel par le concepteur en cours**)*
 
 
 ## T10.2 — Séance d'appropriation du 14/10/2026 (chantiers identifiés)

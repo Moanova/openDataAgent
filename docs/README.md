@@ -113,6 +113,7 @@ Le projet s'utilise via une **CLI** (Command Line Interface) avec Typer. Voici l
 | `demander`   | Conversation agentique multi-tours (REPL, mot-clé `stop`) : l'agent conduit le flux de bout en bout. | `python -m src.main demander` |
 | `acquisitions` | Affiche le manifeste d'acquisition d'une exécution : relie chaque fichier de `data/raw/<id>/` à son jeu, sa licence et sa mention d'attribution. | `python -m src.main acquisitions 20261019_175304` |
 | `nettoyer` | Supprime les anciennes exécutions (fichiers, inventaires, conversations, logs) selon un seuil d'âge. | `python -m src.main nettoyer --age-jours 30 --simulation` |
+| `normaliser` | Normalise les fichiers acquis vers `data/processed/` (CSV UTF-8, tableurs → CSV par feuille, autres copiés tels quels) pour la partie 2. | `python -m src.main normaliser --simulation` |
 
 > **Alias anglais (T13.3)** : les anciens noms `search`, `list`, `download`, `extract`, `query` et `chat` restent fonctionnels (ainsi que `ask`, alias anglais de `demander`). Les commandes sont désormais nommées en français ; les alias sont conservés pour la rétrocompatibilité.
 
@@ -275,7 +276,7 @@ Chaque réponse d'outil expose `donnees.nb_tentatives` (1 = succès au premier e
 
 ## 🧹 Nettoyage des anciennes exécutions (T7.2)
 
-Quatre familles de traces s'accumulent par `id_execution` : `data/raw/<id>/` (fichiers acquis + manifeste), `data/executions/<id>/` (inventaire), `conversations/<id>/` (journal) et `logs/openDataAgent_<id>.log`.
+Cinq familles de traces s'accumulent par `id_execution` : `data/raw/<id>/` (fichiers acquis + manifeste), `data/processed/<id>/` (fichiers normalisés, T10.1), `data/executions/<id>/` (inventaire), `conversations/<id>/` (journal) et `logs/openDataAgent_<id>.log`.
 
 ```bash
 python -m src.main nettoyer --age-jours 30 --simulation   # voir sans supprimer
@@ -285,6 +286,20 @@ python -m src.main nettoyer --age-jours 30                # supprimer
 Règles : l'âge est lu dans le préfixe date de l'`id_execution` ; l'exécution courante (`--id-execution`) est toujours protégée ; les registres globaux et les noms non reconnus sont conservés ; un échec de suppression est signalé, jamais bloquant. Le bilan est normalisé (`supprimes`, `conserves`, `octets_liberes`, `--json` pour la sortie brute).
 
 En complément, un **hook automatique** exécute le nettoyage avant chaque commande si `NETTOYAGE_AUTO=1` dans `.env` (désactivé par défaut). La commande `nettoyer` ne déclenche pas le hook.
+
+---
+
+## 📦 Normalisation des données pour la partie 2 (T10.1, maillon B7)
+
+La commande `normaliser` produit, pour chaque exécution de `data/raw/`, un dossier `data/processed/<id_execution>/` contenant les **fichiers finaux** destinés à la partie 2 (analyse, visualisation) :
+
+```bash
+python -m src.main normaliser --simulation        # voir sans écrire
+python -m src.main normaliser 20261023_100000_a1b2c3  # une exécution
+python -m src.main normaliser                     # toutes les exécutions
+```
+
+Règles : les CSV déjà conformes (UTF-8, virgule) sont copiés tels quels (pas de retraitement de la voie 1) ; les CSV non conformes sont ré-écrits ; les tableurs (`.xlsx`, `.xls`, `.ods`) deviennent un CSV par feuille ; les autres fichiers (zip, geojson, pdf, tsv…) sont copiés tels quels. `data/processed/` ne contient que des fichiers finaux, jamais le manifeste. La commande est re-lançable sans doublon (jamais d'écrasement) et intègre la 5ᵉ racine du nettoyage (`nettoyer`). C'est une commande CLI uniquement : l'agent n'y a pas accès (décision concepteur — déclenchable dans un workflow ultérieur). Les métadonnées de schéma sont reportées en version 2.
 
 ---
 

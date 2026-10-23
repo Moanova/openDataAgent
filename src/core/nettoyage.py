@@ -9,8 +9,9 @@
 # ---------------------------------------------------------------------
 """Nettoyage automatique des anciennes exécutions (T7.2).
 
-Quatre familles de traces s'accumulent par id_execution :
+Cinq familles de traces s'accumulent par id_execution :
 - data/raw/<id_execution>/          (fichiers acquis + manifeste)
+- data/processed/<id_execution>/    (fichiers normalisés, T10.1)
 - data/executions/<id_execution>/    (inventaire persistant, T10.2)
 - conversations/<id_execution>/     (journal de conversation, T11.1)
 - logs/openDataAgent_<id_execution>.log  (logs structurés, fichiers plats)
@@ -33,6 +34,7 @@ AGE_DEFAUT_JOURS = 30
 
 RACINES_SOUS_DOSSIERS = (
     Path("data") / "raw",
+    Path("data") / "processed",
     Path("data") / "executions",
     Path("conversations"),
 )

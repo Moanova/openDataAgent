@@ -13,7 +13,7 @@ openDataAgent/
 │   │   │   ├── <id_ressource>_<nom_fichier_original>.<extension>
 │   │   │   └── ...
 │   │   └── ...
-│   ├── processed/            # Fichiers normalisés (si applicable)
+│   ├── processed/            # Fichiers normalisés (T10.1)
 │   └── registry.json         # Registre des sources inaccessibles
 ```
 
@@ -59,6 +59,7 @@ openDataAgent/
 ## 5. Persistance
 - **Registre** : `data/registry.json` est persistant entre les exécutions (idem `data/registre_acceptations.json`, hors périmètre d'une exécution).
 - **Fichiers téléchargés** : Conservés jusqu'à suppression manuelle ou automatisée (nettoyage des anciennes exécutions, §8).
+- **Fichiers normalisés** (`data/processed/`, T10.1) : même règle de conservation (5ᵉ racine de nettoyage, §8).
 
 ## 6. Améliorations futures
 - *(aucune en attente sur ce document)*
@@ -85,18 +86,48 @@ data/raw/<id_execution>/manifeste_acquisitions.json
 **Rôle** : source de vérité « acquisition » côté disque — la partie 2 (via T10.1, normalisation B7) consomme ce manifeste pour relier chaque fichier à son jeu, sa licence et sa mention d'attribution, sans recroiser inventaire persistant et journal de conversation.
 
 
+## 7.5 Normalisation B7 (T10.1, 23/10/2026)
+
+La commande `normaliser` (CLI uniquement, pas d'outil agentique) produit, pour chaque exécution de `data/raw/`, un dossier `data/processed/<id_execution>/` contenant **les fichiers finaux destinés à la partie 2** (analyse, visualisation) :
+
+```
+python -m src.main normaliser [id_execution] [--simulation] [--json]
+```
+
+- **Sans argument** : normalise toutes les exécutions de `data/raw/` (l'exécution courante est exclue).
+- **Avec `id_execution`** : normalise une seule exécution.
+
+**Règles de normalisation** (par fichier de `data/raw/<id_execution>/`, hors manifeste) :
+
+| Fichier source | Action | Résultat dans `processed/` |
+|---|---|---|
+| CSV déjà conforme (UTF-8, virgule, sans BOM) | copié tel quel | même nom (voie 1 : pas de retraitement) |
+| CSV non conforme (encodage, séparateur, BOM) | ré-écrit | même nom, UTF-8 virgule sans BOM |
+| Tableur (`.xlsx`, `.xls`, `.ods`) | converti | un CSV par feuille : `<fichier>__<feuille>.csv` |
+| Autre (zip, geojson, json, shp, pdf, parquet, tsv, inconnu…) | copié tel quel | même nom (brut non normalisable) |
+
+**Invariants** :
+- `data/processed/<id_execution>/` ne contient **que** des fichiers finaux (jamais le manifeste d'acquisition, jamais de fichier intermédiaire) ;
+- **re-lançable sans doublon** : un fichier déjà produit (même nom) est ignoré, jamais écrasé ni dupliqué ;
+- en `--simulation`, le bilan est produit mais **rien n'est écrit** ;
+- un échec unitaire (lecture tableur impossible, bibliothèque absente) produit un **avertissement** dans le bilan et les logs, jamais un échec de la commande ; le fichier est alors copié tel quel ou ignoré ;
+- les bibliothèques de lecture (`openpyxl`, `xlrd`, `odfpy`, `charset-normalizer`) sont des dépendances optionnelles au runtime : si absentes, les fichiers concernés sont copiés tels quels avec avertissement.
+
+**Métadonnées de schéma** : reportées en version 2 (décision concepteur du 23/10/2026). La partie 2 s'appuie sur le manifeste d'acquisition (§7) pour relier chaque fichier à son jeu, sa licence et sa mention d'attribution.
+
 ## 8. Nettoyage des anciennes exécutions (T7.2, 22/10/2026)
 
-Quatre familles de traces s'accumulent par `id_execution` :
+Cinq familles de traces s'accumulent par `id_execution` :
 
 ```
 data/raw/<id_execution>/                    # fichiers acquis + manifeste
+data/processed/<id_execution>/              # fichiers normalisés (T10.1)
 data/executions/<id_execution>/             # inventaire persistant (T10.2)
 conversations/<id_execution>/              # journal de conversation (T11.1)
 logs/openDataAgent_<id_execution>.log       # logs structurés (fichiers plats)
 ```
 
-**Commande** : `python -m src.main nettoyer [--age-jours N] [--simulation] [--json] [--id-execution <id>]` — supprime les exécutions dont l'âge dépasse le seuil (défaut 30 jours), sur les quatre racines, et retourne un bilan normalisé `{statut, message, donnees}` (`supprimes`, `conserves`, `octets_liberes`, `erreurs`, `simulation`).
+**Commande** : `python -m src.main nettoyer [--age-jours N] [--simulation] [--json] [--id-execution <id>]` — supprime les exécutions dont l'âge dépasse le seuil (défaut 30 jours), sur les cinq racines, et retourne un bilan normalisé `{statut, message, donnees}` (`supprimes`, `conserves`, `octets_liberes`, `erreurs`, `simulation`).
 
 **Règles** :
 - l'âge est lu dans le préfixe date de l'`id_execution` (`AAAAMMJJ_HHMMSS`, hash optionnel) ; un nom non reconnu est **conservé** (fail-safe) ;

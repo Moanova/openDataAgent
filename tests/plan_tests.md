@@ -477,3 +477,21 @@ Périmètre : `src/main.py` (commandes renommées en français + alias anglais, 
 | TU-121 | Alias anglais `search` | délègue à `rechercher` (mêmes arguments/options, appel cœur identique) | Bloquant |
 | TU-122 | `--silencieux` + alias `--quiet` | logs masqués, `_SILENCIEUX=True`, résultat visible, les deux formes fonctionnent | Bloquant |
 | TU-123 | Manifeste : champ `genere_le` | `genere_le` présent, `generé_le` absent (convention sans accent) | Bloquant |
+
+## Tests T10.1 — Normalisation B7 (23/10/2026)
+
+Périmètre : `src/core/normalisation.py` (cœur), `src/main.py` (commande `normaliser`), `src/core/nettoyage.py` (5ᵉ racine `data/processed/`). Suivi : `docs/tasks/T10.1_normalisation_b7.md`.
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-124 | Détection conformité CSV | UTF-8 virgule sans BOM = conforme ; latin-1, BOM, point-virgule, vide = non conforme (vide = conforme) | Bloquant |
+| TU-125 | Normalisation CSV (encodage + séparateur) | CSV latin-1 point-virgule ré-écrit en UTF-8 virgule ; BOM retiré (TU-125b) | Bloquant |
+| TU-126 | CSV déjà conforme copié tel quel | voie 1 (CSV pivot) : copie octet-octet, pas de ré-écriture | Bloquant |
+| TU-127 | Conversion tableurs (xlsx, xls, ods) | un CSV par feuille `<fichier>__<feuille>.csv`, UTF-8 virgule ; nom de feuille nettoyé (TU-127b) | Bloquant |
+| TU-128 | Bruts non normalisables copiés tels quels | zip, geojson, tsv, pdf, extension inconnue : copie octet-octet | Bloquant |
+| TU-129 | `processed/` ne contient que des fichiers finaux | manifeste d'acquisition exclu ; extensions conformes | Bloquant |
+| TU-130 | Re-lancement sans doublon | 2ᵉ passage : tous les fichiers marqués `ignore`, aucun doublon, aucun écrasement | Bloquant |
+| TU-131 | Simulation | bilan fidèle produit, rien d'écrit sous `data/processed/` | Bloquant |
+| TU-132 | Bilan normalisé et cas limites | exécution inconnue → `erreur_parametres` ; dossier sans fichier → `succes` vide (TU-132b) | Bloquant |
+| TU-133 | `normaliser_toutes_executions` | agrégation multi-exécutions, exclusion de l'exécution courante | Bloquant |
+| TI-27 | Commande CLI `normaliser` | cycle complet : `--simulation` (rien écrit) → réel → re-lancement (`--json`, tout `ignore`) → sans argument → id inconnu (exit 1) | Bloquant |

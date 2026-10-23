@@ -355,3 +355,23 @@ L'écriture atomique du manifeste (`src/core/manifeste.py::_ecrire`) utilise **`
 - 2nd test réel T11.1 (20/10, id `20261020_213621`) : 3 acquisitions réussies, 3x « Échec d'écriture du manifeste » (WinError 183), manifeste final réduit à la dernière entrée. La boucle agentique n'était pas en cause — l'incident était purement système de fichiers, côté cœur (T10.8).
 - `os.replace` a la sémantique « écraser si existe » sur Windows comme sur POSIX : l'atomicité est préservée (écriture `.part` complète puis remplacement), sans le point de défaillance Windows.
 - Régression couverte par TU-80 (simulation du comportement Windows de `rename`).
+
+### 8. Normalisation B7 : périmètre et exposition (T10.1, 23/10/2026)
+
+#### Décision
+La normalisation B7 (maillon B7 → P) est réalisée par une **commande CLI uniquement** (`normaliser`), sans outil agentique. Elle produit `data/processed/<id_execution>/` contenant les fichiers finaux destinés à la partie 2 :
+
+- CSV déjà conforme (UTF-8, virgule, sans BOM) : **copié tel quel** — pas de retraitement de la voie 1 (le CSV pivot de `extraire_ressource` est déjà normalisé) ;
+- CSV non conforme (encodage, séparateur, BOM) : **ré-écrit** en UTF-8 virgule sans BOM ;
+- Tableurs (`.xlsx`, `.xls`, `.ods`) : **convertis** en un CSV par feuille (`<fichier>__<feuille>.csv`) ;
+- Autres fichiers (zip, geojson, json, shp, pdf, parquet, tsv, inconnu…) : **copiés tels quels** (bruts non normalisables).
+
+`data/processed/` ne contient **que** des fichiers finaux (jamais le manifeste d'acquisition). La commande est **re-lançable sans doublon** (un fichier déjà produit est ignoré, jamais écrasé ni dupliqué) et intégre la **5ᵉ racine** du nettoyage (`nettoyer`). Les **métadonnées de schéma** sont reportées en version 2. Les bibliothèques de lecture (`openpyxl`, `xlrd`, `odfpy`, `charset-normalizer`) sont optionnelles au runtime : si absentes, les fichiers concernés sont copiés tels quels avec avertissement (jamais bloquant).
+
+#### Justification
+- **Pas d'exposition agentique** (décision concepteur) : la normalisation est une étape post-acquisition, déclenchable dans un workflow ultérieur — l'agent n'a pas à s'en occuper. Cela évite un 7ᵉ outil dans la boucle et toute évolution de contrat (manifeste des outils inchangé).
+- **Voie 1 non retraitée** : le CSV pivot est déjà UTF-8 virgule aplati ; le re-traiter n'apporterait rien et risquerait de perdre l'ordre des colonnes.
+- **Tableurs en CSV par feuille** : la partie 2 consomme des données tabulaires ; un classeur multi-feuilles est éclaté en plusieurs CSV nommés explicitement. « odt » a été interprété comme « ods » (tableur ODF à feuilles ; un `.odt` document texte serait copié tel quel).
+- **Bruts non normalisables copiés tels quels** : la partie 2 peut en avoir besoin (GeoJSON, SHP, PDF…) ; le manifeste d'acquisition (T10.8) assure le lien fichier → jeu → licence.
+- **Re-lançable sans doublon** : un workflow peut relancer `normaliser` sans crainte (idempotence par nom de fichier produit).
+- **Métadonnées de schéma en v2** : le périmètre v1 se limite au dépôt des versions finales ; le schéma/encodage détaillé fera l'objet d'une évolution v2.
