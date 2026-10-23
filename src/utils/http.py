@@ -26,7 +26,7 @@ from typing import Any, Dict, Optional
 import requests
 from dotenv import load_dotenv
 
-from src.utils.logging import get_logger, log_to_file
+from src.utils.journalisation import get_logger, log_to_file
 
 load_dotenv()
 

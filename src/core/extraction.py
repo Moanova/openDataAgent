@@ -27,8 +27,8 @@ from src.core.resources import inventaire
 from src.core.licences_descriptif import mention_attribution
 from src.core.manifeste import enregistrer_acquisition
 from src.utils.http import interroger_ressource_api
-from src.utils.logging import get_logger, bind_context, log_to_file
-from src.utils.storage import generer_id_execution, chemin_destination, resoudre_collision
+from src.utils.journalisation import get_logger, bind_context, log_to_file
+from src.utils.stockage import generer_id_execution, chemin_destination, resoudre_collision
 
 logger = get_logger("openDataAgent.core.extraction")
 

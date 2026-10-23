@@ -19,10 +19,10 @@ from unittest.mock import patch
 import pytest
 import responses
 
-from src.core.download import telecharger_brut
+from src.core.telechargement import telecharger_brut
 from src.core.resources import lister_ressources
-from src.utils.registry import RegistreSourcesInaccessibles
-from src.utils.storage import chemin_destination, nettoyer_nom_fichier
+from src.utils.registre_sources import RegistreSourcesInaccessibles
+from src.utils.stockage import chemin_destination, nettoyer_nom_fichier
 
 URL_JEU = "https://www.data.gouv.fr/api/2/datasets/jeu-t/"
 URL_FICHIER = "https://exemple.fr/donnees/budget-2024.csv"
@@ -54,7 +54,7 @@ def _split_v2(payload):
 
 @pytest.fixture
 def registre(tmp_path) -> RegistreSourcesInaccessibles:
-    return RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    return RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
 
 
 @pytest.fixture
@@ -205,7 +205,7 @@ def test_collision_meme_execution_suffixe_numerique(inventaire_peuple, registre,
 
 def test_lister_fichiers_execution(inventaire_peuple, registre, tmp_path, monkeypatch):
     # Réf. docs/specs/stockage.md §3.1 (retrouver tous les fichiers d'une session)
-    from src.utils.storage import lister_fichiers
+    from src.utils.stockage import lister_fichiers
 
     monkeypatch.chdir(tmp_path)
     with responses.mock:

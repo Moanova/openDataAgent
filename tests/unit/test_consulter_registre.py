@@ -17,12 +17,12 @@ import json
 import src.agent.outils as module_outils
 from src.agent.outils import executer_outil
 from src.core.registre import DERNIERE_N_DEFAUT, consulter_registre
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 
 
 def _registre_peuple(tmp_path, nb_licence=2, nb_technique=3):
     """Registre temporaire avec des exclusions de licence et des echecs techniques."""
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     for i in range(nb_licence):
         registre.consigner_exclusion_juridique(
             id_jeu=f"jeu-lic-{i}",
@@ -44,7 +44,7 @@ def _registre_peuple(tmp_path, nb_licence=2, nb_technique=3):
 
 def test_tu114_registre_absent_rapport_vide(tmp_path):
     # TU-114 : registre absent -> succes, liste vide, total=0 (jamais d'exception).
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     reponse = consulter_registre(registre=registre)
     assert reponse["statut"] == "succes"
     assert reponse["donnees"]["sources_inaccessibles"] == []
@@ -115,7 +115,7 @@ def test_tu119_dispatch_agent_lecture_seule(tmp_path, monkeypatch):
     # id_execution injecte, registre inchange apres l'appel (lecture seule).
     registre = _registre_peuple(tmp_path, nb_licence=1, nb_technique=1)
     registre.sauvegarder()
-    avant = json.loads((tmp_path / "registry.json").read_text(encoding="utf-8"))
+    avant = json.loads((tmp_path / "registre_sources.json").read_text(encoding="utf-8"))
     monkeypatch.setitem(module_outils.TABLE_OUTILS, "consulter_registre",
                         lambda **kwargs: consulter_registre(registre=registre, **kwargs))
 
@@ -129,7 +129,7 @@ def test_tu119_dispatch_agent_lecture_seule(tmp_path, monkeypatch):
     assert len(entrees) == 1
     assert entrees[0]["motif"] == "licence_incompatible"
     # Lecture seule : le fichier registre est byte-identique
-    apres = json.loads((tmp_path / "registry.json").read_text(encoding="utf-8"))
+    apres = json.loads((tmp_path / "registre_sources.json").read_text(encoding="utf-8"))
     assert apres == avant
 
 

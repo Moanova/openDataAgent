@@ -14,12 +14,12 @@ Couvre TU-21 a TU-24 du plan de tests, avec un registre temporaire
 """
 import json
 
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 
 
 def test_consignation_exclusion_juridique(tmp_path):
     # Réf. tests/plan_tests.md : TU-21 (entrée complète : horodatage, motif, id_jeu, organisation, licence, url, detail)
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     entree = registre.consigner_exclusion_juridique(
         id_jeu="abc123",
         organisation="Ministere X",
@@ -38,7 +38,7 @@ def test_consignation_exclusion_juridique(tmp_path):
 
 def test_sauvegarde_puis_rechargement(tmp_path):
     # Réf. tests/plan_tests.md : TU-22 (sauvegarde puis rechargement -> contenu préservé, JSON valide)
-    chemin = tmp_path / "registry.json"
+    chemin = tmp_path / "registre_sources.json"
     registre = RegistreSourcesInaccessibles(chemin=chemin)
     registre.consigner_exclusion_juridique(
         id_jeu="abc123",
@@ -59,7 +59,7 @@ def test_sauvegarde_puis_rechargement(tmp_path):
 
 def test_rapport_pour_agent_copie(tmp_path):
     # Réf. tests/plan_tests.md : TU-23 (rapport_pour_agent -> copie ; modifier la copie n'altère pas le registre)
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     registre.consigner_exclusion_juridique(
         id_jeu="abc123",
         organisation="Org",
@@ -74,7 +74,7 @@ def test_rapport_pour_agent_copie(tmp_path):
 
 def test_registre_preexistant_non_ecrase(tmp_path):
     # Réf. tests/plan_tests.md : TU-24 (registre préexistant -> entrées antérieures chargées et non écrasées)
-    chemin = tmp_path / "registry.json"
+    chemin = tmp_path / "registre_sources.json"
     chemin.parent.mkdir(parents=True, exist_ok=True)
     anterieur = {
         "sources_inaccessibles": [
@@ -107,7 +107,7 @@ def test_registre_preexistant_non_ecrase(tmp_path):
 
 def test_fichier_invalide_registre_vide(tmp_path):
     # Test annexe : sans référence directe dans tests/plan_tests.md
-    chemin = tmp_path / "registry.json"
+    chemin = tmp_path / "registre_sources.json"
     chemin.write_text("{pas du json", encoding="utf-8")
 
     registre = RegistreSourcesInaccessibles(chemin=chemin)
@@ -118,12 +118,12 @@ def test_fichier_invalide_registre_vide(tmp_path):
 # T7.1 (E5) — statut_reprise : TU-91..TU-93
 # ---------------------------------------------------------------------------
 
-from src.utils.registry import REPRISE_A_RETENTER, REPRISE_DEFINITIF
+from src.utils.registre_sources import REPRISE_A_RETENTER, REPRISE_DEFINITIF
 
 
 def test_tu91_echec_transitoire_marque_a_retenter(tmp_path):
     # TU-91 : échec transitoire épuisé -> registre consigné statut_reprise=a_retenter
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     entree = registre.consigner_echec_technique(
         id_jeu="jeu-1",
         organisation="Org",
@@ -138,7 +138,7 @@ def test_tu91_echec_transitoire_marque_a_retenter(tmp_path):
 
 def test_tu92_echec_definitif_marque_definitif(tmp_path):
     # TU-92 : échec définitif (403) -> registre consigné statut_reprise=definitif
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     entree = registre.consigner_echec_technique(
         id_jeu="jeu-1",
         organisation="Org",
@@ -152,7 +152,7 @@ def test_tu92_echec_definitif_marque_definitif(tmp_path):
 
 def test_tu93_lecture_entree_sans_statut_reprise_defaut_definitif(tmp_path):
     # TU-93 : rétrocompatibilité — entrée sans statut_reprise lue comme definitif
-    chemin = tmp_path / "registry.json"
+    chemin = tmp_path / "registre_sources.json"
     anterieur = {
         "sources_inaccessibles": [
             {

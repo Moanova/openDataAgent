@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.utils.logging import get_logger, log_to_file
+from src.utils.journalisation import get_logger, log_to_file
 
 logger = get_logger("openDataAgent.utils.registre_acceptations")
 

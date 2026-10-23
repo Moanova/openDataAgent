@@ -19,8 +19,8 @@ from pathlib import Path
 import pytest
 import responses
 
-from src.core.search import rechercher_jeux
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.core.recherche import rechercher_jeux
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 from src.utils.registre_acceptations import RegistreAcceptationsConditionnelles
 
 REPERTOIRE_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "api"
@@ -35,7 +35,7 @@ def fixture_recherche() -> dict:
 
 @pytest.fixture
 def registre(tmp_path) -> RegistreSourcesInaccessibles:
-    return RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    return RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
 
 
 def _jeu(id_: str, licence_id: str, organisation: str = "Insee", badges: list = None) -> dict:
@@ -324,7 +324,7 @@ def test_sans_registre_acceptations_explicite(tmp_path, monkeypatch):
     # Régression : la CLI appelle rechercher_jeux sans registre_acceptations ;
     # le défaut (instance globale) doit prendre le relais, pas None.
     # On isole le registre global sur tmp_path pour ne pas écrire dans data/.
-    import src.core.search as module_search
+    import src.core.recherche as module_search
     registre_iso = RegistreAcceptationsConditionnelles(chemin=tmp_path / "acceptations.json")
     monkeypatch.setattr(module_search, "_registre_acceptations_par_defaut", registre_iso)
     reponse_api = {

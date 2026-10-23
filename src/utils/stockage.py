@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------
 # Application  : openDataAgent
-# Script       : storage.py
+# Script       : stockage.py
 # Version      : 1
-# Date         : 13-10-2026
+# Date         : 23-10-2026  (renommé de storage.py, T13.4)
 # Design       : Mistral Vibe
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------

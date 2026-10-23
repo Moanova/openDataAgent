@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------
 # Application  : openDataAgent
-# Script       : registry.py
+# Script       : registre_sources.py
 # Version      : 1
-# Date         : 12-10-2026
+# Date         : 23-10-2026  (renommé de registry.py, T13.4)
 # Design       : Mistral Vibe
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------
 """Registre des sources inaccessibles (T3.1.3, cf. docs/specs/registre.md).
 
-Persistant dans `data/registry.json`. Invariants :
+Persistant dans `data/registre_sources.json`. Invariants :
 - aucune entrée n'est supprimée ou modifiée après écriture ;
 - le registre persiste entre les exécutions ;
 - ecriture interne uniquement : l'agent n'y accède qu'en lecture via
@@ -21,9 +21,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from src.utils.logging import get_logger, log_to_file
+from src.utils.journalisation import get_logger, log_to_file
 
-logger = get_logger("openDataAgent.utils.registry")
+logger = get_logger("openDataAgent.utils.registre_sources")
 
 MOTIF_LICENCE = "licence_incompatible"
 MOTIF_SERVEUR = "serveur_origine_bloque"
@@ -36,10 +36,10 @@ REPRISE_DEFINITIF = "definitif"
 
 
 class RegistreSourcesInaccessibles:
-    """Registre persistant des sources inaccessibles (JSON, data/registry.json)."""
+    """Registre persistant des sources inaccessibles (JSON, data/registre_sources.json)."""
 
     def __init__(self, chemin: Optional[Path] = None) -> None:
-        self.chemin = Path(chemin) if chemin else Path("data/registry.json")
+        self.chemin = Path(chemin) if chemin else Path("data/registre_sources.json")
         self._entrees: List[Dict[str, Any]] = self._charger()
 
     def _charger(self) -> List[Dict[str, Any]]:

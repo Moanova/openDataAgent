@@ -19,7 +19,7 @@ from pathlib import Path
 import pytest
 import responses
 
-from src.core.query import interroger_ressource
+from src.core.interrogation import interroger_ressource
 from src.core.resources import lister_ressources
 
 REPERTOIRE_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "api"

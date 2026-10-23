@@ -47,8 +47,8 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.utils.logging import get_logger, log_to_file
-from src.utils.storage import lister_fichiers, nettoyer_nom_fichier
+from src.utils.journalisation import get_logger, log_to_file
+from src.utils.stockage import lister_fichiers, nettoyer_nom_fichier
 
 logger = get_logger("openDataAgent.core.normalisation")
 

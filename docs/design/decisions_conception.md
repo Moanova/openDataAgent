@@ -36,7 +36,7 @@ openDataAgent/
 │   │   │   └── ...
 │   │   └── ...
 │   ├── processed/            # Fichiers normalisés (si applicable)
-│   └── registry.json         # Registre des sources inaccessibles
+│   └── registre_sources.json         # Registre des sources inaccessibles
 ```
 
 ### Détails
@@ -48,7 +48,7 @@ openDataAgent/
 ### Justification
 - **Évite les conflits de noms** : Chaque exécution est isolée dans un dossier dédié.
 - **Traçabilité** : L'`id_execution` permet de retrouver tous les fichiers d'une session.
-- **Persistance** : Le registre (`registry.json`) est stocké dans `data/` pour être conservé entre les exécutions.
+- **Persistance** : Le registre (`registre_sources.json`) est stocké dans `data/` pour être conservé entre les exécutions.
 
 ### Impact
 - Documenté dans [`stockage.md`](stockage.md).

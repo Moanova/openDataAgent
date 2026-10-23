@@ -416,7 +416,7 @@ Périmètre : `src/core/nettoyage.py` + commande CLI `nettoyer` + hook `NETTOYAG
 | TU-95 | Exécution récente → conservée | Dossiers et log présents | Bloquant |
 | TU-96 | Exécution courante (`id_execution_courante`) → protégée même ancienne | `supprimes=[]`, `conserves=[id]` | Bloquant |
 | TU-97 | `--simulation` → rien supprimé, bilan indique ce qui le serait | `simulation=true`, traces présentes | Bloquant |
-| TU-98 | Registres globaux + noms non reconnus → conservés | `registry.json`, `registre_acceptations.json`, dossier/log inconnus intacts | Bloquant |
+| TU-98 | Registres globaux + noms non reconnus → conservés | `registre_sources.json`, `registre_acceptations.json`, dossier/log inconnus intacts | Bloquant |
 | TU-99 | `id_execution` à date invalide (`20261301_...`) → conservé (fail-safe) | Non sélectionné | Bloquant |
 | TU-100 | Bilan : compteurs + octets libérés exacts | `octets_liberes` = somme des tailles supprimées | Bloquant |
 | TI-21 | Flux complet cœur : vieille supprimée, récente + courante conservées, registres intacts | Bilan conforme, disque conforme | Bloquant |
@@ -496,3 +496,16 @@ Périmètre : `src/core/normalisation.py` (cœur), `src/main.py` (commande `norm
 | TU-133 | `normaliser_toutes_executions` | agrégation multi-exécutions, exclusion de l'exécution courante | Bloquant |
 | TI-27 | Commande CLI `normaliser` | cycle complet : `--simulation` (rien écrit) → réel → re-lancement (`--json`, tout `ignore`) → sans argument → id inconnu (exit 1) | Bloquant |
 | TU-134 | Journalisation de la copie sans retraitement | CSV conforme copié tel quel : log console (`logger.info`) + log fichier (`log_to_file`, événement JSON `CSV conforme copie tel quel`) | Bloquant |
+
+## Tests T13.4 — Réalignement linguistique des modules internes (23/10/2026)
+
+Périmètre : renommage de 6 modules (`src/core/search.py`→`recherche.py`, `download.py`→`telechargement.py`, `query.py`→`interrogation.py`, `src/utils/logging.py`→`journalisation.py`, `registry.py`→`registre_sources.py`, `storage.py`→`stockage.py`), 5 tests associés, `data/registry.json`→`data/registre_sources.json`. Suivi : `docs/tasks/T13.4_realignement_modules.md`.
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-135 | Modules renommés importables | les 6 nouveaux noms (`src.core.recherche`, `telechargement`, `interrogation`, `src.utils.journalisation`, `registre_sources`, `stockage`) s'importent | Bloquant |
+| TU-135b | Anciens modules supprimés | les 6 anciens noms lèvent `ModuleNotFoundError` | Bloquant |
+| TU-136 | Chemin par défaut du registre | `RegistreSourcesInaccessibles().chemin == Path("data/registre_sources.json")` | Bloquant |
+| TU-137 | Loggers réalignés | `get_logger("openDataAgent.core.recherche")` etc. portent les nouveaux noms | Bloquant |
+| TU-137b | Aucun résidu d'anciens loggers | grep `openDataAgent.(core.search|core.download|core.query|utils.registry|utils.logging|utils.storage)` dans `src/` = vide | Bloquant |
+| TU-138 | Fichiers de tests renommés | `test_recherche.py`, `test_telechargement.py`, `test_interrogation.py`, `test_journalisation.py`, `test_registre_sources.py` présents ; anciens absents | Bloquant |

@@ -32,7 +32,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, FrozenSet, Optional, Set
 
-from src.utils.logging import get_logger, log_to_file
+from src.utils.journalisation import get_logger, log_to_file
 
 logger = get_logger("openDataAgent.core.licence")
 

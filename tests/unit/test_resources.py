@@ -20,7 +20,7 @@ import responses
 from unittest.mock import patch
 
 from src.core.resources import inventaire, lister_ressources
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 
 REPERTOIRE_FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "api"
 URL_JEU = "https://www.data.gouv.fr/api/2/datasets/67660551c8588734a16a6a60/"
@@ -60,7 +60,7 @@ def fixture_ressources() -> dict:
 
 @pytest.fixture
 def registre(tmp_path) -> RegistreSourcesInaccessibles:
-    return RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    return RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
 
 
 @responses.activate

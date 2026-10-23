@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------
 # Application  : openDataAgent
-# Script       : query.py
+# Script       : interrogation.py
 # Version      : 1
-# Date         : 13-10-2026
+# Date         : 23-10-2026  (renommé de query.py, T13.4)
 # Design       : Mistral Vibe
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------
@@ -18,11 +18,11 @@ configure (5000 par defaut) : volume_eleve_telechargement_brut_suggere.
 import os
 from typing import Any, Dict, Optional
 
-from src.utils.logging import get_logger, bind_context, log_to_file
+from src.utils.journalisation import get_logger, bind_context, log_to_file
 from src.utils.http import interroger_ressource_api, profil_ressource_api
 from src.core.resources import inventaire
 
-logger = get_logger("openDataAgent.core.query")
+logger = get_logger("openDataAgent.core.interrogation")
 
 SEUIL_VOLUME_ELEVE_DEFAUT = 5000
 

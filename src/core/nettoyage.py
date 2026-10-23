@@ -18,7 +18,7 @@ Cinq familles de traces s'accumulent par id_execution :
 
 Le critère de rétention est l'âge, lu dans le préfixe date de l'id
 (AAAAMMJJ_HHMMSS, hash court optionnel). Les registres globaux
-(data/registry.json, data/registre_acceptations.json) et tout nom non
+(data/registre_sources.json, data/registre_acceptations.json) et tout nom non
 reconnu sont conservés (fail-safe). L'exécution courante est toujours
 protégée. Un échec de suppression est consigné, jamais bloquant.
 """
@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-from src.utils.logging import log_to_file
+from src.utils.journalisation import log_to_file
 
 AGE_DEFAUT_JOURS = 30
 

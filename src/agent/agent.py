@@ -35,7 +35,7 @@ from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 
-from src.utils.logging import configure_logging, log_to_file
+from src.utils.journalisation import configure_logging, log_to_file
 
 load_dotenv()
 

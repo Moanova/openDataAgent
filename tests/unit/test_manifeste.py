@@ -135,10 +135,10 @@ def test_echec_ecriture_warning_sans_exception(racine):
 import responses
 from unittest.mock import patch
 
-from src.core.download import telecharger_brut
+from src.core.telechargement import telecharger_brut
 from src.core.extraction import extraire_ressource
 from src.core.resources import lister_ressources
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 
 URL_FICHIER = "https://exemple.org/donnees/budget.csv"
 URL_JEU = "https://www.data.gouv.fr/api/2/datasets/jeu-m/"
@@ -177,7 +177,7 @@ def test_telechargement_succedant_ecrit_entree_manifeste(mock_indexee, tmp_path,
     import src.core.resources as module_resources
     module_resources._inventaire.clear()
     monkeypatch.chdir(tmp_path)
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     _mocker_inventaire()
     lister_ressources("jeu-m", registre=registre)
 
@@ -203,7 +203,7 @@ def test_telechargement_echoue_aucune_entree(mock_indexee, tmp_path, monkeypatch
     import src.core.resources as module_resources
     module_resources._inventaire.clear()
     monkeypatch.chdir(tmp_path)
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     _mocker_inventaire()
     lister_ressources("jeu-m", registre=registre)
 
@@ -222,7 +222,7 @@ def test_extraction_succedante_ecrit_entree_manifeste(mock_indexee, tmp_path, mo
     import src.core.resources as module_resources
     module_resources._inventaire.clear()
     monkeypatch.chdir(tmp_path)
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     _mocker_inventaire()
     lister_ressources("jeu-m", registre=registre)
 
@@ -251,7 +251,7 @@ def test_extraction_non_indexee_aucune_entree(mock_indexee, tmp_path, monkeypatc
     import src.core.resources as module_resources
     module_resources._inventaire.clear()
     monkeypatch.chdir(tmp_path)
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     detail, _ = _mocker_inventaire()
     # inventaire peuplé, puis on déclare la ressource non indexée pour l'extraction
     lister_ressources("jeu-m", registre=registre)
@@ -270,7 +270,7 @@ def test_jeu_courant_porte_titre_et_url(mock_indexee, tmp_path):
     # normalisée les dénormalise (titre_jeu, url_jeu).
     import src.core.resources as module_resources
     module_resources._inventaire.clear()
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     _mocker_inventaire(titre_jeu="Titre Étalons")
     lister_ressources("jeu-m", registre=registre)
 
@@ -281,7 +281,7 @@ def test_jeu_courant_porte_titre_et_url(mock_indexee, tmp_path):
 
 def test_lister_acquisitions_via_storage(tmp_path):
     # T10.8 (E4) : lister_acquisitions lit le manifeste (liste vide si absent).
-    from src.utils.storage import lister_acquisitions
+    from src.utils.stockage import lister_acquisitions
 
     assert lister_acquisitions("exec-x", racine=tmp_path / "data" / "raw") == []
     enregistrer_acquisition("exec-x", _entree("f.csv"), racine=tmp_path / "data" / "raw")
@@ -298,7 +298,7 @@ def test_ti_deux_voies_un_manifeste(mock_indexee, tmp_path, monkeypatch):
     import src.core.resources as module_resources
     module_resources._inventaire.clear()
     monkeypatch.chdir(tmp_path)
-    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    registre = RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
     _mocker_inventaire()
     lister_ressources("jeu-m", registre=registre)
 

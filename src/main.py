@@ -29,12 +29,12 @@ import typer
 
 from pathlib import Path
 
-from src.core.search import rechercher_jeux
+from src.core.recherche import rechercher_jeux
 from src.core.resources import charger_inventaire, decharger_inventaire, lister_ressources
-from src.core.download import telecharger_brut
+from src.core.telechargement import telecharger_brut
 from src.core.extraction import extraire_ressource
-from src.core.query import interroger_ressource
-from src.utils.logging import configure_logging
+from src.core.interrogation import interroger_ressource
+from src.utils.journalisation import configure_logging
 from src.agent.agent import creer_agent, detruire_agent
 from src.agent.boucle import (
     PLAFOND_DEFAUT,

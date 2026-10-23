@@ -57,7 +57,7 @@ openDataAgent/
 └── data/                        # Stockage des fichiers téléchargés
     ├── raw/                     # Fichiers bruts
     ├── processed/               # Fichiers normalisés
-    └── registry.json            # Registre des sources inaccessibles
+    └── registre_sources.json            # Registre des sources inaccessibles
 ```
 
 ---

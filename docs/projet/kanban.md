@@ -21,14 +21,12 @@ T7.6 (optionnel ou à traiter dans la version 2 du projet)
 T10.6 (optionnel)
 T10.9 (optionnel ou à traiter dans la version 2 du projet)
 T11.2 (optionnel ou à traiter dans la version 2 du projet)
-T13.4
 
 
 ## En cours
 
 
 ## En revue
-T10.1
 
 
 ## Terminé
@@ -82,6 +80,8 @@ T11.3
 T11.4
 T13.2
 T13.3
+T10.1
+T13.4
 
 
 ## Annulé
@@ -275,7 +275,7 @@ Circuit breaker agentique par hôte — après 3 échecs transitoires consécuti
 
 
 ## T10.1 — Mise à disposition des données vers la partie 2
-Réaliser la mise à disposition des données vers la partie 2 (maillon B7 → P du schéma de conception, `docs/design/conception.mmd`). **Écart le plus structurel** : en l'état, seule la voie 2 (téléchargement brut) matérialise les données sur disque ; la voie 1 (extraction via API tabulaire) ne persiste rien (exploration conversationnelle uniquement) et aucune normalisation commune B7 n'existe dans le code. Chantiers : persistance des extractions tabulaires (ex. export paginé vers `data/raw/`) et pipeline de normalisation commun aux deux voies. Évolution de contrat probable (v1.2.0, ex. option `destination` sur `interroger_ressource` ou nouvel outil). *(En cours depuis le 14/10/2026 — périmètre précisé : cette entrée porte le chantier 2, pipeline de normalisation commun B7 aux deux voies ; le chantier 1, persistance des extractions de la voie 1, est séparé dans T10.7 ; séquence : T10.7 puis T10.1. E1..E6 implémentés le 23/10/2026 : cœur `src/core/normalisation.py`, commande CLI `normaliser`, 5ᵉ racine de nettoyage `data/processed/`, TU-124..133 + TI-27 ; 490 tests verts (470 avant + 20) ; **En revue depuis le 23/10/2026 — validation en réel par le concepteur en cours**)*
+Réaliser la mise à disposition des données vers la partie 2 (maillon B7 → P du schéma de conception, `docs/design/conception.mmd`). **Écart le plus structurel** : en l'état, seule la voie 2 (téléchargement brut) matérialise les données sur disque ; la voie 1 (extraction via API tabulaire) ne persiste rien (exploration conversationnelle uniquement) et aucune normalisation commune B7 n'existe dans le code. Chantiers : persistance des extractions tabulaires (ex. export paginé vers `data/raw/`) et pipeline de normalisation commun aux deux voies. Évolution de contrat probable (v1.2.0, ex. option `destination` sur `interroger_ressource` ou nouvel outil). *(En cours depuis le 14/10/2026 — périmètre précisé : cette entrée porte le chantier 2, pipeline de normalisation commun B7 aux deux voies ; le chantier 1, persistance des extractions de la voie 1, est séparé dans T10.7 ; séquence : T10.7 puis T10.1. E1..E6 implémentés le 23/10/2026 : cœur `src/core/normalisation.py`, commande CLI `normaliser`, 5ᵉ racine de nettoyage `data/processed/`, TU-124..134 + TI-27 ; 491 tests verts (470 avant + 21) ; correctif TU-134 (journalisation copie conforme) ; **validée en réel par le concepteur le 23/10/2026** (normalisation Excel opérationnelle après installation des dépendances) — passée en Terminé)*
 
 
 ## T10.2 — Séance d'appropriation du 14/10/2026 (chantiers identifiés)
@@ -384,7 +384,8 @@ Francisation des derniers modules nommés en anglais dans `src/core/` et `src/ut
   - mentions de `data/registry.json` dans le contrat `contrats/consulter_registre.json` (description), `config/prompt_systeme.txt` (consigne A4), `docs/specs/registre.md`, `docs/specs/stockage.md`, `docs/README.md`, `docs/design/decisions_conception.md`, `tests/plan_tests.md` (TU-98) ;
   - tests utilisant des chemins temporaires `tmp_path / "registry.json"` à renommer pour cohérence (non bloquant mais recommandé).
 - **Hors périmètre** : noms d'outils agent (`rechercher_jeux`, `consulter_registre`, …), statuts et motifs, champs des contrats JSON, `data/registre_acceptations.json` (déjà en français), arborescence `data/` au-delà du registre, variables d'environnement.
-- **Validation** : suite complète `pytest tests/unit` verte après renommage (470 tests avant la tâche).
+- **Validation** : suite complète `pytest tests/unit` verte après renommage (491 tests avant la tâche).
+*(En cours depuis le 23/10/2026 — E1..E9 implémentés : 6 modules + 5 tests renommés, ~57 imports + loggers mis à jour, `data/registry.json`→`data/registre_sources.json` (code + contrat + prompt + docs), TU-135..138 ; 507 tests verts (491 avant + 16) ; **En revue du 23/10/2026 — validée en réel par le concepteur, passée en Terminé le 23/10/2026** ; commit + push groupés avec la clôture de T10.1)*
 
 
 ## Commande `search` — Intégration et CLI

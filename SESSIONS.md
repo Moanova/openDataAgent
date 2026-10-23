@@ -5,6 +5,96 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 23/10/2026 (21) — Clôture : T13.4 terminée (validée en réel), commit + push groupés, fin de la v1**
+
+### **Contexte**
+- Le concepteur a validé T13.4 en réel et demande le **commit + push** des changements groupés (clôture T10.1 + T13.4). Il fera un dernier test avant la fusion `dev` → `main`.
+
+### **Actions réalisées**
+1. **T13.4 passée en ✅ Terminé** : retirée de la section En revue, ajoutée à la liste Terminé dans le kanban ; note de clôture mise à jour dans la section 13.
+2. **Suivi T13.4** (`docs/tasks/T13.4_realignement_modules.md`) : validation en réel cochée. **T13.4 : E1..E9 + validation tous faits.**
+3. **SESSIONS.md** : présente entrée de clôture.
+4. **Vérification finale avant commit** : `git status --short` (11 renommages stagés `R`, ~30 fichiers modifiés, 2 nouveaux fichiers + 3 fichiers de clôture T10.1) ; suite complète **507 tests verts** ; grep résidus néant (hors `test_realignement_modules.py` qui vérifie volontairement l'absence des anciens modules).
+5. **Commit + push** : commit groupé couvrant la clôture de T10.1 (séance 19) et T13.4 complète, poussé sur `dev`.
+
+### **État en fin de séance**
+- **T13.4 : ✅ Terminé** (E1..E9, validée en réel par le concepteur).
+- **507 tests verts.**
+- Kanban : **52 tâches terminées, 0 en revue, 0 en cours** — **toutes les tâches de la v1 sont terminées**. À faire = uniquement des tâches optionnelles/P2 (T7.3, T7.4, T7.6, T10.6, T10.9, T11.2) ; T13.1 annulée.
+- Prochaine étape : **dernier test du concepteur, puis fusion `dev` → `main` et passage en version 2**.
+
+### **Blocages**
+- Aucun. Séance close.
+
+---
+
+## **Séance du 23/10/2026 (20) — T13.4 : réalignement linguistique des modules internes (E1..E9)**
+
+### **Contexte**
+- Dernière tâche de la v1 : francisation des 6 derniers modules anglais (`src/core/`, `src/utils/`), dans la continuité de T13.3. Le concepteur demande **pas de commit ni de push** (changements cassants) en attendant la validation en réel.
+
+### **Actions réalisées (E1..E9)**
+1. **E1/E2 — Renommage** (`git mv`) : 6 modules (`search.py`→`recherche.py`, `download.py`→`telechargement.py`, `query.py`→`interrogation.py`, `logging.py`→`journalisation.py`, `registry.py`→`registre_sources.py`, `storage.py`→`stockage.py`) + 5 tests associés (correspondance 1:1).
+2. **E3 — Imports et loggers** : 57 références `from src.core.search|download|query|utils.logging|registry|storage import` remplacées, loggers `openDataAgent.*` réalignés, en-têtes `# Script :` mis à jour. 2 références restantes corrigées à la main (`import src.core.search as` dans `test_recherche.py`, `@patch("src.utils.logging._log_file")` dans `test_journalisation.py`).
+3. **E4 — Chemin du registre** : `data/registry.json`→`data/registre_sources.json` dans le code (chemin par défaut + docstrings), `contrats/consulter_registre.json` (description), `config/prompt_systeme.txt` (consigne A4), docs vivantes (`registre.md`, `stockage.md`, `README.md`, `decisions_conception.md`), `plan_tests.md` (TU-98). **Vérification préalable** : pas de bump de version de contrat (description textuelle seule) ; empreinte du prompt modifiée (agents recéés, comportement prévu).
+4. **E5 — Loggers** : tous réalignés, aucun résidu (grep vérifié).
+5. **E6 — Tests tmp_path** : 28 occurrences `tmp_path / "registry.json"` renommées (7 fichiers, cohérence, fonctionnellement neutres).
+6. **E7 — Nettoyage** : vérifié fail-safe — les fichiers plats (registres) sont conservés par défaut ; test manuel avec le nouveau nom OK ; TU-98 mis à jour.
+7. **E8 — TU-135..TU-138** (`tests/unit/test_realignement_modules.py`, 16 tests) : modules renommés importables / anciens non importables, chemin par défaut du registre, loggers réalignés + aucun résidu, fichiers de tests renommés.
+8. **E9 — Documentation** : `contrat_global.md` (convention 5 étendue aux modules internes + T13.4), suivi `docs/tasks/T13.4_realignement_modules.md`, `plan_tests.md` (section T13.4), kanban (T13.4 → En revue).
+
+### **Vérifications**
+- **507 tests verts** (`python -m pytest tests/unit -q`, 28 s) — 491 avant + 16 nouveaux.
+- Smoke test CLI réel : `--help` (9 commandes + alias OK), `rechercher "test" --json` (appel réseau OK, logger `openDataAgent.core.recherche` visible).
+- Grep résidus : aucun `registry.json`, aucun ancien nom de module/logger dans `src/`, `tests/`, `contrats/`, `config/`, docs vivantes.
+
+### **État en fin de séance**
+- T13.4 déplacée en 🔍 **En revue** — **E1..E9 faits**, reste la **validation en réel par le concepteur**.
+- **Non commité / non poussé** (décision concepteur — changements cassants) : la clôture de T10.1 (séance 19) + T13.4 sont en local.
+- Kanban : 51 tâches terminées, 1 en revue (T13.4), aucune en cours. **Toutes les tâches de la v1 sont terminées ou en revue.**
+- Après validation : commit + push groupés (T10.1 clôture + T13.4), puis **fusion `dev` → `main` / passage v2**.
+
+### **Blocages**
+- Aucun.
+
+---
+
+## **Séance du 23/10/2026 (19) — Clôture : T10.1 terminée (validée en réel), préparation T13.4**
+
+### **Contexte**
+- Le concepteur confirme que la normalisation des fichiers Excel est opérationnelle après installation des dépendances (`pip install -r requirements.txt`) — l'avertissement « bibliothèque de lecture absente » était dû à un environnement local sans `openpyxl`/`xlrd`/`odfpy`, pas à un problème de conception.
+- Il fait passer **T10.1** en Terminé et demande **pas de commit ni de push** — les changements de documentation restent en local en attendant T13.4.
+- Prochaine et ultime tâche de la v1 : **T13.4** (réalignement linguistique des modules internes).
+
+### **Actions réalisées**
+1. **T10.1 passée en ✅ Terminé** : retirée de En revue, ajoutée à Terminé (51 tâches terminées) ; note de clôture (491 tests verts, correctif TU-134, validation en réel du 23/10).
+2. **Fiche de suivi T10.1** : validation cochée.
+3. **Plan T13.4 présenté** au concepteur (voir ci-dessous).
+
+### **Plan T13.4 (présenté, en attente de go)**
+- **E1** : renommage des 6 modules (`git mv`) : `src/core/search.py`→`recherche.py`, `download.py`→`telechargement.py`, `query.py`→`interrogation.py`, `src/utils/logging.py`→`journalisation.py` (prioritaire : shadowing stdlib), `registry.py`→`registre_sources.py` (évite le doublon avec `src/core/registre.py`), `storage.py`→`stockage.py`.
+- **E2** : renommage des 5 tests associés (correspondance 1:1).
+- **E3** : mise à jour des ~113 imports dans `src/` et `tests/` (recherches `core.search`, `core.download`, `core.query`, `utils.logging`, `utils.registry`, `utils.storage`).
+- **E4** : chemin par défaut du registre : `data/registry.json`→`data/registre_sources.json` (`src/utils/registry.py` → `registre_sources.py`), mentions dans docstrings (`src/core/registre.py`, `search.py`/`recherche.py`, `download.py`/`telechargement.py`, `resources.py`, `nettoyage.py`), contrat `contrats/consulter_registre.json` (description), `config/prompt_systeme.txt` (consigne A4), `docs/specs/registre.md`, `docs/specs/stockage.md`, `docs/README.md`, `docs/design/decisions_conception.md`, `tests/plan_tests.md` (TU-98).
+- **E5** : noms de loggers (`get_logger("openDataAgent.utils.registry")` etc.) réalignés.
+- **E6** : tests utilisant `tmp_path / "registry.json"` renommés pour cohérence.
+- **E7** : vérification nettoyage (fail-safe : fichiers plats conservés — le renommage est sans impact) + TU-98 mis à jour.
+- **E8** : tests TU-135.. (renommage modules, imports, chemin registre, loggers) + suite complète verte.
+- **E9** : docs (contrat_global convention 5, README, stockage, suivi T13.4, plan_tests, kanban, SESSIONS.md).
+- **Hors périmètre** : noms d'outils agent, statuts, motifs, champs des contrats JSON, `data/registre_acceptations.json` (déjà en français), arborescence `data/` au-delà du registre, variables d'environnement.
+
+### **État en fin de séance**
+- **T10.1 : ✅ Terminé** (validée en réel par le concepteur).
+- **T13.4 : à faire** (dernière tâche de la v1, en attente de go).
+- **51 tâches terminées**, aucune en cours, aucune en revue.
+- **491 tests verts**.
+- **Non commité / non poussé** (décision concepteur) : kanban + fiche T10.1 + SESSIONS.md modifiés en local.
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 23/10/2026 (18) — Clôture : T11.4 terminée (exposition agent-only vérifiée)**
 
 ### **Contexte**

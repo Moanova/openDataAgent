@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------
 # Application  : openDataAgent
-# Script       : download.py
+# Script       : telechargement.py
 # Version      : 1
-# Date         : 13-10-2026
+# Date         : 23-10-2026  (renommé de download.py, T13.4)
 # Design       : Mistral Vibe
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------
@@ -16,15 +16,15 @@ registre est alimenté même en cas d'echec.
 """
 from typing import Any, Dict, Optional
 
-from src.utils.logging import get_logger, bind_context, log_to_file
+from src.utils.journalisation import get_logger, bind_context, log_to_file
 from src.utils.http import telecharger_fichier
-from src.utils.storage import generer_id_execution, chemin_destination, resoudre_collision
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.stockage import generer_id_execution, chemin_destination, resoudre_collision
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 from src.core.resources import inventaire
 from src.core.licences_descriptif import mention_attribution
 from src.core.manifeste import enregistrer_acquisition
 
-logger = get_logger("openDataAgent.core.download")
+logger = get_logger("openDataAgent.core.telechargement")
 
 _registre_par_defaut = RegistreSourcesInaccessibles()
 
@@ -41,7 +41,7 @@ def telecharger_brut(
         id_ressource (str): Identifiant de la ressource, issu de `lister_ressources`.
         id_execution (Optional[str]): Identifiant unique pour tracer l'exécution.
         registre (Optional[RegistreSourcesInaccessibles]): Registre des sources
-            inaccessibles ; par defaut, l'instance globale sur data/registry.json.
+            inaccessibles ; par defaut, l'instance globale sur data/registre_sources.json.
 
     Returns:
         Dict[str, Any]: Resultat au format normalise (statut/message/donnees).
@@ -87,7 +87,7 @@ def telecharger_brut(
         # Invariant : le registre est alimenté meme en cas d'échec.
         # T7.1 (E5) : un échec transitoire épuisé est marqué « à retenter »,
         # un refus définitif du serveur reste « définitif ».
-        from src.utils.registry import REPRISE_A_RETENTER
+        from src.utils.registre_sources import REPRISE_A_RETENTER
 
         statut_reprise = REPRISE_A_RETENTER if resultat.motif == "transitoire" else "definitif"
         registre.consigner_echec_technique(

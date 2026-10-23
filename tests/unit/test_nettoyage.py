@@ -127,7 +127,7 @@ def test_registres_globaux_et_noms_inconnus_conserves(tmp_path, monkeypatch, vie
     id_vieux = _id(vielle)
     _fabriquer_executions(tmp_path, [id_vieux])
     # Registres globaux (fichiers plats sous data/, hors périmètre id_execution)
-    registre = tmp_path / "data" / "registry.json"
+    registre = tmp_path / "data" / "registre_sources.json"
     registre.parent.mkdir(parents=True, exist_ok=True)
     registre.write_text("{}", encoding="utf-8")
     acceptations = tmp_path / "data" / "registre_acceptations.json"

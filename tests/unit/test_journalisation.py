@@ -8,7 +8,7 @@ import json
 import os
 import pytest
 from unittest.mock import patch, mock_open
-from src.utils.logging import configure_logging, get_logger, log_to_file, bind_context
+from src.utils.journalisation import configure_logging, get_logger, log_to_file, bind_context
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ def cleanup_logs():
     """Supprime les fichiers de logs créés pendant les tests."""
     yield
     # Fermer le fichier de logs s'il est ouvert
-    from src.utils.logging import _log_file
+    from src.utils.journalisation import _log_file
     if _log_file is not None:
         _log_file.close()
         _log_file = None
@@ -92,7 +92,7 @@ def test_log_levels():
         assert log_entry["event"] == "Test info level"
 
 
-@patch("src.utils.logging._log_file")
+@patch("src.utils.journalisation._log_file")
 def test_log_to_file_error_handling(mock_log_file):
     # Test annexe : sans référence directe dans tests/plan_tests.md
     """Teste la gestion des erreurs lors de l'écriture dans le fichier de logs."""

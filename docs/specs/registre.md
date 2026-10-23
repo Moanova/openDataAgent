@@ -6,7 +6,7 @@ Ce document décrit le **registre des sources inaccessibles**, utilisé pour con
 - Les **échecs techniques** (blocages serveurs, erreurs HTTP).
 
 ## 2. Structure du registre
-Le registre est stocké dans `data/registry.json` et persiste entre les exécutions.
+Le registre est stocké dans `data/registre_sources.json` et persiste entre les exécutions.
 Format :
 ```json
 {
@@ -34,7 +34,7 @@ T7.1 : `statut_reprise` est un champ **additif** des entrées techniques — `a_
 - **Lecture** :
   - Le registre est accessible en lecture pour la synthèse finale (étape A4).
 - **Persistance** :
-  - Le fichier `registry.json` est chargé au démarrage et mis à jour à chaque exécution.
+  - Le fichier `registre_sources.json` est chargé au démarrage et mis à jour à chaque exécution.
 
 ## 4. Exemple
 ```json

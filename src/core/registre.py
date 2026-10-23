@@ -10,7 +10,7 @@
 """Consultation du registre des sources inaccessibles (T11.4).
 
 Outil agentique `consulter_registre` : lecture seule du registre
-persistant `data/registry.json` (toutes exécutions confondues), pour
+persistant `data/registre_sources.json` (toutes exécutions confondues), pour
 donner à l'agent une mémoire cross-session des sources déjà écartées.
 Le rapport est limitable (`derniere_n`) et filtrable (`motif`) pour
 maîtriser sa taille. Aucune fonction exposée ne modifie le registre
@@ -21,8 +21,8 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from src.contracts.consulter_registre import MotifRegistre
-from src.utils.logging import bind_context, get_logger, log_to_file
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.journalisation import bind_context, get_logger, log_to_file
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 
 logger = get_logger("openDataAgent.core.registre")
 
@@ -50,7 +50,7 @@ def consulter_registre(
             `serveur_origine_bloque`).
         id_execution : Identifiant unique pour tracer l'exécution.
         registre : Registre à lire ; par défaut, l'instance globale sur
-            data/registry.json.
+            data/registre_sources.json.
 
     Returns:
         Dict[str, Any]: Réponse normalisée {statut, message, donnees} ;

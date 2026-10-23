@@ -42,7 +42,7 @@ from src.agent.outils import _decoder_arguments, executer_outil
 from src.core.resources import inventaire
 from src.utils.http import URL_BASE_DEFAUT as URL_BASE_API_DEFAUT
 from src.utils.http import URL_BASE_TABULAIRE_DEFAUT
-from src.utils.logging import bind_context, get_logger, log_to_file
+from src.utils.journalisation import bind_context, get_logger, log_to_file
 
 PLAFOND_DEFAUT = 10
 

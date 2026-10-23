@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------
 # Application  : openDataAgent
-# Script       : logging.py
+# Script       : journalisation.py
 # Version      : 1
-# Date         : 12-10-2026
+# Date         : 23-10-2026  (renommé de logging.py, T13.4)
 # Design       : Mistral Vibe
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------
@@ -134,7 +134,7 @@ def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     Retourne un logger configuré pour le module spécifié.
     
     Args:
-        name (str): Nom du module (ex : "openDataAgent.core.search").
+        name (str): Nom du module (ex : "openDataAgent.core.recherche").
     
     Returns:
         structlog.stdlib.BoundLogger: Logger configuré.

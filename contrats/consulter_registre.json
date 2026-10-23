@@ -2,7 +2,7 @@
   "type": "function",
   "function": {
     "name": "consulter_registre",
-    "description": "Lit le registre persistant des sources inaccessibles (data/registry.json, toutes executions confondues) : exclusions de licence (motif licence_incompatible) et echecs techniques (motif serveur_origine_bloque) avec leur statut_reprise (a_retenter ou definitif). Lecture seule : le registre n'est jamais modifie. Utilise cet outil quand tu doutes d'une source (verifier si elle a deja ete refusee avant de la retenter : ne retente jamais une entree definitif) et pour la synthese finale du registre (etape A4).",
+    "description": "Lit le registre persistant des sources inaccessibles (data/registre_sources.json, toutes executions confondues) : exclusions de licence (motif licence_incompatible) et echecs techniques (motif serveur_origine_bloque) avec leur statut_reprise (a_retenter ou definitif). Lecture seule : le registre n'est jamais modifie. Utilise cet outil quand tu doutes d'une source (verifier si elle a deja ete refusee avant de la retenter : ne retente jamais une entree definitif) et pour la synthese finale du registre (etape A4).",
     "parameters": {
       "type": "object",
       "properties": {

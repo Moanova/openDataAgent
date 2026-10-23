@@ -32,12 +32,12 @@ from src.contracts.interroger_ressource import InterrogerRessourceInput
 from src.contracts.lister_ressources import ListerRessourcesInput
 from src.contracts.rechercher_jeux import RechercherJeuxInput
 from src.contracts.telecharger_brut import TelechargerBrutInput
-from src.core.download import telecharger_brut
+from src.core.telechargement import telecharger_brut
 from src.core.extraction import extraire_ressource
-from src.core.query import interroger_ressource
+from src.core.interrogation import interroger_ressource
 from src.core.registre import consulter_registre
 from src.core.resources import lister_ressources
-from src.core.search import rechercher_jeux
+from src.core.recherche import rechercher_jeux
 
 TABLE_OUTILS: Dict[str, Any] = {
     "rechercher_jeux": rechercher_jeux,

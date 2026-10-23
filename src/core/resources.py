@@ -16,8 +16,8 @@ refuser tout identifiant jamais delivré par la chaine.
 """
 from typing import Any, Dict, Optional
 
-from src.utils.logging import get_logger, bind_context, log_to_file
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.journalisation import get_logger, bind_context, log_to_file
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 from src.utils.registre_acceptations import RegistreAcceptationsConditionnelles
 from src.core.licence import reinitialiser_politique
 from src.core.classification import classer_ressource
@@ -124,7 +124,7 @@ def lister_ressources(
         id_jeu (str): Identifiant du jeu, issu de `rechercher_jeux`.
         id_execution (Optional[str]): Identifiant unique pour tracer l'exécution.
         registre (Optional[RegistreSourcesInaccessibles]): Registre des sources
-            inaccessibles ; par defaut, l'instance globale sur data/registry.json.
+            inaccessibles ; par defaut, l'instance globale sur data/registre_sources.json.
 
     Returns:
         Dict[str, Any]: Resultat au format normalisé (statut/message/donnees).

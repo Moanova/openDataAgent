@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # ---------------------------------------------------------------------
 # Application  : openDataAgent
-# Script       : search.py
+# Script       : recherche.py
 # Version      : 1
-# Date         : 12-10-2026
+# Date         : 23-10-2026  (renommé de search.py, T13.4)
 # Design       : Mistral Vibe
 # Build        : Mistral Vibe
 # ---------------------------------------------------------------------
@@ -12,15 +12,15 @@ Module pour la recherche de jeux de données sur data.gouv.fr.
 """
 
 from typing import List, Dict, Any, Optional
-from src.utils.logging import get_logger, bind_context, log_to_file
+from src.utils.journalisation import get_logger, bind_context, log_to_file
 from src.utils.http import rechercher_jeux_api
 from src.core.licence import licence_est_acceptable, reinitialiser_politique
 from src.core.resources import declarer_jeu_conditionnel
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 from src.utils.registre_acceptations import RegistreAcceptationsConditionnelles
 
 # Initialiser le logger pour ce module
-logger = get_logger("openDataAgent.core.search")
+logger = get_logger("openDataAgent.core.recherche")
 
 _registre_par_defaut = RegistreSourcesInaccessibles()
 _registre_acceptations_par_defaut = RegistreAcceptationsConditionnelles()
@@ -86,7 +86,7 @@ def rechercher_jeux(
         page (int): Numéro de la page de résultats demandée (défaut : 1).
         id_execution (Optional[str]): Identifiant unique pour tracer l'exécution.
         registre (Optional[RegistreSourcesInaccessibles]): Registre des sources
-            inaccessibles ; par défaut, l'instance globale sur data/registry.json.
+            inaccessibles ; par défaut, l'instance globale sur data/registre_sources.json.
     
     Returns:
         Dict[str, Any]: Résultat de la recherche au format normalisé.

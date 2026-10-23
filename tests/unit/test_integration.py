@@ -19,10 +19,10 @@ from pathlib import Path
 import pytest
 import responses
 
-from src.core.search import rechercher_jeux
+from src.core.recherche import rechercher_jeux
 from src.core.resources import lister_ressources
-from src.core.download import telecharger_brut
-from src.utils.registry import RegistreSourcesInaccessibles
+from src.core.telechargement import telecharger_brut
+from src.utils.registre_sources import RegistreSourcesInaccessibles
 
 URL_RECHERCHE = "https://www.data.gouv.fr/api/2/datasets/search/"
 def url_jeu(id_jeu: str) -> str:
@@ -71,7 +71,7 @@ def ping_tabulaire(id_ressource: str) -> str:
 
 @pytest.fixture
 def registre(tmp_path) -> RegistreSourcesInaccessibles:
-    return RegistreSourcesInaccessibles(chemin=tmp_path / "registry.json")
+    return RegistreSourcesInaccessibles(chemin=tmp_path / "registre_sources.json")
 
 
 def _jeu(id_: str, titre: str, licence: str, organisation: str = "Org") -> dict:
@@ -154,7 +154,7 @@ def test_ti08_flux_complet_exclusion_et_echec(registre, tmp_path, monkeypatch):
     assert premiere["timestamp"] <= seconde["timestamp"]
 
     # Registre persiste au format JSON valide
-    chemin_registre = tmp_path / "registry.json"
+    chemin_registre = tmp_path / "registre_sources.json"
     assert chemin_registre.exists()
     json.loads(chemin_registre.read_text(encoding="utf-8"))
 
@@ -321,7 +321,7 @@ def test_t521_ressource_hors_chaine_refusee(registre, tmp_path, monkeypatch):
 def test_t522_rechargement_entre_executions(tmp_path, monkeypatch):
     # Réf. tests/plan_tests.md : TI-15 (T5.2.2) — exécution 1 écrit, exécution 2 (nouvelle instance) retrouve tout
     monkeypatch.chdir(tmp_path)
-    chemin_registre = tmp_path / "registry.json"
+    chemin_registre = tmp_path / "registre_sources.json"
 
     # --- Exécution 1 : exclusion de licence + échec de téléchargement
     registre_1 = RegistreSourcesInaccessibles(chemin=chemin_registre)
@@ -371,7 +371,7 @@ def test_t522_rechargement_entre_executions(tmp_path, monkeypatch):
 def test_t522_enrichissement_cumulatif(tmp_path, monkeypatch):
     # Réf. tests/plan_tests.md : TI-15b (T5.2.2) — l'exécution 2 ajoute sans altérer les entrées d'origine
     monkeypatch.chdir(tmp_path)
-    chemin_registre = tmp_path / "registry.json"
+    chemin_registre = tmp_path / "registre_sources.json"
 
     # Exécution 1 : une exclusion juridique
     registre_1 = RegistreSourcesInaccessibles(chemin=chemin_registre)
@@ -412,7 +412,7 @@ def test_t522_retetest_echec_technique_non_bloquant(tmp_path, monkeypatch):
     # Réf. tests/plan_tests.md : TI-15c (T5.2.2) — une entrée technique ne bloque pas un nouvel essai :
     # le contrat global autorise le re-test d'une source en échec technique lors d'une exécution ultérieure.
     monkeypatch.chdir(tmp_path)
-    chemin_registre = tmp_path / "registry.json"
+    chemin_registre = tmp_path / "registre_sources.json"
     registre = RegistreSourcesInaccessibles(chemin=chemin_registre)
     registre.consigner_echec_technique(
         id_jeu="jeu-y",
@@ -725,7 +725,7 @@ def test_ti21_nettoyage_flux_complet(tmp_path, monkeypatch):
         log = tmp_path / RACINE_LOGS / f"openDataAgent_{id_execution}.log"
         log.parent.mkdir(parents=True, exist_ok=True)
         log.write_text("log\n", encoding="utf-8")
-    registre = tmp_path / "data" / "registry.json"
+    registre = tmp_path / "data" / "registre_sources.json"
     registre.write_text("{}", encoding="utf-8")
 
     bilan = nettoyer_anciennes_executions(
@@ -754,7 +754,7 @@ def test_ti26_consulter_registre_memoire_cross_session(tmp_path, monkeypatch):
     from src.core.registre import consulter_registre
 
     monkeypatch.chdir(tmp_path)
-    chemin_registre = tmp_path / "registry.json"
+    chemin_registre = tmp_path / "registre_sources.json"
 
     # --- Execution 1 : exclusion de licence consignee et sauvegardee
     registre_1 = RegistreSourcesInaccessibles(chemin=chemin_registre)

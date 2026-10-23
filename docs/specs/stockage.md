@@ -14,7 +14,7 @@ openDataAgent/
 │   │   │   └── ...
 │   │   └── ...
 │   ├── processed/            # Fichiers normalisés (T10.1)
-│   └── registry.json         # Registre des sources inaccessibles
+│   └── registre_sources.json         # Registre des sources inaccessibles
 ```
 
 ## 3. Détails
@@ -47,7 +47,7 @@ openDataAgent/
 │   │   │   └── 9e8f7g2h_archive.zip
 │   │   └── 20261010_154530_b4c5d6/
 │   │       └── 3d4e5f6a_donnees-climatiques.csv
-│   └── registry.json
+│   └── registre_sources.json
 ```
 
 ## 4. Gestion des conflits
@@ -57,7 +57,7 @@ openDataAgent/
   - Exemple : `71ff1335_budget-fr-indicateurs_1.csv`, `71ff1335_budget-fr-indicateurs_2.csv`.
 
 ## 5. Persistance
-- **Registre** : `data/registry.json` est persistant entre les exécutions (idem `data/registre_acceptations.json`, hors périmètre d'une exécution).
+- **Registre** : `data/registre_sources.json` est persistant entre les exécutions (idem `data/registre_acceptations.json`, hors périmètre d'une exécution).
 - **Fichiers téléchargés** : Conservés jusqu'à suppression manuelle ou automatisée (nettoyage des anciennes exécutions, §8).
 - **Fichiers normalisés** (`data/processed/`, T10.1) : même règle de conservation (5ᵉ racine de nettoyage, §8).
 
@@ -132,7 +132,7 @@ logs/openDataAgent_<id_execution>.log       # logs structurés (fichiers plats)
 **Règles** :
 - l'âge est lu dans le préfixe date de l'`id_execution` (`AAAAMMJJ_HHMMSS`, hash optionnel) ; un nom non reconnu est **conservé** (fail-safe) ;
 - l'exécution courante (`--id-execution`) est **toujours protégée**, même ancienne ;
-- les registres globaux (`data/registry.json`, `data/registre_acceptations.json`) et tout fichier hors périmètre d'une exécution sont conservés ;
+- les registres globaux (`data/registre_sources.json`, `data/registre_acceptations.json`) et tout fichier hors périmètre d'une exécution sont conservés ;
 - un échec de suppression est consigné dans `donnees.erreurs`, **jamais bloquant** (philosophie du manifeste T10.8) ;
 - en `--simulation`, rien n'est supprimé : le bilan indique ce qui le serait.
 

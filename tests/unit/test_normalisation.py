@@ -475,7 +475,7 @@ def test_tu134_copie_conforme_journalisee(tmp_path, monkeypatch):
     import json as json_module
     import logging
 
-    from src.utils.logging import configure_logging
+    from src.utils.journalisation import configure_logging
 
     monkeypatch.chdir(tmp_path)
     configure_logging(id_execution="test_tu134")
