@@ -105,16 +105,18 @@ Le projet s'utilise via une **CLI** (Command Line Interface) avec Typer. Voici l
 
 | Commande   | Description                                          | Exemple                                      |
 |------------|------------------------------------------------------|----------------------------------------------|
-| `search`   | Recherche des jeux de données par mots-clés.         | `python -m src.main search "dette publique"` |
-| `list`     | Liste les ressources d'un jeu.                       | `python -m src.main list <id_jeu>`           |
-| `query`    | Interroge une ressource indexée par l'API tabulaire. | `python -m src.main query <id_ressource>`    |
-| `extract`  | Extrait une ressource indexée vers un CSV local (voie 1 matérialisée). | `python -m src.main extract <id_ressource>` |
-| `download` | Télécharge une ressource non indexée.                | `python -m src.main download <id_ressource>` |
-| `chat`     | Conversation agentique multi-tours (REPL, mot-clé `stop`) : l'agent conduit le flux de bout en bout. | `python -m src.main chat` |
+| `rechercher` | Recherche des jeux de données par mots-clés.         | `python -m src.main rechercher "dette publique"` |
+| `lister`     | Liste les ressources d'un jeu.                       | `python -m src.main lister <id_jeu>`           |
+| `interroger` | Interroge une ressource indexée par l'API tabulaire. | `python -m src.main interroger <id_ressource>`    |
+| `extraire`   | Extrait une ressource indexée vers un CSV local (voie 1 matérialisée). | `python -m src.main extraire <id_ressource>` |
+| `telecharger` | Télécharge une ressource non indexée.                | `python -m src.main telecharger <id_ressource>` |
+| `demander`   | Conversation agentique multi-tours (REPL, mot-clé `stop`) : l'agent conduit le flux de bout en bout. | `python -m src.main demander` |
 | `acquisitions` | Affiche le manifeste d'acquisition d'une exécution : relie chaque fichier de `data/raw/<id>/` à son jeu, sa licence et sa mention d'attribution. | `python -m src.main acquisitions 20261019_175304` |
 | `nettoyer` | Supprime les anciennes exécutions (fichiers, inventaires, conversations, logs) selon un seuil d'âge. | `python -m src.main nettoyer --age-jours 30 --simulation` |
 
-Les cinq premières commandes (`search`, `list`, `query`, `extract`, `download`) sont le mode manuel : l'utilisateur joue lui-même les étapes de sélection. La commande `chat` est le mode agentique multi-tours : l'agent Mistral conduit le flux de bout en bout (reformulation, sélection, acquisition sur validation) en s'appuyant sur les mêmes fonctions, et la conversation se poursuit d'un message à l'autre jusqu'au mot-clé `stop`.
+> **Alias anglais (T13.3)** : les anciens noms `search`, `list`, `download`, `extract`, `query` et `chat` restent fonctionnels (ainsi que `ask`, alias anglais de `demander`). Les commandes sont désormais nommées en français ; les alias sont conservés pour la rétrocompatibilité.
+
+Les cinq premières commandes (`rechercher`, `lister`, `interroger`, `extraire`, `telecharger`) sont le mode manuel : l'utilisateur joue lui-même les étapes de sélection. La commande `demander` est le mode agentique multi-tours : l'agent Mistral conduit le flux de bout en bout (reformulation, sélection, acquisition sur validation) en s'appuyant sur les mêmes fonctions, et la conversation se poursuit d'un message à l'autre jusqu'au mot-clé `stop`.
 
 ### ⌨️ Options des commandes
 
@@ -122,13 +124,13 @@ Les cinq premières commandes (`search`, `list`, `query`, `extract`, `download`)
 
 | Option | Description | Défaut |
 |---|---|---|
-| `--quiet` | Masque les logs applicatifs `[info]`/`[error]` dans la console. Les résultats et erreurs de la commande restent affichés, et le **fichier de logs reste écrit** (`logs/openDataAgent_<id_execution>.log`). | Désactivé |
+| `--silencieux` (alias `--quiet`) | Masque les logs applicatifs `[info]`/`[error]` dans la console. Les résultats et erreurs de la commande restent affichés, et le **fichier de logs reste écrit** (`logs/openDataAgent_<id_execution>.log`). | Désactivé |
 
 ```bash
-python -m src.main --quiet search "dette publique"
+python -m src.main --silencieux rechercher "dette publique"
 ```
 
-**`search` — recherche de jeux** :
+**`rechercher` — recherche de jeux** :
 | Option | Description | Défaut |
 |---|---|---|
 | `mots_cles` (arguments) | Mots-clés de la recherche (logique ET). | Obligatoire |
@@ -139,16 +141,16 @@ python -m src.main --quiet search "dette publique"
 | `--id-execution` | Identifiant d'exécution (traces, logs). | Horodatage auto |
 | `--json` | Sortie JSON brute. | Désactivé |
 
-**`list` — inventaire des ressources d'un jeu** :
+**`lister` — inventaire des ressources d'un jeu** :
 | Option | Description | Défaut |
 |---|---|---|
-| `id_jeu` (argument) | Identifiant du jeu, issu de `search`. | Obligatoire |
+| `id_jeu` (argument) | Identifiant du jeu, issu de `rechercher`. | Obligatoire |
 | `--id-execution`, `--json` | Comme ci-dessus. | — |
 
-**`query` — interrogation d'une ressource indexée (voie 1)** :
+**`interroger` — interrogation d'une ressource indexée (voie 1)** :
 | Option | Description | Défaut |
 |---|---|---|
-| `id_ressource` (argument) | Identifiant de la ressource, issu de `list`. | Obligatoire |
+| `id_ressource` (argument) | Identifiant de la ressource, issu de `lister`. | Obligatoire |
 | `--page` | Page demandée. | 1 |
 | `--taille-page` | Lignes par page (1-50). | 20 |
 | `--filtre-colonne`, `--filtre-valeur` | Filtre sur une colonne (les deux requis ensemble). | — |
@@ -158,20 +160,20 @@ python -m src.main --quiet search "dette publique"
 | `--apercu` | Nombre maximum de lignes affichées dans l'aperçu (0 pour tout afficher). | 5 |
 | `--id-execution`, `--json` | Comme ci-dessus. | — |
 
-**`extract` — extraction paginée d'une ressource indexée (voie 1)** :
+**`extraire` — extraction paginée d'une ressource indexée (voie 1)** :
 | Option | Description | Défaut |
 |---|---|---|
-| `id_ressource` (argument) | Identifiant de la ressource indexée, issu de `list`. | Obligatoire |
+| `id_ressource` (argument) | Identifiant de la ressource indexée, issu de `lister`. | Obligatoire |
 | `--taille-page` | Lignes demandées par page à l'API tabulaire. | 100 |
 | `--plafond-lignes` | Nombre maximum de lignes extraites ; au-delà, succès partiel avec troncature signalée. | `PLAFOND_EXTRACTION` (10000) |
 | `--id-execution`, `--json` | Comme ci-dessus. | — |
 
-La pagination est conduite par la commande : le CSV complet (en-tête + toutes les lignes, ou jusqu'au plafond) est écrit dans `data/raw/<id_execution>/`. En mode `chat`, l'agent dispose du même pouvoir via le 5ᵉ outil `extraire_ressource` — la frontière est : `query` explore sans écrire, `extract` acquiert sur disque. L'agent dispose en outre d'un 6ᵉ outil, `consulter_registre`, en lecture seule : il consulte le registre persistant des sources inaccessibles (toutes exécutions confondues, avec `statut_reprise` `a_retenter`/`definitif`) quand il doute d'une source et pour sa synthèse finale — mémoire cross-session, sans jamais modifier le registre.
+La pagination est conduite par la commande : le CSV complet (en-tête + toutes les lignes, ou jusqu'au plafond) est écrit dans `data/raw/<id_execution>/`. En mode `demander`, l'agent dispose du même pouvoir via le 5ᵉ outil `extraire_ressource` — la frontière est : `interroger` explore sans écrire, `extraire` acquiert sur disque. L'agent dispose en outre d'un 6ᵉ outil, `consulter_registre`, en lecture seule : il consulte le registre persistant des sources inaccessibles (toutes exécutions confondues, avec `statut_reprise` `a_retenter`/`definitif`) quand il doute d'une source et pour sa synthèse finale — mémoire cross-session, sans jamais modifier le registre.
 
-**`download` — téléchargement brut (voie 2)** :
+**`telecharger` — téléchargement brut (voie 2)** :
 | Option | Description | Défaut |
 |---|---|---|
-| `id_ressource` (argument) | Identifiant de la ressource, issu de `list`. | Obligatoire |
+| `id_ressource` (argument) | Identifiant de la ressource, issu de `lister`. | Obligatoire |
 | `--id-execution`, `--json` | Comme ci-dessus. | — |
 
 ### 🔗 Chaînage des commandes : inventaire persistant par `id_execution`
@@ -179,9 +181,9 @@ La pagination est conduite par la commande : le CSV complet (en-tête + toutes l
 Chaque commande de la CLI manuelle est un **processus indépendant**, mais l'inventaire des ressources **survit aux commandes** grâce à `--id-execution` : la commande `list` persiste l'inventaire dans `data/executions/<id_execution>/inventaire.json`, et toute commande suivante portant le même identifiant le recharge automatiquement.
 
 ```bash
-python -m src.main list <id_jeu> --id-execution dette-publique
-python -m src.main download <id_ressource> --id-execution dette-publique   # fonctionne : ressource vue par le list
-python -m src.main query <id_ressource> --id-execution dette-publique --page 2
+python -m src.main lister <id_jeu> --id-execution dette-publique
+python -m src.main telecharger <id_ressource> --id-execution dette-publique   # fonctionne : ressource vue par le list
+python -m src.main interroger <id_ressource> --id-execution dette-publique --page 2
 ```
 
 - **Sans `--id-execution`** : un identifiant est généré automatiquement (horodatage) et **affiché dans la sortie de chaque commande** (`id_execution : ...`) — relevez-le pour le reprendre sur la commande suivante et retrouver vos artefacts (logs, inventaire).
@@ -190,12 +192,12 @@ python -m src.main query <id_ressource> --id-execution dette-publique --page 2
 - **Mode `chat` inchangé** : l'agent tient l'inventaire en mémoire dans son processus unique, l'inventaire n'y est pas persisté entre les tours.
 - Un `download` sans inventaire correspondant (id jamais utilisé par un `list`) répond toujours `ressource_introuvable` (« identifiant jamais vu par le flux courant ni par une exécution antérieure réactivée sous le même id ») — convention 1 du contrat global.
 
-### 💬 Commande `chat` (mode agentique multi-tours)
+### 💬 Commande `demander` (mode agentique multi-tours)
 
 **Usage** :
 
 ```bash
-python -m src.main chat ["<premier message>"] [options]
+python -m src.main demander ["<premier message>"] [options]
 ```
 
 L'argument `prompt` est **optionnel** : s'il est omis, la commande ouvre directement une boucle interactive (REPL) et vous demande chaque message à la suite (`vous> `). Le mode est toujours multi-tours : il n'y a pas de mode one-shot.

@@ -12,6 +12,12 @@
 Couche mince de presentation : traduit une ligne de commande en appel
 de la fonction coeur correspondante et affiche la reponse normalisée
 {statut, message, donnees}. Aucune logique metier ici.
+
+T13.3 (realignement linguistique) : les commandes sont nominees en
+francais (rechercher, lister, telecharger, extraire, interroger,
+demander) ; les noms anglais (search, list, download, extract, query,
+ask, chat) restent des alias fonctionnels. L'option globale est
+--silencieux (alias --quiet).
 """
 import json
 import os
@@ -149,17 +155,17 @@ def _nettoyage_automatique() -> None:
 @app.callback()
 def racine(
     ctx: typer.Context,
-    quiet: bool = typer.Option(False, "--quiet", help="Masque les logs applicatifs [info]/[error] dans la console (le fichier de logs reste écrit)."),
+    silencieux: bool = typer.Option(False, "--silencieux", "--quiet", help="Masque les logs applicatifs [info]/[error] dans la console (le fichier de logs reste écrit)."),
 ) -> None:
     """CLI openDataAgent : acquisition de données de data.gouv.fr."""
     global _SILENCIEUX
-    _SILENCIEUX = quiet
+    _SILENCIEUX = silencieux
     if ctx.invoked_subcommand and ctx.invoked_subcommand != "nettoyer":
         _nettoyage_automatique()
 
 
-@app.command()
-def search(
+@app.command(name="rechercher")
+def rechercher(
     mots_cles: List[str] = typer.Argument(..., help="Mots-clés de la recherche (logique ET)."),
     tri: str = typer.Option("pertinence", "--tri", help="Ordre de tri des resultats."),
     fenetre_maj: str = typer.Option("toutes", "--fenetre-maj", help="Restriction sur la dernière mise à jour."),
@@ -203,8 +209,8 @@ def search(
         raise typer.Exit(code=1)
 
 
-@app.command()
-def list(
+@app.command(name="lister")
+def lister(
     id_jeu: str = typer.Argument(..., help="Identifiant du jeu, issu de la recherche."),
     id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
     sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute de la réponse normalisée."),
@@ -240,8 +246,8 @@ def list(
         raise typer.Exit(code=1)
 
 
-@app.command()
-def download(
+@app.command(name="telecharger")
+def telecharger(
     id_ressource: str = typer.Argument(..., help="Identifiant de la ressource, issu de l'inventaire."),
     id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
     sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute de la réponse normalisée."),
@@ -253,7 +259,7 @@ def download(
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
 
-    consigner_demande(identifiant, f"download {id_ressource}")
+    consigner_demande(identifiant, f"telecharger {id_ressource}")
     reponse = telecharger_brut(id_ressource=id_ressource, id_execution=identifiant)
 
     if sortie_json:
@@ -275,8 +281,8 @@ def download(
         raise typer.Exit(code=1)
 
 
-@app.command()
-def extract(
+@app.command(name="extraire")
+def extraire(
     id_ressource: str = typer.Argument(..., help="Identifiant de la ressource indexée, issu de l'inventaire."),
     taille_page: int = typer.Option(100, "--taille-page", min=1, help="Lignes demandées par page à l'API tabulaire."),
     plafond_lignes: Optional[int] = typer.Option(None, "--plafond-lignes", min=1, help="Nombre maximum de lignes extraites (défaut : PLAFOND_EXTRACTION, 10000)."),
@@ -289,7 +295,7 @@ def extract(
     _charger_inventaire_persiste(identifiant)
     if not sortie_json:
         typer.echo(f"id_execution : {identifiant}", err=True)
-    consigner_demande(identifiant, f"extract {id_ressource}")
+    consigner_demande(identifiant, f"extraire {id_ressource}")
     reponse = extraire_ressource(
         id_ressource=id_ressource,
         id_execution=identifiant,
@@ -316,8 +322,8 @@ def extract(
         raise typer.Exit(code=1)
 
 
-@app.command()
-def query(
+@app.command(name="interroger")
+def interroger(
     id_ressource: str = typer.Argument(..., help="Identifiant de la ressource, issu de l'inventaire."),
     page: int = typer.Option(1, "--page", min=1, help="Page demandée."),
     taille_page: int = typer.Option(20, "--taille-page", min=1, max=50, help="Lignes par page (max 50)."),
@@ -448,8 +454,8 @@ def nettoyer(
         raise typer.Exit(code=1)
 
 
-@app.command()
-def chat(
+@app.command(name="demander")
+def demander(
     prompt: Optional[List[str]] = typer.Argument(None, help="Premier message de la conversation (optionnel : le REPL le demande sinon)."),
     plafond: int = typer.Option(10, "--plafond", min=1, help="Nombre maximum d'invocations d'outils par tour."),
     id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
@@ -534,6 +540,117 @@ def chat(
             typer.secho(f"destruction de l'agent : {destruction['statut']} {destruction['message']}", fg=typer.colors.YELLOW, err=True)
         if suppression["statut"] != "succes":
             typer.secho(f"suppression de la conversation : {suppression['message']}", fg=typer.colors.YELLOW, err=True)
+
+
+# ---------------------------------------------------------------------------
+# Alias anglais (T13.3) — rétrocompatibilité des commandes renommées.
+# Chaque alias déclare la MÊME signature que la commande française et
+# délègue à celle-ci : l'alias accepte les mêmes arguments et options.
+# ---------------------------------------------------------------------------
+
+@app.command(name="search")
+def search(
+    mots_cles: List[str] = typer.Argument(..., help="Mots-clés de la recherche (logique ET)."),
+    tri: str = typer.Option("pertinence", "--tri", help="Ordre de tri des resultats."),
+    fenetre_maj: str = typer.Option("toutes", "--fenetre-maj", help="Restriction sur la derniere mise a jour."),
+    limite: int = typer.Option(10, "--limite", min=1, max=20, help="Nombre maximum de jeux retournes."),
+    page: int = typer.Option(1, "--page", min=1, help="Numero de la page de resultats demandee."),
+    id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute de la reponse normalisee."),
+) -> None:
+    """Alias anglais de `rechercher`."""
+    rechercher(
+        mots_cles=mots_cles, tri=tri, fenetre_maj=fenetre_maj, limite=limite,
+        page=page, id_execution=id_execution, sortie_json=sortie_json,
+    )
+
+
+@app.command(name="list")
+def list(
+    id_jeu: str = typer.Argument(..., help="Identifiant du jeu, issu de la recherche."),
+    id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute de la reponse normalisee."),
+) -> None:
+    """Alias anglais de `lister`."""
+    lister(id_jeu=id_jeu, id_execution=id_execution, sortie_json=sortie_json)
+
+
+@app.command(name="download")
+def download(
+    id_ressource: str = typer.Argument(..., help="Identifiant de la ressource, issu de l'inventaire."),
+    id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute de la reponse normalisee."),
+) -> None:
+    """Alias anglais de `telecharger`."""
+    telecharger(id_ressource=id_ressource, id_execution=id_execution, sortie_json=sortie_json)
+
+
+@app.command(name="extract")
+def extract(
+    id_ressource: str = typer.Argument(..., help="Identifiant de la ressource indexee, issu de l'inventaire."),
+    taille_page: int = typer.Option(100, "--taille-page", min=1, help="Lignes demandees par page a l'API tabulaire."),
+    plafond_lignes: Optional[int] = typer.Option(None, "--plafond-lignes", min=1, help="Nombre maximum de lignes extraites (defaut : PLAFOND_EXTRACTION, 10000)."),
+    id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute de la reponse normalisee."),
+) -> None:
+    """Alias anglais de `extraire`."""
+    extraire(
+        id_ressource=id_ressource, taille_page=taille_page,
+        plafond_lignes=plafond_lignes, id_execution=id_execution,
+        sortie_json=sortie_json,
+    )
+
+
+@app.command(name="query")
+def query(
+    id_ressource: str = typer.Argument(..., help="Identifiant de la ressource, issu de l'inventaire."),
+    page: int = typer.Option(1, "--page", min=1, help="Page demandee."),
+    taille_page: int = typer.Option(20, "--taille-page", min=1, max=50, help="Lignes par page (max 50)."),
+    colonne: Optional[str] = typer.Option(None, "--filtre-colonne", help="Colonne du filtre."),
+    valeur: Optional[str] = typer.Option(None, "--filtre-valeur", help="Valeur du filtre."),
+    operateur: Optional[str] = typer.Option("exact", "--filtre-operateur", help="Operateur : exact, contient, inferieur, superieur, strictement_inferieur, strictement_superieur."),
+    tri_colonne: Optional[str] = typer.Option(None, "--tri-colonne", help="Colonne du tri."),
+    tri_ordre: Optional[str] = typer.Option("croissant", "--tri-ordre", help="Ordre : croissant ou decroissant."),
+    apercu: int = typer.Option(APERCU_DEFAUT, "--apercu", min=0, help="Nombre maximum de lignes affichees (apercu)."),
+    id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute de la reponse normalisee."),
+) -> None:
+    """Alias anglais de `interroger`."""
+    interroger(
+        id_ressource=id_ressource, page=page, taille_page=taille_page,
+        colonne=colonne, valeur=valeur, operateur=operateur,
+        tri_colonne=tri_colonne, tri_ordre=tri_ordre, apercu=apercu,
+        id_execution=id_execution, sortie_json=sortie_json,
+    )
+
+
+@app.command(name="ask")
+def ask(
+    prompt: Optional[List[str]] = typer.Argument(None, help="Premier message de la conversation (optionnel : le REPL le demande sinon)."),
+    plafond: int = typer.Option(10, "--plafond", min=1, help="Nombre maximum d'invocations d'outils par tour."),
+    id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute (par tour, reponse normalisee)."),
+) -> None:
+    """Alias anglais de `demander`."""
+    demander(
+        prompt=prompt, plafond=plafond,
+        id_execution=id_execution, sortie_json=sortie_json,
+    )
+
+
+@app.command(name="chat")
+def chat(
+    prompt: Optional[List[str]] = typer.Argument(None, help="Premier message de la conversation (optionnel : le REPL le demande sinon)."),
+    plafond: int = typer.Option(10, "--plafond", min=1, help="Nombre maximum d'invocations d'outils par tour."),
+    id_execution: Optional[str] = typer.Option(None, "--id-execution", help=AIDE_ID_EXECUTION),
+    sortie_json: bool = typer.Option(False, "--json", help="Sortie JSON brute (par tour, reponse normalisee)."),
+) -> None:
+    """Alias anglais historique de `demander` (remplacé par `ask`, T13.3)."""
+    demander(
+        prompt=prompt, plafond=plafond,
+        id_execution=id_execution, sortie_json=sortie_json,
+    )
+
 
 
 def _afficher_tour(reponse: dict, sortie_json: bool) -> None:

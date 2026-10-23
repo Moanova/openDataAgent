@@ -105,7 +105,7 @@ def test_consigner_demande_en_tete(racine):
     consigner_demande("exec-1", "résultats des élections présidentielles", racine=racine)
     manifeste = lire_manifeste("exec-1", racine=racine)
     assert manifeste["demande"] == "résultats des élections présidentielles"
-    assert manifeste["generé_le"]
+    assert manifeste["genere_le"]
     assert manifeste["acquisitions"] == []
 
 

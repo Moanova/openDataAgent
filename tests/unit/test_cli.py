@@ -49,7 +49,7 @@ REPONSE_SUCCES = {
 def test_search_appel_coeur_avec_options(mock_recherche):
     # Réf. tests/plan_tests.md : TI-13 (appels logs avec mots_cles, tri, limite — via la CLI)
     mock_recherche.return_value = REPONSE_SUCCES
-    resultat = runner.invoke(app, ["search", "dette", "publique", "--tri", "vues", "--limite", "5", "--page", "2"])
+    resultat = runner.invoke(app, ["rechercher", "dette", "publique", "--tri", "vues", "--limite", "5", "--page", "2"])
     assert resultat.exit_code == 0
     mock_recherche.assert_called_once()
     kwargs = mock_recherche.call_args.kwargs
@@ -66,7 +66,7 @@ def test_search_appel_coeur_avec_options(mock_recherche):
 def test_search_valeurs_par_defaut(mock_recherche):
     # Réf. tests/plan_tests.md : TU-13 (limite omise -> valeur par défaut 10)
     mock_recherche.return_value = REPONSE_SUCCES
-    resultat = runner.invoke(app, ["search", "dette"])
+    resultat = runner.invoke(app, ["rechercher", "dette"])
     assert resultat.exit_code == 0
     kwargs = mock_recherche.call_args.kwargs
     assert kwargs["tri"] == "pertinence"
@@ -79,7 +79,7 @@ def test_search_valeurs_par_defaut(mock_recherche):
 def test_search_sortie_json(mock_recherche):
     # Test annexe : sans référence directe dans tests/plan_tests.md
     mock_recherche.return_value = REPONSE_SUCCES
-    resultat = runner.invoke(app, ["search", "dette", "--json"])
+    resultat = runner.invoke(app, ["rechercher", "dette", "--json"])
     assert resultat.exit_code == 0
     charge = json.loads(resultat.output)
     assert charge["statut"] == "succes"
@@ -89,14 +89,14 @@ def test_search_sortie_json(mock_recherche):
 
 def test_search_limite_hors_bornes():
     # Réf. tests/plan_tests.md : TU-14 (limite au-delà du maximum -> erreur, pas d'exception)
-    resultat = runner.invoke(app, ["search", "dette", "--limite", "50"])
+    resultat = runner.invoke(app, ["rechercher", "dette", "--limite", "50"])
     assert resultat.exit_code != 0
     assert "limite" in (resultat.output + str(resultat.stderr)).lower()
 
 
 def test_search_tri_invalide():
     # Réf. tests/plan_tests.md : TU-16 (tri invalide -> erreur_parametres)
-    resultat = runner.invoke(app, ["search", "dette", "--tri", "invalide"])
+    resultat = runner.invoke(app, ["rechercher", "dette", "--tri", "invalide"])
     assert resultat.exit_code == 2
     assert "invalide" in (resultat.output + str(resultat.stderr)).lower()
 
@@ -109,7 +109,7 @@ def test_search_echec_technique_code_sortie(mock_recherche):
         "message": "Échec de l'appel à l'API data.gouv.fr",
         "donnees": {"suggestion": "réessayer"},
     }
-    resultat = runner.invoke(app, ["search", "dette"])
+    resultat = runner.invoke(app, ["rechercher", "dette"])
     assert resultat.exit_code == 1
     assert "echec_technique" in (resultat.output + str(resultat.stderr))
 
@@ -122,7 +122,7 @@ def test_search_erreur_parametres_code_sortie(mock_recherche):
         "message": "Le paramètre 'mots_cles' est obligatoire et ne peut être vide.",
         "donnees": {},
     }
-    resultat = runner.invoke(app, ["search", "dette"])
+    resultat = runner.invoke(app, ["rechercher", "dette"])
     assert resultat.exit_code == 2
 
 
@@ -143,7 +143,7 @@ REPONSE_QUERY_SUCCES = {
 def test_query_appel_coeur_avec_options(mock_query):
     # Réf. tests/plan_tests.md : TI-13 (appels logs via la CLI — périmètre query)
     mock_query.return_value = REPONSE_QUERY_SUCCES
-    resultat = runner.invoke(app, ["query", "e322fb3f", "--page", "2", "--taille-page", "50",
+    resultat = runner.invoke(app, ["interroger", "e322fb3f", "--page", "2", "--taille-page", "50",
                                    "--filtre-colonne", "theme", "--filtre-valeur", "dette",
                                    "--filtre-operateur", "contient",
                                    "--tri-colonne", "valeur", "--tri-ordre", "decroissant"])
@@ -163,7 +163,7 @@ def test_query_appel_coeur_avec_options(mock_query):
 def test_query_valeurs_par_defaut(mock_query):
     # Test annexe : défauts page/taille_page/filtre/tri via la CLI
     mock_query.return_value = REPONSE_QUERY_SUCCES
-    resultat = runner.invoke(app, ["query", "e322fb3f"])
+    resultat = runner.invoke(app, ["interroger", "e322fb3f"])
     assert resultat.exit_code == 0
     kwargs = mock_query.call_args.kwargs
     assert kwargs["page"] == 1
@@ -177,7 +177,7 @@ def test_query_valeurs_par_defaut(mock_query):
 def test_query_sortie_json(mock_query):
     # Test annexe : sortie JSON brute via --json
     mock_query.return_value = REPONSE_QUERY_SUCCES
-    resultat = runner.invoke(app, ["query", "e322fb3f", "--json"])
+    resultat = runner.invoke(app, ["interroger", "e322fb3f", "--json"])
     assert resultat.exit_code == 0
     assert json.loads(resultat.output)["donnees"]["total_lignes"] == 74
 
@@ -186,7 +186,7 @@ def test_query_sortie_json(mock_query):
 def test_query_operateur_invalide(mock_query):
     # Réf. tests/plan_tests.md : TI-04 (opérateur inconnu — garde CLI, même sémantique que erreur_parametres)
     mock_query.return_value = REPONSE_QUERY_SUCCES
-    resultat = runner.invoke(app, ["query", "e322fb3f", "--filtre-colonne", "theme",
+    resultat = runner.invoke(app, ["interroger", "e322fb3f", "--filtre-colonne", "theme",
                                    "--filtre-valeur", "dette", "--filtre-operateur", "egal"])
     assert resultat.exit_code == 2
     assert "invalide" in (resultat.output + str(resultat.stderr)).lower()
@@ -195,7 +195,7 @@ def test_query_operateur_invalide(mock_query):
 
 def test_query_tri_ordre_invalide():
     # Réf. tests/plan_tests.md : TI-04 (ordre inconnu — garde CLI)
-    resultat = runner.invoke(app, ["query", "e322fb3f", "--tri-colonne", "valeur", "--tri-ordre", "ascendant"])
+    resultat = runner.invoke(app, ["interroger", "e322fb3f", "--tri-colonne", "valeur", "--tri-ordre", "ascendant"])
     assert resultat.exit_code == 2
     assert "invalide" in (resultat.output + str(resultat.stderr)).lower()
 
@@ -208,7 +208,7 @@ def test_query_ressource_non_indexee_code_sortie(mock_query):
         "message": "La ressource n'est pas indexee par l'API tabulaire.",
         "donnees": {"suggestion": "utiliser telecharger_brut"},
     }
-    resultat = runner.invoke(app, ["query", "e322fb3f"])
+    resultat = runner.invoke(app, ["interroger", "e322fb3f"])
     assert resultat.exit_code == 1
     assert "ressource_non_indexee" in (resultat.output + str(resultat.stderr))
     assert "suggestion" in (resultat.output + str(resultat.stderr))
@@ -222,7 +222,7 @@ def test_query_erreur_parametres_code_sortie(mock_query):
         "message": "Le parametre 'taille_page' doit etre compris entre 1 et 50.",
         "donnees": {},
     }
-    resultat = runner.invoke(app, ["query", "e322fb3f"])
+    resultat = runner.invoke(app, ["interroger", "e322fb3f"])
     assert resultat.exit_code == 2
 
 
@@ -241,7 +241,7 @@ REPONSE_DOWNLOAD_SUCCES = {
 def test_download_appel_coeur(mock_download):
     # Réf. tests/plan_tests.md : TI-13 (appels logs via la CLI — périmètre download)
     mock_download.return_value = REPONSE_DOWNLOAD_SUCCES
-    resultat = runner.invoke(app, ["download", "71ff1335"])
+    resultat = runner.invoke(app, ["telecharger", "71ff1335"])
     assert resultat.exit_code == 0
     kwargs = mock_download.call_args.kwargs
     assert kwargs["id_ressource"] == "71ff1335"
@@ -254,7 +254,7 @@ def test_download_appel_coeur(mock_download):
 def test_download_sortie_json(mock_download):
     # Test annexe : sortie JSON brute via --json
     mock_download.return_value = REPONSE_DOWNLOAD_SUCCES
-    resultat = runner.invoke(app, ["download", "71ff1335", "--json"])
+    resultat = runner.invoke(app, ["telecharger", "71ff1335", "--json"])
     assert resultat.exit_code == 0
     assert json.loads(resultat.output)["donnees"]["format"] == "csv"
 
@@ -267,7 +267,7 @@ def test_download_echec_technique_avec_suggestion(mock_download):
         "message": "serveur_origine_bloque",
         "donnees": {"suggestion": "fichier_heberge_exterieurement"},
     }
-    resultat = runner.invoke(app, ["download", "71ff1335"])
+    resultat = runner.invoke(app, ["telecharger", "71ff1335"])
     assert resultat.exit_code == 1
     assert "echec_technique" in (resultat.output + str(resultat.stderr))
     assert "fichier_heberge_exterieurement" in (resultat.output + str(resultat.stderr))
@@ -281,7 +281,7 @@ def test_download_ressource_introuvable_code_sortie(mock_download):
         "message": "Ressource inconnue : reprendre par l'inventaire.",
         "donnees": {},
     }
-    resultat = runner.invoke(app, ["download", "inconnu"])
+    resultat = runner.invoke(app, ["telecharger", "inconnu"])
     assert resultat.exit_code == 2
 
 
@@ -333,7 +333,7 @@ def test_chat_repl_deux_tours_puis_stop(mock_destruction, mock_creer_conv, mock_
         except StopIteration:
             raise EOFError
     monkeypatch.setattr("typer.prompt", _prompt)
-    resultat = runner.invoke(app, ["chat", "cherche", "la", "dette", "publique"])
+    resultat = runner.invoke(app, ["demander", "cherche", "la", "dette", "publique"])
     assert resultat.exit_code == 0
     # Deux tours conduits (prompt argument + saisie), puis EOF clôture la conversation
     assert mock_tour.call_count == 2
@@ -361,7 +361,7 @@ def test_chat_mot_cle_stop_cloture_immediate(mock_destruction, mock_creer_conv, 
     mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
     monkeypatch.setattr("typer.prompt", lambda *a, **k: "STOP")
-    resultat = runner.invoke(app, ["chat"])
+    resultat = runner.invoke(app, ["demander"])
     assert resultat.exit_code == 0
     mock_tour.assert_not_called()
     mock_cloturer.assert_called_once()
@@ -383,7 +383,7 @@ def test_chat_eof_cloture_propre(mock_destruction, mock_creer_conv, mock_cloture
     def _eof(*a, **k):
         raise EOFError
     monkeypatch.setattr("typer.prompt", _eof)
-    resultat = runner.invoke(app, ["chat"])
+    resultat = runner.invoke(app, ["demander"])
     assert resultat.exit_code == 0
     mock_tour.assert_not_called()
     mock_cloturer.assert_called_once()
@@ -404,7 +404,7 @@ def test_chat_plafond_propage_par_tour(mock_destruction, mock_creer_conv, mock_c
     mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
     monkeypatch.setattr("typer.prompt", lambda *a, **k: "stop")
-    resultat = runner.invoke(app, ["chat", "x", "--plafond", "3", "--id-execution", "id_chat"])
+    resultat = runner.invoke(app, ["demander", "x", "--plafond", "3", "--id-execution", "id_chat"])
     assert resultat.exit_code == 0
     assert mock_creer_conv.call_args.kwargs["plafond"] == 3
     assert mock_creer_conv.call_args.args[1] == "id_chat"
@@ -428,7 +428,7 @@ def test_chat_sortie_json_totaux(mock_destruction, mock_creer_conv, mock_cloture
     mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
     monkeypatch.setattr("typer.prompt", lambda *a, **k: "stop")
-    resultat = runner.invoke(app, ["chat", "x", "--json"])
+    resultat = runner.invoke(app, ["demander", "x", "--json"])
     assert resultat.exit_code == 0
     # Deux blocs JSON consécutifs (tour puis récapitulatif) : décodage brut
     decodeur = json.JSONDecoder()
@@ -459,7 +459,7 @@ def test_chat_echec_creation_agent(mock_destruction, mock_creation):
         "message": "Variable d'environnement MISTRAL_API_KEY absente ou vide.",
         "donnees": {"suggestion": "definir MISTRAL_API_KEY dans .env"},
     }
-    resultat = runner.invoke(app, ["chat", "x"])
+    resultat = runner.invoke(app, ["demander", "x"])
     assert resultat.exit_code == 1
     assert "MISTRAL_API_KEY" in (resultat.output + str(resultat.stderr))
     assert "suggestion" in (resultat.output + str(resultat.stderr))
@@ -484,7 +484,7 @@ def test_chat_echec_tour_cloture_malgre_tout(mock_destruction, mock_creer_conv, 
     mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
     monkeypatch.setattr("typer.prompt", lambda *a, **k: "stop")
-    resultat = runner.invoke(app, ["chat", "x"])
+    resultat = runner.invoke(app, ["demander", "x"])
     assert resultat.exit_code == 0  # la commande se termine proprement malgré l'échec du tour
     assert "echec_technique" in (resultat.output + str(resultat.stderr))
     mock_cloturer.assert_called_once()
@@ -505,7 +505,7 @@ def test_chat_exception_tour_cloture_quand_meme(mock_destruction, mock_creer_con
     mock_cloturer.return_value = {"statut": "succes", "message": "", "donnees": {"supprimee": True}}
     mock_destruction.return_value = {"statut": "succes", "message": "", "donnees": {"detruit": True}}
     monkeypatch.setattr("typer.prompt", lambda *a, **k: "stop")
-    resultat = runner.invoke(app, ["chat", "x"])
+    resultat = runner.invoke(app, ["demander", "x"])
     assert resultat.exit_code != 0
     mock_cloturer.assert_called_once()
     mock_destruction.assert_called_once_with(AGENT_CHAT)
@@ -513,7 +513,7 @@ def test_chat_exception_tour_cloture_quand_meme(mock_destruction, mock_creer_con
 
 def test_chat_prompt_vide_code_2():
     # Réf. T11.1 TU-E21 — prompt vide fourni explicitement : code 2
-    resultat = runner.invoke(app, ["chat", "   "])
+    resultat = runner.invoke(app, ["demander", "   "])
     assert resultat.exit_code == 2
 
 
@@ -557,12 +557,12 @@ def test_query_apercu_limite_lignes_affichees(mock_query):
         "message": "",
         "donnees": {"total_lignes": 8, "colonnes": ["n"], "lignes": lignes},
     }
-    resultat = runner.invoke(app, ["query", "e322fb3f", "--taille-page", "50"])
+    resultat = runner.invoke(app, ["interroger", "e322fb3f", "--taille-page", "50"])
     assert resultat.exit_code == 0
     assert resultat.output.count("- {") == 5
     assert "3 ligne(s) supplémentaires" in resultat.output
 
-    resultat_2 = runner.invoke(app, ["query", "e322fb3f", "--taille-page", "50", "--apercu", "2"])
+    resultat_2 = runner.invoke(app, ["interroger", "e322fb3f", "--taille-page", "50", "--apercu", "2"])
     assert resultat_2.exit_code == 0
     assert resultat_2.output.count("- {") == 2
     assert "6 ligne(s) supplémentaires" in resultat_2.output
@@ -584,7 +584,7 @@ def test_chainage_list_download_inventaire_persiste(mock_liste, mock_download, t
                                       "format": "csv", "taille_octets": 1024, "url": "https://example.fr/d.csv"}],
                      "indetermination": []},
     }
-    resultat_list = runner.invoke(app, ["list", "abc", "--id-execution", "flux-dette"])
+    resultat_list = runner.invoke(app, ["lister", "abc", "--id-execution", "flux-dette"])
     assert resultat_list.exit_code == 0
     chemin = tmp_path / "data" / "executions" / "flux-dette" / "inventaire.json"
     assert chemin.exists()
@@ -593,7 +593,7 @@ def test_chainage_list_download_inventaire_persiste(mock_liste, mock_download, t
     module._inventaire.clear()
 
     mock_download.return_value = REPONSE_DOWNLOAD_SUCCES
-    resultat_download = runner.invoke(app, ["download", "71ff1335", "--id-execution", "flux-dette"])
+    resultat_download = runner.invoke(app, ["telecharger", "71ff1335", "--id-execution", "flux-dette"])
     assert resultat_download.exit_code == 0
     mock_download.assert_called_once()
     assert "id_execution : flux-dette" in (resultat_download.output + str(resultat_download.stderr))
@@ -610,7 +610,7 @@ def test_download_sans_inventaire_persiste_restIntrouvable(mock_download, tmp_pa
         "message": "Ressource jamais vue par l'inventaire.",
         "donnees": {},
     }
-    resultat = runner.invoke(app, ["download", "introuvable", "--id-execution", "autre-flux"])
+    resultat = runner.invoke(app, ["telecharger", "introuvable", "--id-execution", "autre-flux"])
     assert resultat.exit_code == 2
     assert not (tmp_path / "data" / "executions" / "autre-flux").exists()
 
@@ -637,7 +637,7 @@ REPONSE_EXTRACT_SUCCES = {
 def test_extract_appel_coeur_avec_options(mock_extraction):
     # Réf. T10.7 — la CLI traduit ses options en appel cœur
     mock_extraction.return_value = REPONSE_EXTRACT_SUCCES
-    resultat = runner.invoke(app, ["extract", "r1", "--id-execution", "flux", "--taille-page", "50", "--plafond-lignes", "5000"])
+    resultat = runner.invoke(app, ["extraire", "r1", "--id-execution", "flux", "--taille-page", "50", "--plafond-lignes", "5000"])
     assert resultat.exit_code == 0
     kwargs = mock_extraction.call_args.kwargs
     assert kwargs["id_ressource"] == "r1"
@@ -655,7 +655,7 @@ def test_extract_affiche_la_troncature(mock_extraction):
         "message": "Extraction tronquée au plafond de 100 lignes (450 lignes au total).",
         "donnees": dict(REPONSE_EXTRACT_SUCCES["donnees"], lignes_ecrites=100, total_lignes=450, tronque=True),
     }
-    resultat = runner.invoke(app, ["extract", "r1"])
+    resultat = runner.invoke(app, ["extraire", "r1"])
     assert resultat.exit_code == 0
     assert "100 écrite(s) sur 450" in resultat.output
 
@@ -668,7 +668,7 @@ def test_extract_ressource_non_indexee_code_sortie(mock_extraction):
         "message": "La ressource 'r1' n'est pas indexée par l'API tabulaire.",
         "donnees": {"suggestion": "basculer sur telecharger_brut"},
     }
-    resultat = runner.invoke(app, ["extract", "r1"])
+    resultat = runner.invoke(app, ["extraire", "r1"])
     assert resultat.exit_code == 1
     assert "basculer sur telecharger_brut" in (resultat.output + str(resultat.stderr))
 
@@ -677,7 +677,7 @@ def test_extract_ressource_non_indexee_code_sortie(mock_extraction):
 def test_extract_sortie_json(mock_extraction):
     # Réf. T10.7 — sortie --json parsable (sans ligne id_execution)
     mock_extraction.return_value = REPONSE_EXTRACT_SUCCES
-    resultat = runner.invoke(app, ["extract", "r1", "--json"])
+    resultat = runner.invoke(app, ["extraire", "r1", "--json"])
     assert resultat.exit_code == 0
     assert json.loads(resultat.output)["donnees"]["chemin_local"] == "data/raw/flux/r1_donnees.csv"
 
@@ -744,13 +744,13 @@ def test_download_consigne_la_demande(tmp_path, monkeypatch):
                 "mention_attribution": None,
             },
         }
-        resultat = runner.invoke(app, ["download", "res-9", "--id-execution", "exec-d"])
+        resultat = runner.invoke(app, ["telecharger", "res-9", "--id-execution", "exec-d"])
         assert resultat.exit_code == 0
     from src.core.manifeste import lire_manifeste
 
     manifeste = lire_manifeste("exec-d")
     assert manifeste is not None
-    assert manifeste["demande"] == "download res-9"
+    assert manifeste["demande"] == "telecharger res-9"
 
 
 # ---------------------------------------------------------------------------
@@ -820,24 +820,24 @@ def test_ti22b_hook_auto_desactive_par_defaut(tmp_path, monkeypatch):
     _fabriquer_executions_cli(tmp_path, [vieux])
 
     with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
-        runner.invoke(app, ["search", "dette"])
+        runner.invoke(app, ["rechercher", "dette"])
     assert (tmp_path / "data" / "raw" / vieux).is_dir()  # hook inactif
 
     monkeypatch.setenv("NETTOYAGE_AUTO", "1")
-    monkeypatch.setattr("sys.argv", ["prog", "search", "dette", "--id-execution", vieux])
+    monkeypatch.setattr("sys.argv", ["prog", "rechercher", "dette", "--id-execution", vieux])
     with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
-        resultat = runner.invoke(app, ["search", "dette"])
+        resultat = runner.invoke(app, ["rechercher", "dette"])
     assert resultat.exit_code == 0
     # L'exécution courante (vieux, passée en --id-execution) est protégée
     assert (tmp_path / "data" / "raw" / vieux).is_dir()
 
 
 # ---------------------------------------------------------------------------
-# T13.2 — Option --quiet (22/10/2026) : TU-111..TU-113
+# T13.2 — Option --silencieux (alias --quiet) (22/10/2026) : TU-111..TU-113
 # ---------------------------------------------------------------------------
 
 def test_quiet_resultat_visible_logs_masques(monkeypatch, tmp_path):
-    # TU-111 : `--quiet` masque les logs applicatifs [info]/[error] console ;
+    # TU-111 : `--silencieux` masque les logs applicatifs [info]/[error] console ;
     # le résultat utilisateur (sorties typer.echo) reste affiché. Le coeur est
     # simulé : la CLI se teste sans réseau.
     import src.main as module_main
@@ -846,7 +846,7 @@ def test_quiet_resultat_visible_logs_masques(monkeypatch, tmp_path):
     monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
     monkeypatch.setattr(module_main, "_SILENCIEUX", False)
     with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
-        resultat = runner.invoke(app, ["--quiet", "search", "dette"])
+        resultat = runner.invoke(app, ["--silencieux", "rechercher", "dette"])
     assert resultat.exit_code == 0
     assert "statut : succes" in resultat.output
     assert "Comptes des administrations publiques" in resultat.output
@@ -858,7 +858,7 @@ def test_quiet_resultat_visible_logs_masques(monkeypatch, tmp_path):
 
 
 def test_sans_quiet_logs_visibles(monkeypatch, tmp_path):
-    # TU-112 : sans --quiet, le comportement est inchangé — les logs
+    # TU-112 : sans --silencieux, le comportement est inchangé — les logs
     # applicatifs apparaissent bien (le coeur est simulé mais le logging
     # est réel : un log est émis par le callback/configuration).
     import src.main as module_main
@@ -867,13 +867,13 @@ def test_sans_quiet_logs_visibles(monkeypatch, tmp_path):
     monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
     monkeypatch.setattr(module_main, "_SILENCIEUX", False)
     with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
-        resultat = runner.invoke(app, ["search", "dette"])
+        resultat = runner.invoke(app, ["rechercher", "dette"])
     assert resultat.exit_code == 0
     assert "statut : succes" in resultat.output
 
 
 def test_quiet_desactive_avant_commande(monkeypatch, tmp_path):
-    # TU-113 : le flag --quiet est posé au callback (avant la sous-commande)
+    # TU-113 : le flag --silencieux est posé au callback (avant la sous-commande)
     # et transmis à configure_logging via le wrapper _configurer_logging.
     import src.main as module_main
 
@@ -887,7 +887,7 @@ def test_quiet_desactive_avant_commande(monkeypatch, tmp_path):
     monkeypatch.setattr(module_main, "_configurer_logging", faux_configurer)
     monkeypatch.setattr(module_main, "_SILENCIEUX", False)
     with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
-        resultat = runner.invoke(app, ["--quiet", "search", "dette"])
+        resultat = runner.invoke(app, ["--silencieux", "rechercher", "dette"])
     assert resultat.exit_code == 0
     assert module_main._SILENCIEUX is True
     assert len(appels) == 1
@@ -897,7 +897,7 @@ def test_quiet_desactive_avant_commande(monkeypatch, tmp_path):
 
 
 def test_quiet_masque_warning_nettoyage_auto(monkeypatch, tmp_path):
-    # TU-113 (suite) : en --quiet, le warning console du hook de nettoyage
+    # TU-113 (suite) : en --silencieux, le warning console du hook de nettoyage
     # automatique (T7.2) est masqué même si des suppressions ont lieu.
     from datetime import datetime, timedelta
     import src.main as module_main
@@ -908,8 +908,72 @@ def test_quiet_masque_warning_nettoyage_auto(monkeypatch, tmp_path):
     _fabriquer_executions_cli(tmp_path, [vieux])
     monkeypatch.setenv("NETTOYAGE_AUTO", "1")
     with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
-        resultat = runner.invoke(app, ["--quiet", "search", "dette"])
+        resultat = runner.invoke(app, ["--silencieux", "rechercher", "dette"])
     assert resultat.exit_code == 0
     assert "nettoyage automatique" not in resultat.output
     # Mais le nettoyage a bien eu lieu (hook exécuté, exécution supprimée)
     assert not (tmp_path / "data" / "raw" / vieux).exists()
+
+
+# ---------------------------------------------------------------------------
+# T13.3 — Réalignement linguistique (22/10/2026) : TU-120..TU-123
+# ---------------------------------------------------------------------------
+
+def test_tu120_commandes_francaises_presentes():
+    # TU-120 : les 7 commandes françaises sont exposées (rechercher, lister,
+    # telecharger, extraire, interroger, demander, + acquisitions/nettoyer déjà FR).
+    resultat = runner.invoke(app, ["--help"])
+    assert resultat.exit_code == 0
+    for commande in ("rechercher", "lister", "telecharger", "extraire",
+                     "interroger", "demander", "acquisitions", "nettoyer"):
+        assert commande in resultat.output, f"commande '{commande}' absente du --help"
+
+
+def test_tu121_alias_anglais_fonctionnent(monkeypatch, tmp_path):
+    # TU-121 : chaque alias anglais (search, list, download, extract, query,
+    # ask, chat) délègue à la commande française éponyme.
+    import src.main as module_main
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES) as mock_recherche:
+        resultat = runner.invoke(app, ["search", "dette"])
+    assert resultat.exit_code == 0
+    assert mock_recherche.call_count == 1
+    assert "Comptes des administrations publiques" in resultat.output
+
+
+def test_tu122_option_silencieux_et_alias_quiet(monkeypatch, tmp_path):
+    # TU-122 : --silencieux masque les logs ; l'alias --quiet fonctionne aussi.
+    import src.main as module_main
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("NETTOYAGE_AUTO", raising=False)
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
+        resultat = runner.invoke(app, ["--silencieux", "rechercher", "dette"])
+    assert resultat.exit_code == 0
+    assert module_main._SILENCIEUX is True
+    assert "statut : succes" in resultat.output
+    assert "[info" not in resultat.output
+
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+    with patch("src.main.rechercher_jeux", return_value=REPONSE_SUCCES):
+        resultat_alias = runner.invoke(app, ["--quiet", "rechercher", "dette"])
+    assert resultat_alias.exit_code == 0
+    assert module_main._SILENCIEUX is True
+    assert "[info" not in resultat_alias.output
+    monkeypatch.setattr(module_main, "_SILENCIEUX", False)
+
+
+def test_tu123_manifeste_genere_le_sans_accent(tmp_path, monkeypatch):
+    # TU-123 : l'en-tête du manifeste porte `genere_le` (sans accent,
+    # convention contrat_global : codes en minuscules sans accent).
+    monkeypatch.chdir(tmp_path)
+    from src.core.manifeste import consigner_demande, lire_manifeste
+
+    consigner_demande("exec-lang", "test réalignement")
+    manifeste = lire_manifeste("exec-lang")
+    assert "genere_le" in manifeste
+    assert "generé_le" not in manifeste

@@ -5,6 +5,37 @@ Il est mis à jour automatiquement à la fin de chaque session et relu au début
 
 ---
 
+## **Séance du 22/10/2026 (14) — T13.3 : audit + réalignement linguistique de la CLI**
+
+### **Contexte**
+- Le concepteur demande un audit des désalignements linguistiques (commandes CLI, options, vocabulaire, manifeste) et une nouvelle tâche de réalignement. Il valide les choix suivants : francisation des commandes avec alias anglais conservés (`chat` remplacé par `ask`), `--quiet`→`--silencieux` (alias conservé), `recent`/`indetermine` conservés en l'état, `generé_le`→`genere_le`.
+
+### **Audit réalisé**
+- **CLI** : 6 commandes anglaises (`search`, `list`, `download`, `extract`, `query`, `chat`) vs 2 françaises (`acquisitions`, `nettoyer`) ; option `--quiet` seule en anglais.
+- **Contrats/code** : `indetermine` (anglais) vs `indetermination` (français) côte à côte dans le même contrat ; `generé_le` (accent, viole la convention) ; `licence_inconnue`/`licence_a_verifier` hors `StatutEnum` (vocabulaire, pas linguistique).
+- **Conservé en anglais (assumé)** : outils agentiques, statuts, motifs, variables d'environnement, arborescence, appels API externes (`TRIS_API`).
+
+### **Actions réalisées (T13.3)**
+1. **E1 — `src/main.py`** : 6 commandes renommées (`rechercher`, `lister`, `telecharger`, `extraire`, `interroger`, `demander`) + `--silencieux` (alias `--quiet`).
+2. **E2 — Alias anglais** : `search`, `list`, `download`, `extract`, `query`, `ask` (nouveau), `chat` (historique) — commandes Typer à part entière, même signature, délégation vers la commande française. **Incident corrigé** : première version des alias sans arguments → exit code 2 (Typer exige les arguments déclarés) ; corrigé par duplication des signatures.
+3. **E3 — `src/core/manifeste.py`** : `generé_le` → `genere_le`.
+4. **E4 — Tests** : TU-120..123 (`test_cli.py`) + mise à jour `test_cli.py` (noms FR) et `test_manifeste.py`.
+5. **E5 — Documentation** : README (tableau + exemples + note alias), `stockage.md`, `contrat_global.md` (convention 5 précisée), suivis T13.2/T10.8, kanban (T13.3 ajoutée, En cours), `plan_tests.md` (section T13.3).
+
+### **Vérifications**
+- **470 tests verts** (`python -m pytest tests/unit -q`, 28 s) — 466 avant + 4 nouveaux (TU-120..123).
+- `--help` : 8 commandes françaises + 7 alias anglais listés.
+
+### **État en fin de séance**
+- T13.3 déplacée en 🔍 **En revue** à la demande du concepteur : **E1..E5 faits**, reste la **validation en réel par le concepteur** (`rechercher`/`search`, `--silencieux`/`--quiet`, `demander`/`ask`/`chat`).
+- T11.4 toujours en 🔍 En revue (validation en réel en attente — erreur 429 Mistral transitoire, à réessayer).
+- **Commité et poussé** sur `dev`.
+
+### **Blocages**
+- Aucun.
+
+---
+
 ## **Séance du 22/10/2026 (13) — T11.4 : implémentation de l'outil `consulter_registre` (E0..E7)**
 
 ### **Contexte**

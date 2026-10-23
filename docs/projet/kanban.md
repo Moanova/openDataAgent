@@ -29,6 +29,7 @@ T10.1
 
 ## En revue
 T11.4
+T13.3
 
 
 ## Terminé
@@ -349,6 +350,17 @@ Nouvel outil agentique `consulter_registre` — branchement de `rapport_pour_age
 
 ## T13.2 — Confort d'utilisation de la CLI (séance du 22/10/2026)
 Option silencieuse `--quiet` — masque les logs applicatifs `[info]`/`[error]` console ; les résultats/erreurs de commande restent affichés et le **fichier de logs reste écrit**. *(Terminé le 22/10/2026 — validation réelle par le concepteur : `--quiet search ...` console épurée, résultat visible, log fichier écrit ; implémentée : `configure_logging(silencieux=...)` avec `NullHandler` sur le logger racine (`src/utils/logging.py`), option globale `--quiet` au callback Typer transmise via le wrapper `_configurer_logging` (7 commandes), warning du hook de nettoyage T7.2 masqué en quiet, correctifs de robustesse (fermeture du fichier de logs précédent, `log_to_file` défensif) ; 451 tests verts (445 avant + TU-109..113). Suivi : `docs/tasks/T13.2_option_quiet.md`)*
+
+
+## T13.3 — Réalignement linguistique de la CLI (séance du 22/10/2026)
+Francisation des commandes et options de la CLI, avec conservation des alias anglais pour la rétrocompatibilité (décisions concepteur du 22/10/2026) :
+- **Commandes** : `search`→`rechercher`, `list`→`lister`, `download`→`telecharger`, `extract`→`extraire`, `query`→`interroger`, `chat`→`demander`. Alias anglais conservés : `search`, `list`, `download`, `extract`, `query`, **`ask`** (nouveau, alias de `demander` — `chat` étant remplacé par `ask` pour cohérence), **`chat`** (alias historique conservé).
+- **Option de journalisation** : `--quiet`→`--silencieux`, alias `--quiet` conservé.
+- **Vocabulaire** : `recent` et `indetermine` conservés en l'état (décision concepteur : « récent » sans accent est aligné avec la convention de nommage en minuscules sans accent).
+- **Manifeste** : champ `generé_le`→`genere_le` (convention contrat_global : minuscules sans accent).
+- Alias = commandes Typer à part entière (même signature, délégation vers la commande française) : l'alias accepte les mêmes arguments et options.
+- Périmètre : `src/main.py`, `src/core/manifeste.py`, tests (`test_cli.py`, `test_manifeste.py`), docs (`docs/README.md`, `docs/specs/stockage.md`, `contrat_global.md` convention 5, suivis T13.2/T10.8).
+*(En cours depuis le 22/10/2026 — implémentée : E1..E4 + TU-120..123 ; 470 tests verts (466 avant + 4) ; En revue depuis le 22/10/2026 — validation en réel par le concepteur en cours : `rechercher`/`search`, `--silencieux`/`--quiet`, alias `ask`/`chat`)*
 
 
 ## Commande `search` — Intégration et CLI

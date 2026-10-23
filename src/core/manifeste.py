@@ -99,7 +99,7 @@ def consigner_demande(
     manifeste.setdefault("acquisitions", [])
     manifeste["id_execution"] = id_execution
     manifeste["demande"] = demande
-    manifeste["generé_le"] = datetime.now().isoformat(timespec="seconds")
+    manifeste["genere_le"] = datetime.now().isoformat(timespec="seconds")
     _ecrire(_chemin_manifeste(id_execution, racine), manifeste)
 
 

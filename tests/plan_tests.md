@@ -465,3 +465,15 @@ Périmètre : `src/core/registre.py` (fonction cœur, lecture seule), contrat v1
 | TU-119 | Dispatch agent (`executer_outil`) | validation Pydantic (champs inconnus ignorés), `id_execution` injecté, registre inchangé (lecture seule) | Bloquant |
 | TI-25 | Boucle : l'agent invoque `consulter_registre` | rapport normalisé renvoyé, invocation consomme le plafond | Bloquant |
 | TI-26 | Mémoire cross-session | entrée consignée par une exécution visible via `consulter_registre` dans l'exécution suivante, registre non réécrit | Bloquant |
+
+
+## Tests T13.3 — Réalignement linguistique de la CLI (22/10/2026)
+
+Périmètre : `src/main.py` (commandes renommées en français + alias anglais, `--silencieux` alias `--quiet`), `src/core/manifeste.py` (`genere_le`). Suivi : `docs/tasks/T13.3_realignement_linguistique.md`.
+
+| Réf. | Objectif | Résultat attendu | Criticité |
+|---|---|---|---|
+| TU-120 | `--help` : les 8 commandes françaises présentes | `rechercher`, `lister`, `telecharger`, `extraire`, `interroger`, `demander`, `acquisitions`, `nettoyer` dans la sortie | Bloquant |
+| TU-121 | Alias anglais `search` | délègue à `rechercher` (mêmes arguments/options, appel cœur identique) | Bloquant |
+| TU-122 | `--silencieux` + alias `--quiet` | logs masqués, `_SILENCIEUX=True`, résultat visible, les deux formes fonctionnent | Bloquant |
+| TU-123 | Manifeste : champ `genere_le` | `genere_le` présent, `generé_le` absent (convention sans accent) | Bloquant |
